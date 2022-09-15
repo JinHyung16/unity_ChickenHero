@@ -1,6 +1,6 @@
 module github.com/heroiclabs/nakama/v3
 
-go 1.18
+go 1.19
 
 require (
 	github.com/blugelabs/bluge v0.1.9

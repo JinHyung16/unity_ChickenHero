@@ -18,18 +18,19 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
-	"net"
-	"net/url"
-	"strings"
-	"time"
+	//"fmt"
+	//"net"
+	//"net/url"
+	//"strings"
+	//"time"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v4/stdlib"
-	"go.uber.org/zap"
+	//"github.com/jackc/pgx/v4/stdlib"
+	//"go.uber.org/zap"
 )
 
+/*
 var ErrDatabaseDriverMismatch = errors.New("database driver mismatch")
 
 func DbConnect(ctx context.Context, logger *zap.Logger, config Config) (*sql.DB, string) {
@@ -189,6 +190,7 @@ func dbResolveAddress(ctx context.Context, logger *zap.Logger, host string) ([]s
 	}
 	return addr, addrMap
 }
+*/
 
 // Tx is used to permit clients to implement custom transaction logic.
 type Tx interface {

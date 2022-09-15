@@ -9,7 +9,8 @@ public partial class GameServer : HughServer<GameServer>
 {
     protected new string host = "35.197.17.99"; // boss scene 이동시 HughServer에 있는 host로 연결되므로 당장 nakama 접속시엔 필요 없다.
     //protected new string host = "localhost"; // @LocalHost
-    //protected new int port = 7350; // HughServer에 있는 port와 동일
+
+    protected new int port = 7350; // HughServer에 있는 port와 동일
 
     protected new string sessionPrefName = "gameserver.session";
     public string userid;
@@ -53,7 +54,7 @@ public partial class GameServer : HughServer<GameServer>
 #endif
 
                 // Use Nakama Device authentication to create a new session using the device identifier.
-                session = await client.AuthenticateDeviceAsync(deviceId, null, true);
+                session = await client.AuthenticateDeviceAsync(deviceId);
                 userid = session.UserId;
                 userNickName = session.Username;
 

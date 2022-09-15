@@ -39,11 +39,15 @@ type SessionCache interface {
 	Ban(userIDs []uuid.UUID)
 	// Unban a set of users.
 	Unban(userIDs []uuid.UUID)
+
+	GetTargetDBId(userId uuid.UUID) (int, bool)
 }
 
 type sessionCacheUser struct {
 	sessionTokens map[string]int64
 	refreshTokens map[string]int64
+
+	targetdbId    int
 }
 
 type LocalSessionCache struct {
@@ -179,3 +183,16 @@ func (s *LocalSessionCache) Ban(userIDs []uuid.UUID) {
 }
 
 func (s *LocalSessionCache) Unban(userIDs []uuid.UUID) {}
+
+func (s *LocalSessionCache) GetTargetDBId(userID uuid.UUID) (int, bool) {
+	s.RLock()
+	cache, found := s.cache[userID]
+	if !found {
+		s.RUnlock()
+
+		return 0, found
+	}
+
+	s.RUnlock()
+	return cache.targetdbId, found
+}

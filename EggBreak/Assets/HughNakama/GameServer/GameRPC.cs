@@ -22,5 +22,23 @@ public partial class GameServer
         return JsonConvert.DeserializeObject<UserData>(res.Payload);
     }
 
+    public async Task<UserData> GetUserRetainGoods(ReqUserInfoPacket req)
+    {
+        string json = JsonConvert.SerializeObject(req);
+        var res = await client.RpcAsync(session, "get_user_goods", json);
+#if UNITY_EDITOR
+        UnityEngine.Debug.Log(res.Payload);
+#endif 
+        return JsonConvert.DeserializeObject<UserData>(res.Payload);
+    }
+
+    public async Task<UserData> GetUserRetainGoodsTest()
+    {
+        var res = await client.RpcAsync(session, "get_user_goods_test");
+#if UNITY_EDITOR
+        UnityEngine.Debug.Log(res.Payload);
+#endif 
+        return JsonConvert.DeserializeObject<UserData>(res.Payload);
+    }
     #endregion
 }

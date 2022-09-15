@@ -16,7 +16,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	//"strconv"
 
 	"github.com/gofrs/uuid"
@@ -55,7 +54,7 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 		return nil, status.Error(codes.InvalidArgument, "Refresh token is required.")
 	}
 
-	userID, _, vars, err := SessionRefresh(ctx, s.logger, nil, s.config, s.sessionCache, in.Token)
+	userID, username, vars, err := SessionRefresh(ctx, s.logger, s.db.Hugh_db, s.config, s.sessionCache, in.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -66,14 +65,6 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 		useVars = vars
 	}
 	userIDStr := userID.String()
-	fmt.Println("api_session.go refresh")
-	key, sessionCache := GetSessionCache(userIDStr)
-	//fmt.Println("get session : ", key)
-	if sessionCache == nil {
-		//로그인서버에서 인증되지않은경우...
-		return nil, status.Error(codes.InvalidArgument, "SessionRefresh, 인증정보가 존재하지않습니다 : "+key)
-	}
-	username := sessionCache["username"]
 
 	token, exp := generateToken(s.config, userIDStr, username, useVars)
 	s.sessionCache.Add(userID, exp, token, 0, "")

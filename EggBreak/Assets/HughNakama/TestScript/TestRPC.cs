@@ -6,12 +6,17 @@ using Packet.GameServer;
 public class TestRPC : MonoBehaviour
 {
     public KeyCode setGoodsKey = KeyCode.A;
+    public KeyCode getGoodsKey = KeyCode.S;
 
     private void Update()
     {
         if(Input.GetKeyDown(setGoodsKey))
         {
             SetUserGoods();
+        }
+        if(Input.GetKeyDown(getGoodsKey))
+        {
+            GetUserGoods();
         }
     }
 
@@ -28,6 +33,16 @@ public class TestRPC : MonoBehaviour
         var res = await GameServer.GetInstance.SetUserRetainGoods(reqSetUserPacket);
 
         Debug.Log(res.userId);
+        Debug.Log(res.userName);
+        Debug.Log(res.userLevel);
+        Debug.Log(res.userGold);
+    }
+
+    private async void GetUserGoods()
+    {
+        var res = await GameServer.GetInstance.GetUserRetainGoodsTest();
+
+        Debug.Log(res.userId); 
         Debug.Log(res.userName);
         Debug.Log(res.userLevel);
         Debug.Log(res.userGold);

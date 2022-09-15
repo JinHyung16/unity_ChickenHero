@@ -30,8 +30,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofrs/uuid"
-	//"github.com/heroiclabs/nakama/v3/ga"
-	//"github.com/heroiclabs/nakama/v3/migrate"
 	"github.com/heroiclabs/nakama/v3/server"
 	"github.com/heroiclabs/nakama/v3/social"
 	_ "github.com/jackc/pgx/v4/stdlib"

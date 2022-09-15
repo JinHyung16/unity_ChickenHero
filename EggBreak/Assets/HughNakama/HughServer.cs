@@ -1,13 +1,13 @@
-using Nakama;
 using System;
 using System.Threading.Tasks;
 using HughLibrary.Generics;
+using Nakama;
 
 public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
 {
     protected string scheme = "http";
-    protected string host = "35.197.17.99"; // @GCP VM: hugh-server 외부 ip
-    //protected string host = "localhost";
+    //protected string host = "35.197.17.99"; // @GCP VM: hugh-server 외부 ip
+    protected string host = "localhost";
 
     protected int port = 7350;
     protected string serverKey = "defaultkey";
@@ -64,12 +64,7 @@ public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
         }
     }
 
-    /// <summary>
-    /// if u not use custom rpc
-    /// please using this.
-    /// </summary>
-    
-    /*
+
     protected async Task<IApiRpc> GetRPC(string rpcId)
     {
         if (session == null) return null;
@@ -83,5 +78,4 @@ public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
 
         return await client.RpcAsync(session, rpcId, param);
     }
-    */
 }
