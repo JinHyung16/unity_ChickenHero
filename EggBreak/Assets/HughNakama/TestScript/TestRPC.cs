@@ -25,7 +25,7 @@ public class TestRPC : MonoBehaviour
             userGold = 1000,
         };
 
-        var res = await GameServer.GetInstance.SetUserGoods(reqSetUserPacket);
+        var res = await GameServer.GetInstance.SetUserRetainGoods(reqSetUserPacket);
 
         Debug.Log(res.userId);
         Debug.Log(res.userName);

@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using Nakama;
 using System;
 using System.Threading.Tasks;
@@ -10,7 +7,7 @@ public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
 {
     protected string scheme = "http";
     protected string host = "35.197.17.99"; // @GCP VM: hugh-server ¿ÜºÎ ip
-   // protected string host = "localhost";
+    //protected string host = "localhost";
 
     protected int port = 7350;
     protected string serverKey = "defaultkey";

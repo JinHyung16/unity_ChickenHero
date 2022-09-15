@@ -58,6 +58,7 @@ public partial class GameServer : HughServer<GameServer>
                 userNickName = session.Username;
 
 #if UNITY_EDITOR
+                Debug.LogFormat("session.UserId : {0}", session.UserId);
                 Debug.LogFormat("session.AuthToken : {0}", session.AuthToken);
                 Debug.LogFormat("session.CreateTime : {0}", session.CreateTime);
                 Debug.LogFormat("session.ExpireTime : {0}", session.ExpireTime);

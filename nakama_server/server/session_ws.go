@@ -463,6 +463,7 @@ func (s *sessionWS) Close(msg string, reason runtime.PresenceReason, envelopes .
 	s.pingTimer.Stop()
 	close(s.outgoingCh)
 
+	/*
 	// Send final messages, if any are specified.
 	for _, envelope := range envelopes {
 		var payload []byte
@@ -504,6 +505,7 @@ func (s *sessionWS) Close(msg string, reason runtime.PresenceReason, envelopes .
 		}
 		s.Unlock()
 	}
+	*/
 
 	// Send close message.
 	if err := s.conn.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(s.writeWaitDuration)); err != nil {

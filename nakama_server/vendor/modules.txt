@@ -111,6 +111,7 @@ github.com/go-sourcemap/sourcemap
 github.com/go-sourcemap/sourcemap/internal/base64vlq
 # github.com/go-sql-driver/mysql v1.6.0
 ## explicit; go 1.10
+github.com/go-sql-driver/mysql
 # github.com/gofrs/uuid v4.0.0+incompatible
 ## explicit
 github.com/gofrs/uuid
@@ -238,6 +239,8 @@ github.com/twmb/murmur3
 github.com/uber-go/tally/v4
 github.com/uber-go/tally/v4/internal/identity
 github.com/uber-go/tally/v4/prometheus
+# github.com/ziutek/mymysql v1.5.4
+## explicit
 # go.uber.org/atomic v1.9.0
 ## explicit; go 1.13
 go.uber.org/atomic

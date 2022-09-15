@@ -159,6 +159,7 @@ func (r *RuntimeGoMatchCore) MatchJoin(tick int64, state interface{}, joins []*M
 	for i, join := range joins {
 		presences[i] = runtime.Presence(join)
 	}
+	r.ctx = context.WithValue(ctx, "game_channel_index", Game_Channel_Index)
 
 	newState := r.match.MatchJoin(r.ctx, r.runtimeLogger, r.db, r.nk, r, tick, state, presences)
 	return newState, nil

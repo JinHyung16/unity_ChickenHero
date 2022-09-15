@@ -68,6 +68,7 @@ func (ri *RuntimeGoInitializer) RegisterEvent(fn func(ctx context.Context, logge
 }
 
 func (ri *RuntimeGoInitializer) RegisterEventSessionStart(fn func(ctx context.Context, logger runtime.Logger, evt *api.Event, db *runtime.DBManager)) error {
+	ctx = context.WithValue(ctx, "game_channel_index", Game_Channel_Index)
 	ri.sessionStartFunctions = append(ri.sessionStartFunctions, fn)
 	return nil
 }
@@ -92,6 +93,7 @@ func (ri *RuntimeGoInitializer) RegisterRpc(id string, fn func(ctx context.Conte
 	id = strings.ToLower(id)
 	ri.rpc[id] = func(ctx context.Context, headers, queryParams map[string][]string, userID, username string, vars map[string]string, expiry int64, sessionID, clientIP, clientPort, lang, payload string) (string, error, codes.Code) {
 		ctx = NewRuntimeGoContext(ctx, ri.node, ri.env, RuntimeExecutionModeRPC, queryParams, expiry, userID, username, vars, sessionID, clientIP, clientPort, lang)
+		ctx = context.WithValue(ctx, "game_channel_index", Game_Channel_Index)
 		result, fnErr := fn(ctx, ri.logger.WithField("rpc_id", id), ri.db, ri.nk, payload)
 		if fnErr != nil {
 			if runtimeErr, ok := fnErr.(*runtime.Error); ok {
@@ -2453,6 +2455,7 @@ func (ri *RuntimeGoInitializer) RegisterLeaderboardReset(fn func(ctx context.Con
 
 func (ri *RuntimeGoInitializer) RegisterMatch(name string, fn func(ctx context.Context, logger runtime.Logger, db *runtime.DBManager, nk runtime.NakamaModule) (runtime.Match, error)) error {
 	ri.matchLock.Lock()
+	ctx = context.WithValue(ctx, "game_channel_index", Game_Channel_Index)
 	ri.match[name] = fn
 	ri.matchLock.Unlock()
 	return nil

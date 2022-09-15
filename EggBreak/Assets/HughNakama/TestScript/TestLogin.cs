@@ -9,7 +9,7 @@ public class TestLogin : MonoBehaviour
 
     public void Awake()
     {
-        PlayerPrefs.DeleteAll();
+       // PlayerPrefs.DeleteAll();
     }
 
     public void Start()

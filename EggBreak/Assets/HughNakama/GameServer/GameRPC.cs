@@ -12,7 +12,7 @@ public partial class GameServer
     // 서버에 등록한 RPC 사용을 위해 관리하는 클래스
 
     #region User
-    public async Task<UserData> SetUserGoods(ReqSetUserPacket req)
+    public async Task<UserData> SetUserRetainGoods(ReqSetUserPacket req)
     {
         string json = JsonConvert.SerializeObject(req);
         var res = await client.RpcAsync(session, "set_user_goods", json);

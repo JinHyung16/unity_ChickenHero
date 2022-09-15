@@ -24,10 +24,11 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"syscall"
 	"time"
 
-	//_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofrs/uuid"
 	//"github.com/heroiclabs/nakama/v3/ga"
 	//"github.com/heroiclabs/nakama/v3/migrate"
@@ -72,28 +73,10 @@ func main() {
 		case "--version":
 			fmt.Println(semver)
 			return
-		/*
-		case "migrate":
-			migrate.Parse(os.Args[2:], tmpLogger)
-			return
-		case "check":
-			// Parse any command line args to look up runtime path.
-			// Use full config structure even if not all of its options are available in this command.
-			config := server.NewConfig(tmpLogger)
-			var runtimePath string
-			flags := flag.NewFlagSet("check", flag.ExitOnError)
-			flags.StringVar(&runtimePath, "runtime.path", filepath.Join(config.GetDataDir(), "modules"), "Path for the server to scan for Lua and Go library files.")
-			if err := flags.Parse(os.Args[2:]); err != nil {
-				tmpLogger.Fatal("Could not parse check flags.")
-			}
-			config.GetRuntime().Path = runtimePath
-
-			if err := server.CheckRuntime(tmpLogger, config); err != nil {
-				// Errors are already logged in the function above.
-				os.Exit(1)
-			}
-			return
-		*/
+		case "channel_id":
+			channelId, _ := strconv.Atoi(os.Args[2])
+			server.Game_Channel_Index = channelId
+			fmt.Println("GameChannelID : ", server.Game_Channel_Index)
 		}
 	}
 
