@@ -23,19 +23,19 @@ import (
 	"go.uber.org/zap"
 )
 
-func MultiUpdate(ctx context.Context, logger *zap.Logger, db *sql.DB, metrics Metrics, accountUpdates []*accountUpdate, storageWrites StorageOpWrites, walletUpdates []*walletUpdate, updateLedger bool) ([]*api.StorageObjectAck, []*runtime.WalletUpdateResult, error) {
+func MultiUpdate(ctx context.Context, logger *zap.Logger, db *sql.DB, accountUpdates []*accountUpdate, storageWrites StorageOpWrites, walletUpdates []*walletUpdate, updateLedger bool) ([]*api.StorageObjectAck, []*runtime.WalletUpdateResult, error) {
 	if len(accountUpdates) == 0 && len(storageWrites) == 0 && len(walletUpdates) == 0 {
 		return nil, nil, nil
 	}
-
-	var storageWriteAcks []*api.StorageObjectAck
-	var walletUpdateResults []*runtime.WalletUpdateResult
 
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		logger.Error("Could not begin database transaction.", zap.Error(err))
 		return nil, nil, err
 	}
+
+	var storageWriteAcks []*api.StorageObjectAck
+	var walletUpdateResults []*runtime.WalletUpdateResult
 
 	if err = ExecuteInTx(ctx, tx, func() error {
 		storageWriteAcks = nil
@@ -48,7 +48,7 @@ func MultiUpdate(ctx context.Context, logger *zap.Logger, db *sql.DB, metrics Me
 		}
 
 		// Execute any storage updates.
-		storageWriteAcks, updateErr = storageWriteObjects(ctx, logger, /*metrics,*/ tx, true, storageWrites)
+		storageWriteAcks, updateErr = storageWriteObjects(ctx, logger, tx, true, storageWrites)
 		if updateErr != nil {
 			return updateErr
 		}

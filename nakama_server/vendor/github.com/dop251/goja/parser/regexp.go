@@ -9,7 +9,6 @@ import (
 
 const (
 	WhitespaceChars = " \f\n\r\t\v\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff"
-	Re2Dot          = "[^\r\n\u2028\u2029]"
 )
 
 type regexpParseError struct {
@@ -147,7 +146,7 @@ func (self *_RegExp_parser) scan() {
 			self.error(true, "Unmatched ')'")
 			return
 		case '.':
-			self.writeString(Re2Dot)
+			self.writeString("[^\\r\\n]")
 			self.read()
 		default:
 			self.pass()
@@ -185,7 +184,7 @@ func (self *_RegExp_parser) scanGroup() {
 		case '[':
 			self.scanBracket()
 		case '.':
-			self.writeString(Re2Dot)
+			self.writeString("[^\\r\\n]")
 			self.read()
 		default:
 			self.pass()
@@ -285,12 +284,7 @@ func (self *_RegExp_parser) scanEscape(inClass bool) {
 
 	case 'u':
 		self.read()
-		if self.chr == '{' {
-			self.read()
-			length, base = 0, 16
-		} else {
-			length, base = 4, 16
-		}
+		length, base = 4, 16
 
 	case 'b':
 		if inClass {
@@ -371,36 +365,31 @@ func (self *_RegExp_parser) scanEscape(inClass bool) {
 	// Otherwise, we're a \u.... or \x...
 	valueOffset := self.chrOffset
 
-	if length > 0 {
-		for length := length; length > 0; length-- {
+	var value uint32
+	{
+		length := length
+		for ; length > 0; length-- {
 			digit := uint32(digitValue(self.chr))
 			if digit >= base {
 				// Not a valid digit
 				goto skip
 			}
-			self.read()
-		}
-	} else {
-		for self.chr != '}' && self.chr != -1 {
-			digit := uint32(digitValue(self.chr))
-			if digit >= base {
-				// Not a valid digit
-				goto skip
-			}
+			value = value*base + digit
 			self.read()
 		}
 	}
 
-	if length == 4 || length == 0 {
+	if length == 4 {
 		self.write([]byte{
 			'\\',
 			'x',
 			'{',
+			self.str[valueOffset+0],
+			self.str[valueOffset+1],
+			self.str[valueOffset+2],
+			self.str[valueOffset+3],
+			'}',
 		})
-		self.passString(valueOffset, self.chrOffset)
-		if length != 0 {
-			self.writeByte('}')
-		}
 	} else if length == 2 {
 		self.passString(offset-1, valueOffset+2)
 	} else {

@@ -1,7 +1,6 @@
 package goja
 
 import (
-	"fmt"
 	"math"
 	"math/bits"
 	"reflect"
@@ -30,44 +29,48 @@ func (a *sparseArrayObject) findIdx(idx uint32) int {
 	})
 }
 
-func (a *sparseArrayObject) _setLengthInt(l uint32, throw bool) bool {
-	ret := true
-	if l <= a.length {
-		if a.propValueCount > 0 {
-			// Slow path
-			for i := len(a.items) - 1; i >= 0; i-- {
-				item := a.items[i]
-				if item.idx <= l {
-					break
-				}
-				if prop, ok := item.value.(*valueProperty); ok {
-					if !prop.configurable {
-						l = item.idx + 1
-						ret = false
+func (a *sparseArrayObject) _setLengthInt(l int64, throw bool) bool {
+	if l >= 0 && l <= math.MaxUint32 {
+		ret := true
+		l := uint32(l)
+		if l <= a.length {
+			if a.propValueCount > 0 {
+				// Slow path
+				for i := len(a.items) - 1; i >= 0; i-- {
+					item := a.items[i]
+					if item.idx <= l {
 						break
 					}
-					a.propValueCount--
+					if prop, ok := item.value.(*valueProperty); ok {
+						if !prop.configurable {
+							l = item.idx + 1
+							ret = false
+							break
+						}
+						a.propValueCount--
+					}
 				}
 			}
 		}
-	}
 
-	idx := a.findIdx(l)
+		idx := a.findIdx(l)
 
-	aa := a.items[idx:]
-	for i := range aa {
-		aa[i].value = nil
+		aa := a.items[idx:]
+		for i := range aa {
+			aa[i].value = nil
+		}
+		a.items = a.items[:idx]
+		a.length = l
+		if !ret {
+			a.val.runtime.typeErrorResult(throw, "Cannot redefine property: length")
+		}
+		return ret
 	}
-	a.items = a.items[:idx]
-	a.length = l
-	if !ret {
-		a.val.runtime.typeErrorResult(throw, "Cannot redefine property: length")
-	}
-	return ret
+	panic(a.val.runtime.newError(a.val.runtime.global.RangeError, "Invalid array length"))
 }
 
-func (a *sparseArrayObject) setLengthInt(l uint32, throw bool) bool {
-	if l == a.length {
+func (a *sparseArrayObject) setLengthInt(l int64, throw bool) bool {
+	if l == int64(a.length) {
 		return true
 	}
 	if !a.lengthProp.writable {
@@ -77,12 +80,19 @@ func (a *sparseArrayObject) setLengthInt(l uint32, throw bool) bool {
 	return a._setLengthInt(l, throw)
 }
 
-func (a *sparseArrayObject) setLength(v uint32, throw bool) bool {
+func (a *sparseArrayObject) setLength(v Value, throw bool) bool {
+	l, ok := toIntIgnoreNegZero(v)
+	if ok && l == int64(a.length) {
+		return true
+	}
 	if !a.lengthProp.writable {
 		a.val.runtime.typeErrorResult(throw, "length is not writable")
 		return false
 	}
-	return a._setLengthInt(v, throw)
+	if ok {
+		return a._setLengthInt(l, throw)
+	}
+	panic(a.val.runtime.newError(a.val.runtime.global.RangeError, "Invalid array length"))
 }
 
 func (a *sparseArrayObject) _getIdx(idx uint32) Value {
@@ -117,13 +127,13 @@ func (a *sparseArrayObject) getIdx(idx valueInt, receiver Value) Value {
 	return prop
 }
 
-func (a *sparseArrayObject) getLengthProp() *valueProperty {
+func (a *sparseArrayObject) getLengthProp() Value {
 	a.lengthProp.value = intToValue(int64(a.length))
 	return &a.lengthProp
 }
 
 func (a *sparseArrayObject) getOwnPropStr(name unistring.String) Value {
-	if idx := strToArrayIdx(name); idx != math.MaxUint32 {
+	if idx := strToIdx(name); idx != math.MaxUint32 {
 		return a._getIdx(idx)
 	}
 	if name == "length" {
@@ -171,7 +181,7 @@ func (a *sparseArrayObject) _setOwnIdx(idx uint32, val Value, throw bool) bool {
 		}
 
 		if idx >= a.length {
-			if !a.setLengthInt(idx+1, throw) {
+			if !a.setLengthInt(int64(idx)+1, throw) {
 				return false
 			}
 		}
@@ -204,11 +214,11 @@ func (a *sparseArrayObject) _setOwnIdx(idx uint32, val Value, throw bool) bool {
 }
 
 func (a *sparseArrayObject) setOwnStr(name unistring.String, val Value, throw bool) bool {
-	if idx := strToArrayIdx(name); idx != math.MaxUint32 {
+	if idx := strToIdx(name); idx != math.MaxUint32 {
 		return a._setOwnIdx(idx, val, throw)
 	} else {
 		if name == "length" {
-			return a.setLength(a.val.runtime.toLengthUint32(val), throw)
+			return a.setLength(val, throw)
 		} else {
 			return a.baseObject.setOwnStr(name, val, throw)
 		}
@@ -238,7 +248,7 @@ type sparseArrayPropIter struct {
 
 func (i *sparseArrayPropIter) next() (propIterItem, iterNextFunc) {
 	for i.idx < len(i.a.items) {
-		name := asciiString(strconv.Itoa(int(i.a.items[i.idx].idx)))
+		name := unistring.String(strconv.Itoa(int(i.a.items[i.idx].idx)))
 		prop := i.a.items[i.idx].value
 		i.idx++
 		if prop != nil {
@@ -246,16 +256,16 @@ func (i *sparseArrayPropIter) next() (propIterItem, iterNextFunc) {
 		}
 	}
 
-	return i.a.baseObject.iterateStringKeys()()
+	return i.a.baseObject.enumerateOwnKeys()()
 }
 
-func (a *sparseArrayObject) iterateStringKeys() iterNextFunc {
+func (a *sparseArrayObject) enumerateOwnKeys() iterNextFunc {
 	return (&sparseArrayPropIter{
 		a: a,
 	}).next
 }
 
-func (a *sparseArrayObject) stringKeys(all bool, accum []Value) []Value {
+func (a *sparseArrayObject) ownKeys(all bool, accum []Value) []Value {
 	if all {
 		for _, item := range a.items {
 			accum = append(accum, asciiString(strconv.FormatUint(uint64(item.idx), 10)))
@@ -269,7 +279,7 @@ func (a *sparseArrayObject) stringKeys(all bool, accum []Value) []Value {
 		}
 	}
 
-	return a.baseObject.stringKeys(all, accum)
+	return a.baseObject.ownKeys(all, accum)
 }
 
 func (a *sparseArrayObject) setValues(values []Value, objCount int) {
@@ -285,7 +295,7 @@ func (a *sparseArrayObject) setValues(values []Value, objCount int) {
 }
 
 func (a *sparseArrayObject) hasOwnPropertyStr(name unistring.String) bool {
-	if idx := strToArrayIdx(name); idx != math.MaxUint32 {
+	if idx := strToIdx(name); idx != math.MaxUint32 {
 		i := a.findIdx(idx)
 		return i < len(a.items) && a.items[i].idx == idx
 	} else {
@@ -333,7 +343,7 @@ func (a *sparseArrayObject) _defineIdxProperty(idx uint32, desc PropertyDescript
 	prop, ok := a.baseObject._defineOwnProperty(unistring.String(strconv.FormatUint(uint64(idx), 10)), existing, desc, throw)
 	if ok {
 		if idx >= a.length {
-			if !a.setLengthInt(idx+1, throw) {
+			if !a.setLengthInt(int64(idx)+1, throw) {
 				return false
 			}
 		}
@@ -362,11 +372,11 @@ func (a *sparseArrayObject) _defineIdxProperty(idx uint32, desc PropertyDescript
 }
 
 func (a *sparseArrayObject) defineOwnPropertyStr(name unistring.String, descr PropertyDescriptor, throw bool) bool {
-	if idx := strToArrayIdx(name); idx != math.MaxUint32 {
+	if idx := strToIdx(name); idx != math.MaxUint32 {
 		return a._defineIdxProperty(idx, descr, throw)
 	}
 	if name == "length" {
-		return a.val.runtime.defineArrayLength(a.getLengthProp(), descr, a.setLength, throw)
+		return a.val.runtime.defineArrayLength(&a.lengthProp, descr, a.setLength, throw)
 	}
 	return a.baseObject.defineOwnPropertyStr(name, descr, throw)
 }
@@ -396,7 +406,7 @@ func (a *sparseArrayObject) _deleteIdxProp(idx uint32, throw bool) bool {
 }
 
 func (a *sparseArrayObject) deleteStr(name unistring.String, throw bool) bool {
-	if idx := strToArrayIdx(name); idx != math.MaxUint32 {
+	if idx := strToIdx(name); idx != math.MaxUint32 {
 		return a._deleteIdxProp(idx, throw)
 	}
 	return a.baseObject.deleteStr(name, throw)
@@ -409,20 +419,20 @@ func (a *sparseArrayObject) deleteIdx(idx valueInt, throw bool) bool {
 	return a.baseObject.deleteStr(idx.string(), throw)
 }
 
-func (a *sparseArrayObject) sortLen() int {
+func (a *sparseArrayObject) sortLen() int64 {
 	if len(a.items) > 0 {
-		return toIntStrict(int64(a.items[len(a.items)-1].idx) + 1)
+		return int64(a.items[len(a.items)-1].idx) + 1
 	}
 
 	return 0
 }
 
 func (a *sparseArrayObject) export(ctx *objectExportCtx) interface{} {
-	if v, exists := ctx.get(a.val); exists {
+	if v, exists := ctx.get(a); exists {
 		return v
 	}
 	arr := make([]interface{}, a.length)
-	ctx.put(a.val, arr)
+	ctx.put(a, arr)
 	var prevIdx uint32
 	for _, item := range a.items {
 		idx := item.idx
@@ -454,35 +464,4 @@ func (a *sparseArrayObject) export(ctx *objectExportCtx) interface{} {
 
 func (a *sparseArrayObject) exportType() reflect.Type {
 	return reflectTypeArray
-}
-
-func (a *sparseArrayObject) exportToArrayOrSlice(dst reflect.Value, typ reflect.Type, ctx *objectExportCtx) error {
-	r := a.val.runtime
-	if iter := a.getSym(SymIterator, nil); iter == r.global.arrayValues || iter == nil {
-		l := toIntStrict(int64(a.length))
-		if typ.Kind() == reflect.Array {
-			if dst.Len() != l {
-				return fmt.Errorf("cannot convert an Array into an array, lengths mismatch (have %d, need %d)", l, dst.Len())
-			}
-		} else {
-			dst.Set(reflect.MakeSlice(typ, l, l))
-		}
-		ctx.putTyped(a.val, typ, dst.Interface())
-		for _, item := range a.items {
-			val := item.value
-			if p, ok := val.(*valueProperty); ok {
-				val = p.get(a.val)
-			}
-			idx := toIntStrict(int64(item.idx))
-			if idx >= l {
-				break
-			}
-			err := r.toReflectValue(val, dst.Index(idx), ctx)
-			if err != nil {
-				return fmt.Errorf("could not convert array element %v to %v at %d: %w", item.value, typ, idx, err)
-			}
-		}
-		return nil
-	}
-	return a.baseObject.exportToArrayOrSlice(dst, typ, ctx)
 }

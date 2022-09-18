@@ -20,18 +20,17 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/gob"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/heroiclabs/nakama-common/api"
+	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/heroiclabs/nakama-common/rtapi"
 	"github.com/jackc/pgtype"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"github.com/heroiclabs/nakama-common/runtime"
 )
 
 const (
@@ -41,7 +40,6 @@ const (
 	NotificationCodeGroupAdd         int32 = -4
 	NotificationCodeGroupJoinRequest int32 = -5
 	NotificationCodeFriendJoinGame   int32 = -6
-	NotificationCodeSingleSocket     int32 = -7
 )
 
 type notificationCacheableCursor struct {
@@ -49,7 +47,9 @@ type notificationCacheableCursor struct {
 	CreateTime     int64
 }
 
+//func NotificationSend(ctx context.Context, logger *zap.Logger, db map[int]*sql.DB, messageRouter MessageRouter, notifications map[uuid.UUID][]*api.Notification) error {
 func NotificationSend(ctx context.Context, logger *zap.Logger, db *runtime.DBManager, messageRouter MessageRouter, notifications map[uuid.UUID][]*api.Notification) error {
+
 	persistentNotifications := make(map[uuid.UUID][]*api.Notification, len(notifications))
 	for userID, ns := range notifications {
 		for _, userNotification := range ns {
@@ -66,13 +66,17 @@ func NotificationSend(ctx context.Context, logger *zap.Logger, db *runtime.DBMan
 
 	// Store any persistent notifications.
 	if len(persistentNotifications) > 0 {
+		//TODO : 유저별로 본인의 contents_db에 저장되도록 db지정할수 있게
 		if err := NotificationSave(ctx, logger, db, persistentNotifications); err != nil {
 			return err
 		}
 	}
 
+	//TODO : 같은채널만이 아닌 전 채널에 Noti를 보낼수 있게
 	// Deliver live notifications to connected users.
 	for userID, ns := range notifications {
+
+		//본인채널의 유저에게 보내는 부분
 		messageRouter.SendToStream(logger, PresenceStream{Mode: StreamModeNotifications, Subject: userID}, &rtapi.Envelope{
 			Message: &rtapi.Envelope_Notifications{
 				Notifications: &rtapi.Notifications{
@@ -81,111 +85,6 @@ func NotificationSend(ctx context.Context, logger *zap.Logger, db *runtime.DBMan
 			},
 		}, true)
 	}
-
-	return nil
-}
-
-func NotificationSendAll(ctx context.Context, logger *zap.Logger, db *runtime.DBManager, tracker Tracker, messageRouter MessageRouter, notification *api.Notification) error {
-	// Non-persistent notifications don't need to work through all database users, just use currently connected notification streams.
-	if !notification.Persistent {
-		env := &rtapi.Envelope{
-			Message: &rtapi.Envelope_Notifications{
-				Notifications: &rtapi.Notifications{
-					Notifications: []*api.Notification{notification},
-				},
-			},
-		}
-
-		notificationStreamMode := StreamModeNotifications
-		streams := tracker.CountByStreamModeFilter(map[uint8]*uint8{StreamModeNotifications: &notificationStreamMode})
-		for streamPtr, count := range streams {
-			if streamPtr == nil || count == 0 {
-				continue
-			}
-			messageRouter.SendToStream(logger, *streamPtr, env, true)
-		}
-		return nil
-	}
-
-	const limit = 10_000
-
-	// Start dispatch in paginated batches.
-	go func() {
-		// Switch to a background context, the caller should not wait for the full operation to complete.
-		ctx := context.Background()
-		notificationLogger := logger.With(zap.String("notification_subject", notification.Subject))
-
-		var userIDStr string
-		for {
-			sends := make(map[uuid.UUID][]*api.Notification, limit)
-
-			params := make([]interface{}, 0, 1)
-			query := "SELECT id FROM users"
-			if userIDStr != "" {
-				query += " AND id > $1"
-				params = append(params, userIDStr)
-			}
-			query += fmt.Sprintf(" ORDER BY id ASC LIMIT %d", limit)
-
-			rows, err := db.Hugh_db.QueryContext(ctx, query, params...)
-			if err != nil {
-				notificationLogger.Error("Failed to retrieve user data to send notification", zap.Error(err))
-				return
-			}
-
-			for rows.Next() {
-				if err = rows.Scan(&userIDStr); err != nil {
-					_ = rows.Close()
-					notificationLogger.Error("Failed to scan user data to send notification", zap.String("id", userIDStr), zap.Error(err))
-					return
-				}
-				userID, err := uuid.FromString(userIDStr)
-				if err != nil {
-					_ = rows.Close()
-					notificationLogger.Error("Failed to parse scanned user id data to send notification", zap.String("id", userIDStr), zap.Error(err))
-					return
-				}
-				sends[userID] = []*api.Notification{{
-					Id:         uuid.Must(uuid.NewV4()).String(),
-					Subject:    notification.Subject,
-					Content:    notification.Content,
-					Code:       notification.Code,
-					SenderId:   notification.SenderId,
-					CreateTime: notification.CreateTime,
-					Persistent: notification.Persistent,
-				}}
-			}
-			_ = rows.Close()
-
-			if len(sends) == 0 {
-				// Pagination finished.
-				return
-			}
-
-			if err := NotificationSave(ctx, notificationLogger, db, sends); err != nil {
-				notificationLogger.Error("Failed to save persistent notifications", zap.Error(err))
-				return
-			}
-
-			// Deliver live notifications to connected users.
-			for userID, notifications := range sends {
-				env := &rtapi.Envelope{
-					Message: &rtapi.Envelope_Notifications{
-						Notifications: &rtapi.Notifications{
-							Notifications: []*api.Notification{notifications[0]},
-						},
-					},
-				}
-
-				messageRouter.SendToStream(logger, PresenceStream{Mode: StreamModeNotifications, Subject: userID}, env, true)
-			}
-
-			// Stop pagination when reaching the last (incomplete) page.
-			if len(sends) < limit {
-				return
-			}
-		}
-	}()
 
 	return nil
 }
@@ -266,7 +165,7 @@ ORDER BY create_time ASC, id ASC`+limitQuery, params...)
 	return notificationList, nil
 }
 
-func NotificationDelete(ctx context.Context, logger *zap.Logger, db *runtime.DBManager, userID uuid.UUID, notificationIDs []string) error {
+func NotificationDelete(ctx context.Context, logger *zap.Logger, db *sql.DB, userID uuid.UUID, notificationIDs []string) error {
 	statements := make([]string, 0, len(notificationIDs))
 	params := make([]interface{}, 0, len(notificationIDs)+1)
 	params = append(params, userID)
@@ -279,7 +178,7 @@ func NotificationDelete(ctx context.Context, logger *zap.Logger, db *runtime.DBM
 
 	query := "DELETE FROM notification WHERE user_id = $1 AND id IN (" + strings.Join(statements, ", ") + ")"
 	logger.Debug("Delete notification query", zap.String("query", query), zap.Any("params", params))
-	_, err := db.Hugh_db.ExecContext(ctx, query, params...)
+	_, err := db.ExecContext(ctx, query, params...)
 	if err != nil {
 		logger.Error("Could not delete notifications.", zap.Error(err))
 		return err

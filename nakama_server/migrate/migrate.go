@@ -17,17 +17,19 @@ package migrate
 import (
 	"database/sql"
 	"embed"
-	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"math"
 	"net/url"
 	"os"
+	"path"
 	"strings"
 	"time"
 
+	mysql_error "github.com/go-mysql/errors"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/heroiclabs/nakama/v3/server"
-	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	migrate "github.com/rubenv/sql-migrate"
@@ -42,7 +44,6 @@ const (
 	defaultLimit                = -1
 )
 
-//go:embed sql/*
 var sqlMigrateFS embed.FS
 
 type statusRow struct {
@@ -56,7 +57,7 @@ type migrationService struct {
 	dbAddress    string
 	limit        int
 	loggerFormat server.LoggingFormat
-	migrations   *migrate.EmbedFileSystemMigrationSource
+	migrations   *migrate.AssetMigrationSource
 	db           *sql.DB
 }
 
@@ -64,9 +65,25 @@ func StartupCheck(logger *zap.Logger, db *sql.DB) {
 	migrate.SetTable(migrationTable)
 	migrate.SetIgnoreUnknown(true)
 
-	ms := &migrate.EmbedFileSystemMigrationSource{
-		FileSystem: sqlMigrateFS,
-		Root:       "sql",
+	ms := &migrate.AssetMigrationSource{
+		Asset: func(_path string) ([]byte, error) {
+			f, err := sqlMigrateFS.Open(path.Join("sql", _path))
+			if err != nil {
+				return nil, err
+			}
+			return ioutil.ReadAll(f)
+		},
+		AssetDir: func(_path string) ([]string, error) {
+			entries, err := sqlMigrateFS.ReadDir(path.Join("sql", _path))
+			if err != nil {
+				return nil, err
+			}
+			files := make([]string, 0, len(entries))
+			for _, dirEntry := range entries {
+				files = append(files, dirEntry.Name())
+			}
+			return files, nil
+		},
 	}
 
 	migrations, err := ms.FindMigrations()
@@ -95,9 +112,25 @@ func Parse(args []string, tmpLogger *zap.Logger) {
 	migrate.SetTable(migrationTable)
 	migrate.SetIgnoreUnknown(true)
 	ms := &migrationService{
-		migrations: &migrate.EmbedFileSystemMigrationSource{
-			FileSystem: sqlMigrateFS,
-			Root:       "sql",
+		migrations: &migrate.AssetMigrationSource{
+			Asset: func(_path string) ([]byte, error) {
+				f, err := sqlMigrateFS.Open(path.Join("sql", _path))
+				if err != nil {
+					return nil, err
+				}
+				return ioutil.ReadAll(f)
+			},
+			AssetDir: func(_path string) ([]string, error) {
+				entries, err := sqlMigrateFS.ReadDir(path.Join("sql", _path))
+				if err != nil {
+					return nil, err
+				}
+				files := make([]string, 0, len(entries))
+				for _, dirEntry := range entries {
+					files = append(files, dirEntry.Name())
+				}
+				return files, nil
+			},
 		},
 	}
 
@@ -120,18 +153,20 @@ func Parse(args []string, tmpLogger *zap.Logger) {
 	logger := server.NewJSONLogger(os.Stdout, zapcore.InfoLevel, ms.loggerFormat)
 
 	rawURL := ms.dbAddress
-	if !(strings.HasPrefix(rawURL, "postgresql://") || strings.HasPrefix(rawURL, "postgres://")) {
-		rawURL = fmt.Sprintf("postgres://%s", rawURL)
-	}
+	// if !(strings.HasPrefix(rawURL, "postgresql://") || strings.HasPrefix(rawURL, "postgres://")) {
+	// 	rawURL = fmt.Sprintf("postgres://%s", rawURL)
+	// }
+
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		logger.Fatal("Bad connection URL", zap.Error(err))
 	}
-	query := parsedURL.Query()
-	if len(query.Get("sslmode")) == 0 {
-		query.Set("sslmode", "prefer")
-		parsedURL.RawQuery = query.Encode()
-	}
+
+	//query := parsedURL.Query()
+	// if len(query.Get("sslmode")) == 0 {
+	// 	query.Set("sslmode", "prefer")
+	// 	parsedURL.RawQuery = query.Encode()
+	// }
 
 	if len(parsedURL.User.Username()) < 1 {
 		parsedURL.User = url.User("root")
@@ -146,19 +181,28 @@ func Parse(args []string, tmpLogger *zap.Logger) {
 
 	logger.Info("Database connection", zap.String("dsn", parsedURL.Redacted()))
 
-	db, err := sql.Open("pgx", parsedURL.String())
+	db, err := sql.Open("mysql", parsedURL.String()+dbname)
 	if err != nil {
 		logger.Fatal("Failed to open database", zap.Error(err))
 	}
 
 	var nakamaDBExists bool
-	if err = db.QueryRow("SELECT EXISTS (SELECT 1 from pg_database WHERE datname = $1)", dbname).Scan(&nakamaDBExists); err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == dbErrorDatabaseDoesNotExist {
+	check_row := db.QueryRow(`SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?`, dbname)
+
+	if check_row != nil {
+
+		fmt.Println("check_row.Err() : ", check_row.Err())
+
+		//해당 dbname이 없는경우
+		if mysql_error.MySQLErrorCode(check_row.Err()) == 1049 {
+
 			nakamaDBExists = false
 		} else {
+
+			nakamaDBExists = true
 			db.Close()
-			logger.Fatal("Failed to check if db exists", zap.String("db", dbname), zap.Error(err))
+			// logger.Fatal("Failed to check if db exists", zap.String("db", dbname), zap.Error(err))
+			//logger.Fatal("db체크 실패", zap.String("db", dbname), zap.Error(err))
 		}
 	}
 
@@ -168,31 +212,33 @@ func Parse(args []string, tmpLogger *zap.Logger) {
 		db.Close()
 		// Connect to anonymous db
 		parsedURL.Path = ""
-		db, err = sql.Open("pgx", parsedURL.String())
+		db, err = sql.Open("mysql", parsedURL.String())
 		if err != nil {
 			logger.Fatal("Failed to open database", zap.Error(err))
 		}
-		if _, err = db.Exec(fmt.Sprintf("CREATE DATABASE %q", dbname)); err != nil {
+		if _, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s", dbname)); err != nil {
 			db.Close()
 			logger.Fatal("Failed to create database", zap.Error(err))
 		}
 		db.Close()
+
 		parsedURL.Path = fmt.Sprintf("/%s", dbname)
-		db, err = sql.Open("pgx", parsedURL.String())
-		if err != nil {
-			db.Close()
-			logger.Fatal("Failed to open database", zap.Error(err))
-		}
 	}
 
 	// Get database version
-	var dbVersion string
-	if err = db.QueryRow("SELECT version()").Scan(&dbVersion); err != nil {
-		db.Close()
-		logger.Fatal("Error querying database version", zap.Error(err))
-	}
+	// var dbVersion string
+	// if err = db.QueryRow("SELECT version()").Scan(&dbVersion); err != nil {
+	// 	db.Close()
+	// 	logger.Fatal("Error querying database version", zap.Error(err))
+	// }
 
-	logger.Info("Database information", zap.String("version", dbVersion))
+	// logger.Info("Database information", zap.String("version", dbVersion))
+
+	db, err = sql.Open("mysql", parsedURL.String()+dbname+"?parseTime=true")
+	if err != nil {
+		db.Close()
+		logger.Fatal("Failed to open database", zap.Error(err))
+	}
 
 	if err = db.Ping(); err != nil {
 		db.Close()
@@ -203,6 +249,7 @@ func Parse(args []string, tmpLogger *zap.Logger) {
 
 	exec(logger)
 	db.Close()
+	os.Exit(0)
 }
 
 func (ms *migrationService) up(logger *zap.Logger) {
@@ -210,7 +257,8 @@ func (ms *migrationService) up(logger *zap.Logger) {
 		ms.limit = 0
 	}
 
-	appliedMigrations, err := migrate.ExecMax(ms.db, dialect, ms.migrations, migrate.Up, ms.limit)
+	// appliedMigrations, err := migrate.ExecMax(ms.db, dialect, ms.migrations, migrate.Up, ms.limit)
+	appliedMigrations, err := migrate.ExecMax(ms.db, "mysql", ms.migrations, migrate.Up, ms.limit)
 	if err != nil {
 		logger.Fatal("Failed to apply migrations", zap.Int("count", appliedMigrations), zap.Error(err))
 	}

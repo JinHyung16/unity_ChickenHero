@@ -1,11 +1,5 @@
 package goja
 
-import (
-	"reflect"
-)
-
-var mapExportType = reflect.TypeOf([][2]interface{}{})
-
 type mapObject struct {
 	baseObject
 	m *orderedMap
@@ -46,59 +40,11 @@ func (mo *mapObject) init() {
 	mo.m = newOrderedMap(mo.val.runtime.getHash())
 }
 
-func (mo *mapObject) exportType() reflect.Type {
-	return mapExportType
-}
-
-func (mo *mapObject) export(ctx *objectExportCtx) interface{} {
-	m := make([][2]interface{}, mo.m.size)
-	ctx.put(mo.val, m)
-
-	iter := mo.m.newIter()
-	for i := 0; i < len(m); i++ {
-		entry := iter.next()
-		if entry == nil {
-			break
-		}
-		m[i][0] = exportValue(entry.key, ctx)
-		m[i][1] = exportValue(entry.value, ctx)
-	}
-
-	return m
-}
-
-func (mo *mapObject) exportToMap(dst reflect.Value, typ reflect.Type, ctx *objectExportCtx) error {
-	dst.Set(reflect.MakeMap(typ))
-	ctx.putTyped(mo.val, typ, dst.Interface())
-	keyTyp := typ.Key()
-	elemTyp := typ.Elem()
-	iter := mo.m.newIter()
-	r := mo.val.runtime
-	for {
-		entry := iter.next()
-		if entry == nil {
-			break
-		}
-		keyVal := reflect.New(keyTyp).Elem()
-		err := r.toReflectValue(entry.key, keyVal, ctx)
-		if err != nil {
-			return err
-		}
-		elemVal := reflect.New(elemTyp).Elem()
-		err = r.toReflectValue(entry.value, elemVal, ctx)
-		if err != nil {
-			return err
-		}
-		dst.SetMapIndex(keyVal, elemVal)
-	}
-	return nil
-}
-
 func (r *Runtime) mapProto_clear(call FunctionCall) Value {
 	thisObj := r.toObject(call.This)
 	mo, ok := thisObj.self.(*mapObject)
 	if !ok {
-		panic(r.NewTypeError("Method Map.prototype.clear called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
+		panic(r.NewTypeError("Method Map.prototype.clear called on incompatible receiver %s", thisObj.String()))
 	}
 
 	mo.m.clear()
@@ -110,7 +56,7 @@ func (r *Runtime) mapProto_delete(call FunctionCall) Value {
 	thisObj := r.toObject(call.This)
 	mo, ok := thisObj.self.(*mapObject)
 	if !ok {
-		panic(r.NewTypeError("Method Map.prototype.delete called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
+		panic(r.NewTypeError("Method Map.prototype.delete called on incompatible receiver %s", thisObj.String()))
 	}
 
 	return r.toBoolean(mo.m.remove(call.Argument(0)))
@@ -120,7 +66,7 @@ func (r *Runtime) mapProto_get(call FunctionCall) Value {
 	thisObj := r.toObject(call.This)
 	mo, ok := thisObj.self.(*mapObject)
 	if !ok {
-		panic(r.NewTypeError("Method Map.prototype.get called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
+		panic(r.NewTypeError("Method Map.prototype.get called on incompatible receiver %s", thisObj.String()))
 	}
 
 	return nilSafe(mo.m.get(call.Argument(0)))
@@ -130,7 +76,7 @@ func (r *Runtime) mapProto_has(call FunctionCall) Value {
 	thisObj := r.toObject(call.This)
 	mo, ok := thisObj.self.(*mapObject)
 	if !ok {
-		panic(r.NewTypeError("Method Map.prototype.has called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
+		panic(r.NewTypeError("Method Map.prototype.has called on incompatible receiver %s", thisObj.String()))
 	}
 	if mo.m.has(call.Argument(0)) {
 		return valueTrue
@@ -142,7 +88,7 @@ func (r *Runtime) mapProto_set(call FunctionCall) Value {
 	thisObj := r.toObject(call.This)
 	mo, ok := thisObj.self.(*mapObject)
 	if !ok {
-		panic(r.NewTypeError("Method Map.prototype.set called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
+		panic(r.NewTypeError("Method Map.prototype.set called on incompatible receiver %s", thisObj.String()))
 	}
 	mo.m.set(call.Argument(0), call.Argument(1))
 	return call.This
@@ -156,7 +102,7 @@ func (r *Runtime) mapProto_forEach(call FunctionCall) Value {
 	thisObj := r.toObject(call.This)
 	mo, ok := thisObj.self.(*mapObject)
 	if !ok {
-		panic(r.NewTypeError("Method Map.prototype.forEach called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
+		panic(r.NewTypeError("Method Map.prototype.forEach called on incompatible receiver %s", thisObj.String()))
 	}
 	callbackFn, ok := r.toObject(call.Argument(0)).self.assertCallable()
 	if !ok {
@@ -187,7 +133,7 @@ func (r *Runtime) mapProto_getSize(call FunctionCall) Value {
 	thisObj := r.toObject(call.This)
 	mo, ok := thisObj.self.(*mapObject)
 	if !ok {
-		panic(r.NewTypeError("Method get Map.prototype.size called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
+		panic(r.NewTypeError("Method get Map.prototype.size called on incompatible receiver %s", thisObj.String()))
 	}
 	return intToValue(int64(mo.m.size))
 }
@@ -213,7 +159,7 @@ func (r *Runtime) builtin_newMap(args []Value, newTarget *Object) *Object {
 			i0 := valueInt(0)
 			i1 := valueInt(1)
 			if adder == r.global.mapAdder {
-				iter.iterate(func(item Value) {
+				r.iterate(iter, func(item Value) {
 					itemObj := r.toObject(item)
 					k := nilSafe(itemObj.self.getIdx(i0, nil))
 					v := nilSafe(itemObj.self.getIdx(i1, nil))
@@ -224,7 +170,7 @@ func (r *Runtime) builtin_newMap(args []Value, newTarget *Object) *Object {
 				if adderFn == nil {
 					panic(r.NewTypeError("Map.set in missing"))
 				}
-				iter.iterate(func(item Value) {
+				r.iterate(iter, func(item Value) {
 					itemObj := r.toObject(item)
 					k := itemObj.self.getIdx(i0, nil)
 					v := itemObj.self.getIdx(i1, nil)
@@ -264,7 +210,7 @@ func (r *Runtime) mapIterProto_next(call FunctionCall) Value {
 	if iter, ok := thisObj.self.(*mapIterObject); ok {
 		return iter.next()
 	}
-	panic(r.NewTypeError("Method Map Iterator.prototype.next called on incompatible receiver %s", r.objectproto_toString(FunctionCall{This: thisObj})))
+	panic(r.NewTypeError("Method Map Iterator.prototype.next called on incompatible receiver %s", thisObj.String()))
 }
 
 func (r *Runtime) createMapProto(val *Object) objectImpl {
@@ -297,7 +243,11 @@ func (r *Runtime) createMapProto(val *Object) objectImpl {
 
 func (r *Runtime) createMap(val *Object) objectImpl {
 	o := r.newNativeConstructOnly(val, r.builtin_newMap, r.global.MapPrototype, "Map", 0)
-	r.putSpeciesReturnThis(o)
+	o._putSym(SymSpecies, &valueProperty{
+		getterFunc:   r.newNativeFunc(r.returnThis, nil, "get [Symbol.species]", nil, 0),
+		accessor:     true,
+		configurable: true,
+	})
 
 	return o
 }

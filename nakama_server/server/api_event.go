@@ -43,7 +43,7 @@ func (s *ApiServer) Event(ctx context.Context, in *api.Event) (*emptypb.Empty, e
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -66,7 +66,7 @@ func (s *ApiServer) Event(ctx context.Context, in *api.Event) (*emptypb.Empty, e
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return &emptypb.Empty{}, nil

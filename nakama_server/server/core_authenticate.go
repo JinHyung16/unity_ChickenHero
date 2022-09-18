@@ -27,6 +27,7 @@ import (
 	"github.com/gofrs/uuid"
 
 	"github.com/heroiclabs/nakama-common/api"
+	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/heroiclabs/nakama/v3/social"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgtype"
@@ -35,7 +36,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"github.com/heroiclabs/nakama-common/runtime"
 )
 
 func AuthenticateApple(ctx context.Context, logger *zap.Logger, db *sql.DB, client *social.Client, bundleId, token, username string, create bool) (string, string, bool, error) {
@@ -102,17 +102,15 @@ func AuthenticateApple(ctx context.Context, logger *zap.Logger, db *sql.DB, clie
 		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
-	// Import email address, if it exists.
-	if profile.Email != "" {
-		_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", profile.Email, userID)
-		if err != nil {
-			var pgErr *pgconn.PgError
-			if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {
-				logger.Warn("Skipping apple account email import as it is already set in another user.", zap.Error(err), zap.String("appleID", profile.ID), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
-			} else {
-				logger.Error("Failed to import apple account email.", zap.Error(err), zap.String("appleID", profile.ID), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
-				return "", "", false, status.Error(codes.Internal, "Error importing apple account email.")
-			}
+	// Import email address
+	_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", profile.Email, userID)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {
+			logger.Warn("Skipping apple account email import as it is already set in another user.", zap.Error(err), zap.String("appleID", profile.ID), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
+		} else {
+			logger.Error("Failed to import apple account email.", zap.Error(err), zap.String("appleID", profile.ID), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
+			return "", "", false, status.Error(codes.Internal, "Error importing apple account email.")
 		}
 	}
 
@@ -185,7 +183,8 @@ func AuthenticateDevice(ctx context.Context, logger *zap.Logger, db *sql.DB, dev
 	found := true
 
 	// Look for an existing account.
-	query := "SELECT user_id FROM user_device WHERE id = $1"
+	//query := "SELECT user_id FROM user_device WHERE id = $1"
+	query := "SELECT user_id FROM user_device WHERE id = ?"
 	var dbUserID string
 	err := db.QueryRowContext(ctx, query, deviceID).Scan(&dbUserID)
 	if err != nil {
@@ -200,7 +199,8 @@ func AuthenticateDevice(ctx context.Context, logger *zap.Logger, db *sql.DB, dev
 	// Existing account found.
 	if found {
 		// Load its details.
-		query = "SELECT username, disable_time FROM users WHERE id = $1"
+		//query = "SELECT username, disable_time FROM users WHERE id = $1"
+		query = "SELECT username, disable_time FROM users WHERE id = ?"
 		var dbUsername string
 		var dbDisableTime pgtype.Timestamptz
 		err = db.QueryRowContext(ctx, query, dbUserID).Scan(&dbUsername, &dbDisableTime)
@@ -233,6 +233,7 @@ func AuthenticateDevice(ctx context.Context, logger *zap.Logger, db *sql.DB, dev
 	}
 
 	err = ExecuteInTx(ctx, tx, func() error {
+		/*
 		query := `
 INSERT INTO users (id, username, create_time, update_time)
 SELECT $1 AS id,
@@ -243,7 +244,18 @@ WHERE NOT EXISTS
   (SELECT id
    FROM user_device
    WHERE id = $3::VARCHAR)`
-
+   */
+   		query := `
+   INSERT INTO users (id, username, create_time, update_time)
+   SELECT ? AS id,
+			? AS username,
+			now(),
+			now()
+   WHERE NOT EXISTS
+	 (SELECT id
+	  FROM user_device
+	  WHERE id = ?)`
+   
 		result, err := tx.ExecContext(ctx, query, userID, username, deviceID)
 		if err != nil {
 			var pgErr *pgconn.PgError
@@ -264,7 +276,8 @@ WHERE NOT EXISTS
 			return StatusError(codes.Internal, "Error finding or creating user account.", ErrRowsAffectedCount)
 		}
 
-		query = "INSERT INTO user_device (id, user_id) VALUES ($1, $2)"
+		//query = "INSERT INTO user_device (id, user_id) VALUES ($1, $2)"
+		query = "INSERT INTO user_device (id, user_id) VALUES (?, ?)"
 		result, err = tx.ExecContext(ctx, query, deviceID, userID)
 		if err != nil {
 			logger.Debug("Cannot add device ID.", zap.Error(err), zap.String("deviceID", deviceID), zap.String("username", username), zap.Bool("create", create))
@@ -451,8 +464,8 @@ func AuthenticateFacebook(ctx context.Context, logger *zap.Logger, db *sql.DB, c
 
 	// Create a new account.
 	userID := uuid.Must(uuid.NewV4()).String()
-	query = "INSERT INTO users (id, username, display_name, avatar_url, facebook_id, create_time, update_time) VALUES ($1, $2, $3, $4, $5, now(), now())"
-	result, err := db.ExecContext(ctx, query, userID, username, facebookProfile.Name, facebookProfile.Picture.Data.Url, facebookProfile.ID)
+	query = "INSERT INTO users (id, username, display_name, email, avatar_url, facebook_id, create_time, update_time) VALUES ($1, $2, $3, $4, $5, $6, now(), now())"
+	result, err := db.ExecContext(ctx, query, userID, username, facebookProfile.Name, facebookProfile.Email, facebookProfile.Picture, facebookProfile.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
@@ -474,17 +487,15 @@ func AuthenticateFacebook(ctx context.Context, logger *zap.Logger, db *sql.DB, c
 		return "", "", false, false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
-	// Import email address, if it exists.
-	if facebookProfile.Email != "" {
-		_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", facebookProfile.Email, userID)
-		if err != nil {
-			var pgErr *pgconn.PgError
-			if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {
-				logger.Warn("Skipping facebook account email import as it is already set in another user.", zap.Error(err), zap.String("facebookID", facebookProfile.ID), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
-			} else {
-				logger.Error("Failed to import facebook account email.", zap.Error(err), zap.String("facebookID", facebookProfile.ID), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
-				return "", "", false, false, status.Error(codes.Internal, "Error importing facebook account email.")
-			}
+	// Import email address
+	_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", facebookProfile.Email, userID)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {
+			logger.Warn("Skipping facebook account email import as it is already set in another user.", zap.Error(err), zap.String("facebookID", facebookProfile.ID), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
+		} else {
+			logger.Error("Failed to import facebook account email.", zap.Error(err), zap.String("facebookID", facebookProfile.ID), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
+			return "", "", false, false, status.Error(codes.Internal, "Error importing facebook account email.")
 		}
 	}
 
@@ -730,17 +741,15 @@ func AuthenticateGoogle(ctx context.Context, logger *zap.Logger, db *sql.DB, cli
 		return "", "", false, status.Error(codes.Internal, "Error finding or creating user account.")
 	}
 
-	// Import email address, if it exists.
-	if googleProfile.Email != "" {
-		_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", googleProfile.Email, userID)
-		if err != nil {
-			var pgErr *pgconn.PgError
-			if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {
-				logger.Warn("Skipping google account email import as it is already set in another user.", zap.Error(err), zap.String("googleID", googleProfile.Sub), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
-			} else {
-				logger.Error("Failed to import google account email.", zap.Error(err), zap.String("googleID", googleProfile.Sub), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
-				return "", "", false, status.Error(codes.Internal, "Error importing google account email.")
-			}
+	// Import email address
+	_, err = db.ExecContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", googleProfile.Email, userID)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation && strings.Contains(pgErr.Message, "users_email_key") {
+			logger.Warn("Skipping google account email import as it is already set in another user.", zap.Error(err), zap.String("googleID", googleProfile.Sub), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
+		} else {
+			logger.Error("Failed to import google account email.", zap.Error(err), zap.String("googleID", googleProfile.Sub), zap.String("username", username), zap.Bool("create", create), zap.String("created_user_id", userID))
+			return "", "", false, status.Error(codes.Internal, "Error importing google account email.")
 		}
 	}
 
@@ -830,6 +839,7 @@ func importSteamFriends(ctx context.Context, logger *zap.Logger, db *runtime.DBM
 	}
 
 	var friendUserIDs []uuid.UUID
+
 	tx, err := db.Hugh_db.BeginTx(ctx, nil)
 	if err != nil {
 		logger.Error("Could not begin database transaction.", zap.Error(err))
@@ -912,6 +922,7 @@ func importFacebookFriends(ctx context.Context, logger *zap.Logger, db *runtime.
 	}
 
 	var friendUserIDs []uuid.UUID
+
 	tx, err := db.Hugh_db.BeginTx(ctx, nil)
 	if err != nil {
 		logger.Error("Could not begin database transaction.", zap.Error(err))

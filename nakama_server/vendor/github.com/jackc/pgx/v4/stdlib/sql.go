@@ -56,7 +56,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"math/rand"
 	"reflect"
 	"strconv"
 	"strings"
@@ -111,65 +110,18 @@ var (
 // OptionOpenDB options for configuring the driver when opening a new db pool.
 type OptionOpenDB func(*connector)
 
-// OptionBeforeConnect provides a callback for before connect. It is passed a shallow copy of the ConnConfig that will
-// be used to connect, so only its immediate members should be modified.
-func OptionBeforeConnect(bc func(context.Context, *pgx.ConnConfig) error) OptionOpenDB {
-	return func(dc *connector) {
-		dc.BeforeConnect = bc
-	}
-}
-
-// OptionAfterConnect provides a callback for after connect.
+// OptionAfterConnect provide a callback for after connect.
 func OptionAfterConnect(ac func(context.Context, *pgx.Conn) error) OptionOpenDB {
 	return func(dc *connector) {
 		dc.AfterConnect = ac
 	}
 }
 
-// OptionResetSession provides a callback that can be used to add custom logic prior to executing a query on the
-// connection if the connection has been used before.
-// If ResetSessionFunc returns ErrBadConn error the connection will be discarded.
-func OptionResetSession(rs func(context.Context, *pgx.Conn) error) OptionOpenDB {
-	return func(dc *connector) {
-		dc.ResetSession = rs
-	}
-}
-
-// RandomizeHostOrderFunc is a BeforeConnect hook that randomizes the host order in the provided connConfig, so that a
-// new host becomes primary each time. This is useful to distribute connections for multi-master databases like
-// CockroachDB. If you use this you likely should set https://golang.org/pkg/database/sql/#DB.SetConnMaxLifetime as well
-// to ensure that connections are periodically rebalanced across your nodes.
-func RandomizeHostOrderFunc(ctx context.Context, connConfig *pgx.ConnConfig) error {
-	if len(connConfig.Fallbacks) == 0 {
-		return nil
-	}
-
-	newFallbacks := append([]*pgconn.FallbackConfig{&pgconn.FallbackConfig{
-		Host:      connConfig.Host,
-		Port:      connConfig.Port,
-		TLSConfig: connConfig.TLSConfig,
-	}}, connConfig.Fallbacks...)
-
-	rand.Shuffle(len(newFallbacks), func(i, j int) {
-		newFallbacks[i], newFallbacks[j] = newFallbacks[j], newFallbacks[i]
-	})
-
-	// Use the one that sorted last as the primary and keep the rest as the fallbacks
-	newPrimary := newFallbacks[len(newFallbacks)-1]
-	connConfig.Host = newPrimary.Host
-	connConfig.Port = newPrimary.Port
-	connConfig.TLSConfig = newPrimary.TLSConfig
-	connConfig.Fallbacks = newFallbacks[:len(newFallbacks)-1]
-	return nil
-}
-
 func OpenDB(config pgx.ConnConfig, opts ...OptionOpenDB) *sql.DB {
 	c := connector{
-		ConnConfig:    config,
-		BeforeConnect: func(context.Context, *pgx.ConnConfig) error { return nil }, // noop before connect by default
-		AfterConnect:  func(context.Context, *pgx.Conn) error { return nil },       // noop after connect by default
-		ResetSession:  func(context.Context, *pgx.Conn) error { return nil },       // noop reset session by default
-		driver:        pgxDriver,
+		ConnConfig:   config,
+		AfterConnect: func(context.Context, *pgx.Conn) error { return nil }, // noop after connect by default
+		driver:       pgxDriver,
 	}
 
 	for _, opt := range opts {
@@ -181,10 +133,8 @@ func OpenDB(config pgx.ConnConfig, opts ...OptionOpenDB) *sql.DB {
 
 type connector struct {
 	pgx.ConnConfig
-	BeforeConnect func(context.Context, *pgx.ConnConfig) error // function to call before creation of every new connection
-	AfterConnect  func(context.Context, *pgx.Conn) error       // function to call after creation of every new connection
-	ResetSession  func(context.Context, *pgx.Conn) error       // function is called before a connection is reused
-	driver        *Driver
+	AfterConnect func(context.Context, *pgx.Conn) error // function to call on every new connection
+	driver       *Driver
 }
 
 // Connect implement driver.Connector interface
@@ -194,13 +144,7 @@ func (c connector) Connect(ctx context.Context) (driver.Conn, error) {
 		conn *pgx.Conn
 	)
 
-	// Create a shallow copy of the config, so that BeforeConnect can safely modify it
-	connConfig := c.ConnConfig
-	if err = c.BeforeConnect(ctx, &connConfig); err != nil {
-		return nil, err
-	}
-
-	if conn, err = pgx.ConnectConfig(ctx, &connConfig); err != nil {
+	if conn, err = pgx.ConnectConfig(ctx, &c.ConnConfig); err != nil {
 		return nil, err
 	}
 
@@ -208,7 +152,7 @@ func (c connector) Connect(ctx context.Context) (driver.Conn, error) {
 		return nil, err
 	}
 
-	return &Conn{conn: conn, driver: c.driver, connConfig: connConfig, resetSessionFunc: c.ResetSession}, nil
+	return &Conn{conn: conn, driver: c.driver, connConfig: c.ConnConfig}, nil
 }
 
 // Driver implement driver.Connector interface
@@ -225,7 +169,6 @@ func GetDefaultDriver() driver.Driver {
 type Driver struct {
 	configMutex sync.Mutex
 	configs     map[string]*pgx.ConnConfig
-	sequence    int
 }
 
 func (d *Driver) Open(name string) (driver.Conn, error) {
@@ -245,8 +188,7 @@ func (d *Driver) OpenConnector(name string) (driver.Connector, error) {
 
 func (d *Driver) registerConnConfig(c *pgx.ConnConfig) string {
 	d.configMutex.Lock()
-	connStr := fmt.Sprintf("registeredConnConfig%d", d.sequence)
-	d.sequence++
+	connStr := fmt.Sprintf("registeredConnConfig%d", len(d.configs))
 	d.configs[connStr] = c
 	d.configMutex.Unlock()
 	return connStr
@@ -283,13 +225,7 @@ func (dc *driverConnector) Connect(ctx context.Context) (driver.Conn, error) {
 		return nil, err
 	}
 
-	c := &Conn{
-		conn:             conn,
-		driver:           dc.driver,
-		connConfig:       *connConfig,
-		resetSessionFunc: func(context.Context, *pgx.Conn) error { return nil },
-	}
-
+	c := &Conn{conn: conn, driver: dc.driver, connConfig: *connConfig}
 	return c, nil
 }
 
@@ -308,11 +244,10 @@ func UnregisterConnConfig(connStr string) {
 }
 
 type Conn struct {
-	conn             *pgx.Conn
-	psCount          int64 // Counter used for creating unique prepared statement names
-	driver           *Driver
-	connConfig       pgx.ConnConfig
-	resetSessionFunc func(context.Context, *pgx.Conn) error // Function is called before a connection is reused
+	conn       *pgx.Conn
+	psCount    int64 // Counter used for creating unique prepared statement names
+	driver     *Driver
+	connConfig pgx.ConnConfig
 }
 
 // Conn returns the underlying *pgx.Conn
@@ -448,14 +383,6 @@ func (c *Conn) Ping(ctx context.Context) error {
 func (c *Conn) CheckNamedValue(*driver.NamedValue) error {
 	// Underlying pgx supports sql.Scanner and driver.Valuer interfaces natively. So everything can be passed through directly.
 	return nil
-}
-
-func (c *Conn) ResetSession(ctx context.Context) error {
-	if c.conn.IsClosed() {
-		return driver.ErrBadConn
-	}
-
-	return c.resetSessionFunc(ctx, c.conn)
 }
 
 type Stmt struct {

@@ -206,14 +206,6 @@ func (b *valueStringBuilder) WriteString(s valueString) {
 	}
 }
 
-func (b *valueStringBuilder) WriteASCII(s string) {
-	if b.ascii() {
-		b.asciiBuilder.WriteString(s)
-	} else {
-		b.unicodeBuilder.writeASCIIString(s)
-	}
-}
-
 func (b *valueStringBuilder) WriteRune(r rune) {
 	if r < utf8.RuneSelf {
 		if b.ascii() {
@@ -260,10 +252,8 @@ func (b *valueStringBuilder) WriteSubstring(source valueString, start int, end i
 	if ascii, ok := source.(asciiString); ok {
 		if b.ascii() {
 			b.asciiBuilder.WriteString(string(ascii[start:end]))
-		} else {
-			b.unicodeBuilder.writeASCIIString(string(ascii[start:end]))
+			return
 		}
-		return
 	}
 	us := source.(unicodeString)
 	if b.ascii() {

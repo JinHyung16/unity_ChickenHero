@@ -17,7 +17,6 @@ package server
 import (
 	"context"
 	"sync/atomic"
-	"time"
 
 	"google.golang.org/grpc/stats"
 )
@@ -31,7 +30,7 @@ type metricsGrpcHandlerData struct {
 }
 
 type MetricsGrpcHandler struct {
-	MetricsFn func(name string, elapsed time.Duration, recvBytes, sentBytes int64, isErr bool)
+	metrics *Metrics
 }
 
 // TagRPC can attach some information to the given context.
@@ -52,7 +51,7 @@ func (m *MetricsGrpcHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 	case *stats.OutPayload:
 		atomic.AddInt64(&data.sentBytes, int64(rs.WireLength))
 	case *stats.End:
-		m.MetricsFn(data.fullMethodName, rs.EndTime.Sub(rs.BeginTime), data.recvBytes, data.sentBytes, rs.Error != nil)
+		m.metrics.Api(data.fullMethodName, rs.EndTime.Sub(rs.BeginTime), data.recvBytes, data.sentBytes, rs.Error != nil)
 	}
 }
 

@@ -23,7 +23,6 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"github.com/heroiclabs/nakama-common/runtime"
 	"sort"
 
 	"github.com/gofrs/uuid"
@@ -33,6 +32,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
+var (
+	ErrStorageRejectedVersion    = errors.New("Storage write rejected - version check failed.")
+	ErrStorageRejectedPermission = errors.New("Storage write rejected - permission denied.")
 )
 
 type storageCursor struct {
@@ -457,7 +461,10 @@ WHERE
 	return objects, err
 }
 
-func StorageWriteObjects(ctx context.Context, logger *zap.Logger, db *sql.DB, /*metricsMetrics,*/ authoritativeWrite bool, ops StorageOpWrites) (*api.StorageObjectAcks, codes.Code, error) {
+func StorageWriteObjects(ctx context.Context, logger *zap.Logger, db *sql.DB, authoritativeWrite bool, ops StorageOpWrites) (*api.StorageObjectAcks, codes.Code, error) {
+	// Ensure writes are processed in a consistent order.
+	sort.Sort(ops)
+
 	var acks []*api.StorageObjectAck
 
 	tx, err := db.BeginTx(ctx, nil)
@@ -469,7 +476,7 @@ func StorageWriteObjects(ctx context.Context, logger *zap.Logger, db *sql.DB, /*
 	if err = ExecuteInTx(ctx, tx, func() error {
 		// If the transaction is retried ensure we wipe any acks that may have been prepared by previous attempts.
 		var writeErr error
-		acks, writeErr = storageWriteObjects(ctx, logger, /*metrics,*/ tx, authoritativeWrite, ops)
+		acks, writeErr = storageWriteObjects(ctx, logger, tx, authoritativeWrite, ops)
 		if writeErr != nil {
 			return writeErr
 		}
@@ -485,36 +492,25 @@ func StorageWriteObjects(ctx context.Context, logger *zap.Logger, db *sql.DB, /*
 	return &api.StorageObjectAcks{Acks: acks}, codes.OK, nil
 }
 
-func storageWriteObjects(ctx context.Context, logger *zap.Logger, /*metrics Metrics,*/ tx *sql.Tx, authoritativeWrite bool, ops StorageOpWrites) ([]*api.StorageObjectAck, error) {
-	// Ensure writes are processed in a consistent order to avoid deadlocks from concurrent operations.
-	// Sorting done on a copy to ensure we don't modify the input, which may be re-used on transaction retries.
-	sortedOps := make(StorageOpWrites, 0, len(ops))
-	indexedOps := make(map[*StorageOpWrite]int, len(ops))
-	for i, op := range ops {
-		sortedOps = append(sortedOps, op)
-		indexedOps[op] = i
-	}
-	sort.Sort(sortedOps)
+func storageWriteObjects(ctx context.Context, logger *zap.Logger, tx *sql.Tx, authoritativeWrite bool, ops StorageOpWrites) ([]*api.StorageObjectAck, error) {
+	acks := make([]*api.StorageObjectAck, 0, ops.Len())
 
-	// Run operations in the sorted order.
-	acks := make([]*api.StorageObjectAck, ops.Len())
-	for _, op := range sortedOps {
-		ack, writeErr := storageWriteObject(ctx, logger, /*metrics,*/ tx, authoritativeWrite, op.OwnerID, op.Object)
+	for _, op := range ops {
+		ack, writeErr := storageWriteObject(ctx, logger, tx, authoritativeWrite, op.OwnerID, op.Object)
 		if writeErr != nil {
-			if writeErr == runtime.ErrStorageRejectedVersion || writeErr == runtime.ErrStorageRejectedPermission {
+			if writeErr == ErrStorageRejectedVersion || writeErr == ErrStorageRejectedPermission {
 				return nil, StatusError(codes.InvalidArgument, "Storage write rejected.", writeErr)
 			}
 
 			logger.Debug("Error writing storage objects.", zap.Error(writeErr))
 			return nil, writeErr
 		}
-		// Acks are returned in the original order.
-		acks[indexedOps[op]] = ack
+		acks = append(acks, ack)
 	}
 	return acks, nil
 }
 
-func storageWriteObject(ctx context.Context, logger *zap.Logger, /*metrics,Metrics,*/ tx *sql.Tx, authoritativeWrite bool, ownerID string, object *api.WriteStorageObject) (*api.StorageObjectAck, error) {
+func storageWriteObject(ctx context.Context, logger *zap.Logger, tx *sql.Tx, authoritativeWrite bool, ownerID string, object *api.WriteStorageObject) (*api.StorageObjectAck, error) {
 	var dbVersion sql.NullString
 	var dbPermissionWrite sql.NullInt64
 	var dbPermissionRead sql.NullInt64
@@ -523,8 +519,7 @@ func storageWriteObject(ctx context.Context, logger *zap.Logger, /*metrics,Metri
 		if err == sql.ErrNoRows {
 			if object.Version != "" && object.Version != "*" {
 				// Conditional write with a specific version but the object did not exist at all.
-				//metrics.StorageWriteRejectCount(map[string]string{"collection": object.Collection}, 1)
-				return nil, runtime.ErrStorageRejectedVersion
+				return nil, ErrStorageRejectedVersion
 			}
 		} else {
 			logger.Debug("Error in write storage object pre-flight.", zap.Any("object", object), zap.Error(err))
@@ -533,16 +528,15 @@ func storageWriteObject(ctx context.Context, logger *zap.Logger, /*metrics,Metri
 	}
 
 	if dbVersion.Valid && (object.Version == "*" || (object.Version != "" && object.Version != dbVersion.String)) {
-		// An object existed, and it's a conditional write that either:
+		// An object existed and it's a conditional write that either:
 		// - Expects no object.
-		// - Or expects a given version, but it does not match.
-		//metrics.StorageWriteRejectCount(map[string]string{"collection": object.Collection}, 1)
-		return nil, runtime.ErrStorageRejectedVersion
+		// - Or expects a given version but it does not match.
+		return nil, ErrStorageRejectedVersion
 	}
 
 	if dbPermissionWrite.Valid && dbPermissionWrite.Int64 == 0 && !authoritativeWrite {
 		// Non-authoritative write to an existing storage object with permission 0.
-		return nil, runtime.ErrStorageRejectedPermission
+		return nil, ErrStorageRejectedPermission
 	}
 
 	newVersion := fmt.Sprintf("%x", md5.Sum([]byte(object.Value)))
@@ -572,27 +566,12 @@ func storageWriteObject(ctx context.Context, logger *zap.Logger, /*metrics,Metri
 	var query string
 	switch {
 	case object.Version != "" && object.Version != "*":
-		// OCC if-match.
+		// OCC if match.
 		query = "UPDATE storage SET value = $4, version = $5, read = $6, write = $7, update_time = now() WHERE collection = $1 AND key = $2 AND user_id = $3::UUID AND version = $8"
 		params = append(params, object.Version)
 		// Respect permissions in non-authoritative writes.
 		if !authoritativeWrite {
 			query += " AND write = 1"
-		}
-	case dbVersion.Valid && object.Version == "":
-		// An existing storage object was present, but no OCC of any kind is specified.
-		query = "UPDATE storage SET value = $4, version = $5, read = $6, write = $7, update_time = now() WHERE collection = $1 AND key = $2 AND user_id = $3::UUID"
-		// Respect permissions in non-authoritative writes.
-		if !authoritativeWrite {
-			query += " AND write = 1"
-		}
-	case !dbVersion.Valid && object.Version == "":
-		// An existing storage object was not present, and no OCC of any kind is specified.
-		// Separate to the case above to handle concurrent non-OCC object creations, where all but the first must become updates.
-		query = "INSERT INTO storage (collection, key, user_id, value, version, read, write, create_time, update_time) VALUES ($1, $2, $3::UUID, $4, $5, $6, $7, now(), now()) ON CONFLICT (collection, read, key, user_id) DO UPDATE SET value = $4, version = $5, read = $6, write = $7, update_time = now()"
-		// Respect permissions in non-authoritative writes, where this operation also loses the race to insert the object.
-		if !authoritativeWrite {
-			query += " WHERE storage.write = 1"
 		}
 	case dbVersion.Valid && object.Version != "*":
 		// An existing storage object was present, but no OCC if-not-exists required.
@@ -613,22 +592,22 @@ func storageWriteObject(ctx context.Context, logger *zap.Logger, /*metrics,Metri
 		logger.Debug("Could not write storage object, exec error.", zap.Any("object", object), zap.String("query", query), zap.Error(err))
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == dbErrorUniqueViolation {
-			//metrics.StorageWriteRejectCount(map[string]string{"collection": object.Collection}, 1)
-			return nil, runtime.ErrStorageRejectedVersion
+			return nil, ErrStorageRejectedVersion
 		}
 		return nil, err
 	}
-	if rowsAffected, err := res.RowsAffected(); rowsAffected != 1 {
+	if rowsAffected, _ := res.RowsAffected(); rowsAffected != 1 {
 		logger.Debug("Could not write storage object, rowsAffected error.", zap.Any("object", object), zap.String("query", query), zap.Error(err))
-		//metrics.StorageWriteRejectCount(map[string]string{"collection": object.Collection}, 1)
-		return nil, runtime.ErrStorageRejectedVersion
+		return nil, ErrStorageRejectedVersion
 	}
 
 	ack := &api.StorageObjectAck{
 		Collection: object.Collection,
 		Key:        object.Key,
 		Version:    newVersion,
-		UserId:     ownerID,
+	}
+	if ownerID != uuid.Nil.String() {
+		ack.UserId = ownerID
 	}
 
 	return ack, nil

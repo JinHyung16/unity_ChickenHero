@@ -17,14 +17,15 @@ package server
 import (
 	"context"
 	"errors"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gofrs/uuid"
+	"github.com/heroiclabs/nakama-common/api"
+
 	"math/rand"
 	"regexp"
 	"time"
-	"fmt"
 
-	"github.com/gofrs/uuid"
-	jwt "github.com/golang-jwt/jwt/v4"
-	"github.com/heroiclabs/nakama-common/api"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -55,72 +56,70 @@ func (stc *SessionTokenClaims) Valid() error {
 }
 
 func (s *ApiServer) AuthenticateApple(ctx context.Context, in *api.AuthenticateAppleRequest) (*api.Session, error) {
-	/*
 	// Before hook.
-	if fn := s.runtime.BeforeAuthenticateApple(); fn != nil {
-		beforeFn := func(clientIP, clientPort string) error {
-			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
-			if err != nil {
-				return status.Error(code, err.Error())
-			}
-			if result == nil {
-				// If result is nil, requested resource is disabled.
-				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
-				return status.Error(codes.NotFound, "Requested resource was not found.")
-			}
-			in = result
-			return nil
-		}
+	// if fn := s.runtime.BeforeAuthenticateApple(); fn != nil {
+	// 	beforeFn := func(clientIP, clientPort string) error {
+	// 		result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
+	// 		if err != nil {
+	// 			return status.Error(code, err.Error())
+	// 		}
+	// 		if result == nil {
+	// 			// If result is nil, requested resource is disabled.
+	// 			s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
+	// 			return status.Error(codes.NotFound, "Requested resource was not found.")
+	// 		}
+	// 		in = result
+	// 		return nil
+	// 	}
 
-		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// 	// Execute the before function lambda wrapped in a trace for stats measurement.
+	// 	err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
-	if s.config.GetSocial().Apple.BundleId == "" {
-		return nil, status.Error(codes.FailedPrecondition, "Apple authentication is not configured.")
-	}
+	// if s.config.GetSocial().Apple.BundleId == "" {
+	// 	return nil, status.Error(codes.FailedPrecondition, "Apple authentication is not configured.")
+	// }
 
-	if in.Account == nil || in.Account.Token == "" {
-		return nil, status.Error(codes.InvalidArgument, "Apple ID token is required.")
-	}
+	// if in.Account == nil || in.Account.Token == "" {
+	// 	return nil, status.Error(codes.InvalidArgument, "Apple ID token is required.")
+	// }
 
-	username := in.Username
-	if username == "" {
-		username = generateUsername()
-	} else if invalidUsernameRegex.MatchString(username) {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
-	} else if len(username) > 128 {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
-	}
+	// username := in.Username
+	// if username == "" {
+	// 	username = generateUsername()
+	// } else if invalidUsernameRegex.MatchString(username) {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
+	// } else if len(username) > 128 {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
+	// }
 
-	create := in.Create == nil || in.Create.Value
+	// create := in.Create == nil || in.Create.Value
+	// //TODO : 타겟디비지정
+	// targetdbId := 1
+	// dbUserID, dbUsername, created, err := AuthenticateApple(ctx, s.logger, s.db[targetdbId], s.socialClient, s.config.GetSocial().Apple.BundleId, in.Account.Token, username, create)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	dbUserID, dbUsername, created, err := AuthenticateApple(ctx, s.logger, s.db, s.socialClient, s.config.GetSocial().Apple.BundleId, in.Account.Token, username, create)
-	if err != nil {
-		return nil, err
-	}
-
-	token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
-	refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
-	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
-	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+	// token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
+	// refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
+	// s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
+	// session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
 	// After hook.
-	if fn := s.runtime.AfterAuthenticateApple(); fn != nil {
-		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
-		}
+	// if fn := s.runtime.AfterAuthenticateApple(); fn != nil {
+	// 	afterFn := func(clientIP, clientPort string) error {
+	// 		return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
+	// 	}
 
-		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
-	}
+	// 	// Execute the after function lambda wrapped in a trace for stats measurement.
+	// 	traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	// }
 
-	return session, nil
-	*/
-
+	//return session, nil
 	return &api.Session{}, nil
 }
 
@@ -142,7 +141,7 @@ func (s *ApiServer) AuthenticateCustom(ctx context.Context, in *api.Authenticate
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -156,42 +155,24 @@ func (s *ApiServer) AuthenticateCustom(ctx context.Context, in *api.Authenticate
 		return nil, status.Error(codes.InvalidArgument, "Custom ID invalid, must be 6-128 bytes.")
 	}
 
-	/*
 	username := in.Username
 	if username == "" {
-		username = generateUsername()
+	username = generateUsername()
 	} else if invalidUsernameRegex.MatchString(username) {
 		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
 	} else if len(username) > 128 {
 		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
 	}
 
-
 	create := in.Create == nil || in.Create.Value
-	*/
-
-	userId := in.Account.Id
-	create := false
-	fmt.Println("게임서버 연결중: ", userId)
-
-	key, sessionCache := GetSessionCache(userId)
-	//fmt.Println("get session : ", key)
-
-	username := sessionCache["username"]
-
-	if sessionCache == nil {
-		//로그인서버에서 인증되지않은경우...
-		return nil, status.Error(codes.InvalidArgument, "인증정보가 존재하지않습니다 : "+key)
-	}
 
 	dbUserID, dbUsername, created, err := AuthenticateCustom(ctx, s.logger, s.db.Hugh_db, in.Account.Id, username, create)
 	if err != nil {
 		return nil, err
 	}
 
-
-	token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
-	refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
+	token, exp := generateToken(s.config, dbUserID, username, in.Account.Vars)
+	refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, username, in.Account.Vars)
 	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
 	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
@@ -202,14 +183,13 @@ func (s *ApiServer) AuthenticateCustom(ctx context.Context, in *api.Authenticate
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return session, nil
 }
 
 func (s *ApiServer) AuthenticateDevice(ctx context.Context, in *api.AuthenticateDeviceRequest) (*api.Session, error) {
-	/*
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateDevice(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -227,7 +207,7 @@ func (s *ApiServer) AuthenticateDevice(ctx context.Context, in *api.Authenticate
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -252,7 +232,7 @@ func (s *ApiServer) AuthenticateDevice(ctx context.Context, in *api.Authenticate
 
 	create := in.Create == nil || in.Create.Value
 
-	dbUserID, dbUsername, created, err := AuthenticateDevice(ctx, s.logger, s.db, in.Account.Id, username, create)
+	dbUserID, dbUsername, created, err := AuthenticateDevice(ctx, s.logger, s.db.Hugh_db, in.Account.Id, username, create)
 	if err != nil {
 		return nil, err
 	}
@@ -269,460 +249,453 @@ func (s *ApiServer) AuthenticateDevice(ctx context.Context, in *api.Authenticate
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return session, nil
-	*/
-	return &api.Session{}, nil
 }
 
 func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateEmailRequest) (*api.Session, error) {
-	/*
 	// Before hook.
-	if fn := s.runtime.BeforeAuthenticateEmail(); fn != nil {
-		beforeFn := func(clientIP, clientPort string) error {
-			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
-			if err != nil {
-				return status.Error(code, err.Error())
-			}
-			if result == nil {
-				// If result is nil, requested resource is disabled.
-				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
-				return status.Error(codes.NotFound, "Requested resource was not found.")
-			}
-			in = result
-			return nil
-		}
+	// if fn := s.runtime.BeforeAuthenticateEmail(); fn != nil {
+	// 	beforeFn := func(clientIP, clientPort string) error {
+	// 		result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
+	// 		if err != nil {
+	// 			return status.Error(code, err.Error())
+	// 		}
+	// 		if result == nil {
+	// 			// If result is nil, requested resource is disabled.
+	// 			s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
+	// 			return status.Error(codes.NotFound, "Requested resource was not found.")
+	// 		}
+	// 		in = result
+	// 		return nil
+	// 	}
 
-		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// 	// Execute the before function lambda wrapped in a trace for stats measurement.
+	// 	err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
-	email := in.Account
-	if email == nil {
-		return nil, status.Error(codes.InvalidArgument, "Email address and password is required.")
-	}
+	// email := in.Account
+	// if email == nil {
+	// 	return nil, status.Error(codes.InvalidArgument, "Email address and password is required.")
+	// }
 
-	var attemptUsernameLogin bool
-	if email.Email == "" {
-		// Password was supplied, but no email. Perhaps the user is attempting to login with username/password.
-		attemptUsernameLogin = true
-	} else if invalidCharsRegex.MatchString(email.Email) {
-		return nil, status.Error(codes.InvalidArgument, "Invalid email address, no spaces or control characters allowed.")
-	} else if !emailRegex.MatchString(email.Email) {
-		return nil, status.Error(codes.InvalidArgument, "Invalid email address format.")
-	} else if len(email.Email) < 10 || len(email.Email) > 255 {
-		return nil, status.Error(codes.InvalidArgument, "Invalid email address, must be 10-255 bytes.")
-	}
+	// var attemptUsernameLogin bool
+	// if email.Email == "" {
+	// 	// Password was supplied, but no email. Perhaps the user is attempting to login with username/password.
+	// 	attemptUsernameLogin = true
+	// } else if invalidCharsRegex.MatchString(email.Email) {
+	// 	return nil, status.Error(codes.InvalidArgument, "Invalid email address, no spaces or control characters allowed.")
+	// } else if !emailRegex.MatchString(email.Email) {
+	// 	return nil, status.Error(codes.InvalidArgument, "Invalid email address format.")
+	// } else if len(email.Email) < 10 || len(email.Email) > 255 {
+	// 	return nil, status.Error(codes.InvalidArgument, "Invalid email address, must be 10-255 bytes.")
+	// }
 
-	if len(email.Password) < 8 {
-		return nil, status.Error(codes.InvalidArgument, "Password must be at least 8 characters long.")
-	}
+	// if len(email.Password) < 8 {
+	// 	return nil, status.Error(codes.InvalidArgument, "Password must be at least 8 characters long.")
+	// }
 
-	username := in.Username
-	if username == "" {
-		// If no username was supplied and the email was missing.
-		if attemptUsernameLogin {
-			return nil, status.Error(codes.InvalidArgument, "Username is required when email address is not supplied.")
-		}
+	// username := in.Username
+	// if username == "" {
+	// 	// If no username was supplied and the email was missing.
+	// 	if attemptUsernameLogin {
+	// 		return nil, status.Error(codes.InvalidArgument, "Username is required when email address is not supplied.")
+	// 	}
 
-		// Email address was supplied, we are allowed to generate a username.
-		username = generateUsername()
-	} else if invalidUsernameRegex.MatchString(username) {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
-	} else if len(username) > 128 {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
-	}
+	// 	// Email address was supplied, we are allowed to generate a username.
+	// 	username = generateUsername()
+	// } else if invalidUsernameRegex.MatchString(username) {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
+	// } else if len(username) > 128 {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
+	// }
 
-	var dbUserID string
-	var created bool
-	var err error
+	// var dbUserID string
+	// var created bool
+	// var err error
+	// //TODO : 타겟디비지정
+	// targetdbId := 1
+	// if attemptUsernameLogin {
 
-	if attemptUsernameLogin {
-		// Attempting to log in with username/password. Create flag is ignored, creation is not possible here.
-		dbUserID, err = AuthenticateUsername(ctx, s.logger, s.db, username, email.Password)
-	} else {
-		// Attempting email authentication, may or may not create.
-		cleanEmail := strings.ToLower(email.Email)
-		create := in.Create == nil || in.Create.Value
+	// 	// Attempting to log in with username/password. Create flag is ignored, creation is not possible here.
+	// 	dbUserID, err = AuthenticateUsername(ctx, s.logger, s.db[targetdbId], username, email.Password)
+	// } else {
+	// 	// Attempting email authentication, may or may not create.
+	// 	cleanEmail := strings.ToLower(email.Email)
+	// 	create := in.Create == nil || in.Create.Value
 
-		dbUserID, username, created, err = AuthenticateEmail(ctx, s.logger, s.db, cleanEmail, email.Password, username, create)
-	}
-	if err != nil {
-		return nil, err
-	}
+	// 	dbUserID, username, created, err = AuthenticateEmail(ctx, s.logger, s.db[targetdbId], cleanEmail, email.Password, username, create)
+	// }
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	token, exp := generateToken(s.config, dbUserID, username, in.Account.Vars)
-	refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, username, in.Account.Vars)
-	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
-	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+	// token, exp := generateToken(s.config, dbUserID, username, in.Account.Vars)
+	// refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, username, in.Account.Vars)
+	// s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
+	// session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
-	// After hook.
-	if fn := s.runtime.AfterAuthenticateEmail(); fn != nil {
-		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, dbUserID, username, in.Account.Vars, exp, clientIP, clientPort, session, in)
-		}
+	// // After hook.
+	// if fn := s.runtime.AfterAuthenticateEmail(); fn != nil {
+	// 	afterFn := func(clientIP, clientPort string) error {
+	// 		return fn(ctx, s.logger, dbUserID, username, in.Account.Vars, exp, clientIP, clientPort, session, in)
+	// 	}
 
-		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
-	}
+	// 	// Execute the after function lambda wrapped in a trace for stats measurement.
+	// 	traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	// }
 
-	return session, nil
-	*/
+	// return session, nil
 	return &api.Session{}, nil
 }
 
 func (s *ApiServer) AuthenticateFacebook(ctx context.Context, in *api.AuthenticateFacebookRequest) (*api.Session, error) {
-	/*
 	// Before hook.
-	if fn := s.runtime.BeforeAuthenticateFacebook(); fn != nil {
-		beforeFn := func(clientIP, clientPort string) error {
-			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
-			if err != nil {
-				return status.Error(code, err.Error())
-			}
-			if result == nil {
-				// If result is nil, requested resource is disabled.
-				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
-				return status.Error(codes.NotFound, "Requested resource was not found.")
-			}
-			in = result
-			return nil
-		}
+	// if fn := s.runtime.BeforeAuthenticateFacebook(); fn != nil {
+	// 	beforeFn := func(clientIP, clientPort string) error {
+	// 		result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
+	// 		if err != nil {
+	// 			return status.Error(code, err.Error())
+	// 		}
+	// 		if result == nil {
+	// 			// If result is nil, requested resource is disabled.
+	// 			s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
+	// 			return status.Error(codes.NotFound, "Requested resource was not found.")
+	// 		}
+	// 		in = result
+	// 		return nil
+	// 	}
 
-		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// 	// Execute the before function lambda wrapped in a trace for stats measurement.
+	// 	err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
-	if in.Account == nil || in.Account.Token == "" {
-		return nil, status.Error(codes.InvalidArgument, "Facebook access token is required.")
-	}
+	// if in.Account == nil || in.Account.Token == "" {
+	// 	return nil, status.Error(codes.InvalidArgument, "Facebook access token is required.")
+	// }
 
-	username := in.Username
-	if username == "" {
-		username = generateUsername()
-	} else if invalidUsernameRegex.MatchString(username) {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
-	} else if len(username) > 128 {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
-	}
+	// username := in.Username
+	// if username == "" {
+	// 	username = generateUsername()
+	// } else if invalidUsernameRegex.MatchString(username) {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
+	// } else if len(username) > 128 {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
+	// }
 
-	create := in.Create == nil || in.Create.Value
+	// create := in.Create == nil || in.Create.Value
+	// //TODO : 타겟디비지정
+	// targetdbId := 1
+	// dbUserID, dbUsername, created, importFriendsPossible, err := AuthenticateFacebook(ctx, s.logger, s.db[targetdbId], s.socialClient, s.config.GetSocial().FacebookLimitedLogin.AppId, in.Account.Token, username, create)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	dbUserID, dbUsername, created, importFriendsPossible, err := AuthenticateFacebook(ctx, s.logger, s.db, s.socialClient, s.config.GetSocial().FacebookLimitedLogin.AppId, in.Account.Token, username, create)
-	if err != nil {
-		return nil, err
-	}
+	// // Import friends if requested.
+	// if in.Sync != nil && in.Sync.Value && importFriendsPossible {
+	// 	_ = importFacebookFriends(ctx, s.logger, s.db, s.router, s.socialClient, uuid.FromStringOrNil(dbUserID), dbUsername, in.Account.Token, false)
+	// }
 
-	// Import friends if requested.
-	if in.Sync != nil && in.Sync.Value && importFriendsPossible {
-		_ = importFacebookFriends(ctx, s.logger, s.db, s.router, s.socialClient, uuid.FromStringOrNil(dbUserID), dbUsername, in.Account.Token, false)
-	}
+	// token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
+	// refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
+	// s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
+	// session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
-	token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
-	refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
-	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
-	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+	// // After hook.
+	// if fn := s.runtime.AfterAuthenticateFacebook(); fn != nil {
+	// 	afterFn := func(clientIP, clientPort string) error {
+	// 		return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
+	// 	}
 
-	// After hook.
-	if fn := s.runtime.AfterAuthenticateFacebook(); fn != nil {
-		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
-		}
+	// 	// Execute the after function lambda wrapped in a trace for stats measurement.
+	// 	traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	// }
 
-		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
-	}
-
-	return session, nil
-	*/
+	// return session, nil
 	return &api.Session{}, nil
 }
 
 func (s *ApiServer) AuthenticateFacebookInstantGame(ctx context.Context, in *api.AuthenticateFacebookInstantGameRequest) (*api.Session, error) {
-	/*
 	// Before hook.
-	if fn := s.runtime.BeforeAuthenticateFacebookInstantGame(); fn != nil {
-		beforeFn := func(clientIP, clientPort string) error {
-			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
-			if err != nil {
-				return status.Error(code, err.Error())
-			}
-			if result == nil {
-				// If result is nil, requested resource is disabled.
-				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
-				return status.Error(codes.NotFound, "Requested resource was not found.")
-			}
-			in = result
-			return nil
-		}
+	// if fn := s.runtime.BeforeAuthenticateFacebookInstantGame(); fn != nil {
+	// 	beforeFn := func(clientIP, clientPort string) error {
+	// 		result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
+	// 		if err != nil {
+	// 			return status.Error(code, err.Error())
+	// 		}
+	// 		if result == nil {
+	// 			// If result is nil, requested resource is disabled.
+	// 			s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
+	// 			return status.Error(codes.NotFound, "Requested resource was not found.")
+	// 		}
+	// 		in = result
+	// 		return nil
+	// 	}
 
-		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// 	// Execute the before function lambda wrapped in a trace for stats measurement.
+	// 	err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
-	if in.Account == nil || in.Account.SignedPlayerInfo == "" {
-		return nil, status.Error(codes.InvalidArgument, "Signed Player Info for a Facebook Instant Game is required.")
-	}
+	// if in.Account == nil || in.Account.SignedPlayerInfo == "" {
+	// 	return nil, status.Error(codes.InvalidArgument, "Signed Player Info for a Facebook Instant Game is required.")
+	// }
 
-	username := in.Username
-	if username == "" {
-		username = generateUsername()
-	} else if invalidUsernameRegex.MatchString(username) {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
-	} else if len(username) > 128 {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
-	}
+	// username := in.Username
+	// if username == "" {
+	// 	username = generateUsername()
+	// } else if invalidUsernameRegex.MatchString(username) {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
+	// } else if len(username) > 128 {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
+	// }
 
-	create := in.Create == nil || in.Create.Value
+	// create := in.Create == nil || in.Create.Value
+	// //TODO : 타겟디비지정
+	// targetdbId := 1
+	// dbUserID, dbUsername, created, err := AuthenticateFacebookInstantGame(ctx, s.logger, s.db[targetdbId], s.socialClient, s.config.GetSocial().FacebookInstantGame.AppSecret, in.Account.SignedPlayerInfo, username, create)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
+	// refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
+	// s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
+	// session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
-	dbUserID, dbUsername, created, err := AuthenticateFacebookInstantGame(ctx, s.logger, s.db, s.socialClient, s.config.GetSocial().FacebookInstantGame.AppSecret, in.Account.SignedPlayerInfo, username, create)
-	if err != nil {
-		return nil, err
-	}
-	token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
-	refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
-	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
-	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+	// // After hook.
+	// if fn := s.runtime.AfterAuthenticateFacebookInstantGame(); fn != nil {
+	// 	afterFn := func(clientIP, clientPort string) error {
+	// 		return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
+	// 	}
 
-	// After hook.
-	if fn := s.runtime.AfterAuthenticateFacebookInstantGame(); fn != nil {
-		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
-		}
+	// 	// Execute the after function lambda wrapped in a trace for stats measurement.
+	// 	traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	// }
 
-		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
-	}
-
-	return session, nil
-	*/
+	// return session, nil
 	return &api.Session{}, nil
 }
 
 func (s *ApiServer) AuthenticateGameCenter(ctx context.Context, in *api.AuthenticateGameCenterRequest) (*api.Session, error) {
-	/*
 	// Before hook.
-	if fn := s.runtime.BeforeAuthenticateGameCenter(); fn != nil {
-		beforeFn := func(clientIP, clientPort string) error {
-			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
-			if err != nil {
-				return status.Error(code, err.Error())
-			}
-			if result == nil {
-				// If result is nil, requested resource is disabled.
-				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
-				return status.Error(codes.NotFound, "Requested resource was not found.")
-			}
-			in = result
-			return nil
-		}
+	// if fn := s.runtime.BeforeAuthenticateGameCenter(); fn != nil {
+	// 	beforeFn := func(clientIP, clientPort string) error {
+	// 		result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
+	// 		if err != nil {
+	// 			return status.Error(code, err.Error())
+	// 		}
+	// 		if result == nil {
+	// 			// If result is nil, requested resource is disabled.
+	// 			s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
+	// 			return status.Error(codes.NotFound, "Requested resource was not found.")
+	// 		}
+	// 		in = result
+	// 		return nil
+	// 	}
 
-		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// 	// Execute the before function lambda wrapped in a trace for stats measurement.
+	// 	err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
-	if in.Account == nil {
-		return nil, status.Error(codes.InvalidArgument, "GameCenter access credentials are required.")
-	} else if in.Account.BundleId == "" {
-		return nil, status.Error(codes.InvalidArgument, "GameCenter bundle ID is required.")
-	} else if in.Account.PlayerId == "" {
-		return nil, status.Error(codes.InvalidArgument, "GameCenter player ID is required.")
-	} else if in.Account.PublicKeyUrl == "" {
-		return nil, status.Error(codes.InvalidArgument, "GameCenter public key URL is required.")
-	} else if in.Account.Salt == "" {
-		return nil, status.Error(codes.InvalidArgument, "GameCenter salt is required.")
-	} else if in.Account.Signature == "" {
-		return nil, status.Error(codes.InvalidArgument, "GameCenter signature is required.")
-	} else if in.Account.TimestampSeconds == 0 {
-		return nil, status.Error(codes.InvalidArgument, "GameCenter timestamp is required.")
-	}
+	// if in.Account == nil {
+	// 	return nil, status.Error(codes.InvalidArgument, "GameCenter access credentials are required.")
+	// } else if in.Account.BundleId == "" {
+	// 	return nil, status.Error(codes.InvalidArgument, "GameCenter bundle ID is required.")
+	// } else if in.Account.PlayerId == "" {
+	// 	return nil, status.Error(codes.InvalidArgument, "GameCenter player ID is required.")
+	// } else if in.Account.PublicKeyUrl == "" {
+	// 	return nil, status.Error(codes.InvalidArgument, "GameCenter public key URL is required.")
+	// } else if in.Account.Salt == "" {
+	// 	return nil, status.Error(codes.InvalidArgument, "GameCenter salt is required.")
+	// } else if in.Account.Signature == "" {
+	// 	return nil, status.Error(codes.InvalidArgument, "GameCenter signature is required.")
+	// } else if in.Account.TimestampSeconds == 0 {
+	// 	return nil, status.Error(codes.InvalidArgument, "GameCenter timestamp is required.")
+	// }
 
-	username := in.Username
-	if username == "" {
-		username = generateUsername()
-	} else if invalidUsernameRegex.MatchString(username) {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
-	} else if len(username) > 128 {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
-	}
+	// username := in.Username
+	// if username == "" {
+	// 	username = generateUsername()
+	// } else if invalidUsernameRegex.MatchString(username) {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
+	// } else if len(username) > 128 {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
+	// }
 
-	create := in.Create == nil || in.Create.Value
+	// create := in.Create == nil || in.Create.Value
+	// //TODO : 타겟디비지정
+	// targetdbId := 1
+	// dbUserID, dbUsername, created, err := AuthenticateGameCenter(ctx, s.logger, s.db[targetdbId], s.socialClient, in.Account.PlayerId, in.Account.BundleId, in.Account.TimestampSeconds, in.Account.Salt, in.Account.Signature, in.Account.PublicKeyUrl, username, create)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	dbUserID, dbUsername, created, err := AuthenticateGameCenter(ctx, s.logger, s.db, s.socialClient, in.Account.PlayerId, in.Account.BundleId, in.Account.TimestampSeconds, in.Account.Salt, in.Account.Signature, in.Account.PublicKeyUrl, username, create)
-	if err != nil {
-		return nil, err
-	}
+	// token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
+	// refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
+	// s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
+	// session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
-	token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
-	refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
-	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
-	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+	// // After hook.
+	// if fn := s.runtime.AfterAuthenticateGameCenter(); fn != nil {
+	// 	afterFn := func(clientIP, clientPort string) error {
+	// 		return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
+	// 	}
 
-	// After hook.
-	if fn := s.runtime.AfterAuthenticateGameCenter(); fn != nil {
-		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
-		}
+	// 	// Execute the after function lambda wrapped in a trace for stats measurement.
+	// 	traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	// }
 
-		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
-	}
-
-	return session, nil
-	*/
+	// return session, nil
 	return &api.Session{}, nil
 }
 
 func (s *ApiServer) AuthenticateGoogle(ctx context.Context, in *api.AuthenticateGoogleRequest) (*api.Session, error) {
-	/*
 	// Before hook.
-	if fn := s.runtime.BeforeAuthenticateGoogle(); fn != nil {
-		beforeFn := func(clientIP, clientPort string) error {
-			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
-			if err != nil {
-				return status.Error(code, err.Error())
-			}
-			if result == nil {
-				// If result is nil, requested resource is disabled.
-				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
-				return status.Error(codes.NotFound, "Requested resource was not found.")
-			}
-			in = result
-			return nil
-		}
+	// if fn := s.runtime.BeforeAuthenticateGoogle(); fn != nil {
+	// 	beforeFn := func(clientIP, clientPort string) error {
+	// 		result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
+	// 		if err != nil {
+	// 			return status.Error(code, err.Error())
+	// 		}
+	// 		if result == nil {
+	// 			// If result is nil, requested resource is disabled.
+	// 			s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
+	// 			return status.Error(codes.NotFound, "Requested resource was not found.")
+	// 		}
+	// 		in = result
+	// 		return nil
+	// 	}
 
-		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// 	// Execute the before function lambda wrapped in a trace for stats measurement.
+	// 	err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
-	if in.Account == nil || in.Account.Token == "" {
-		return nil, status.Error(codes.InvalidArgument, "Google access token is required.")
-	}
+	// if in.Account == nil || in.Account.Token == "" {
+	// 	return nil, status.Error(codes.InvalidArgument, "Google access token is required.")
+	// }
 
-	username := in.Username
-	if username == "" {
-		username = generateUsername()
-	} else if invalidUsernameRegex.MatchString(username) {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
-	} else if len(username) > 128 {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
-	}
+	// username := in.Username
+	// if username == "" {
+	// 	username = generateUsername()
+	// } else if invalidUsernameRegex.MatchString(username) {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
+	// } else if len(username) > 128 {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
+	// }
 
-	create := in.Create == nil || in.Create.Value
+	// create := in.Create == nil || in.Create.Value
+	// //TODO : 타겟디비지정
+	// targetdbId := 1
+	// dbUserID, dbUsername, created, err := AuthenticateGoogle(ctx, s.logger, s.db[targetdbId], s.socialClient, in.Account.Token, username, create)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	dbUserID, dbUsername, created, err := AuthenticateGoogle(ctx, s.logger, s.db, s.socialClient, in.Account.Token, username, create)
-	if err != nil {
-		return nil, err
-	}
+	// token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
+	// refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
+	// s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
+	// session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
-	token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
-	refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
-	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
-	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+	// // After hook.
+	// if fn := s.runtime.AfterAuthenticateGoogle(); fn != nil {
+	// 	afterFn := func(clientIP, clientPort string) error {
+	// 		return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
+	// 	}
 
-	// After hook.
-	if fn := s.runtime.AfterAuthenticateGoogle(); fn != nil {
-		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
-		}
+	// 	// Execute the after function lambda wrapped in a trace for stats measurement.
+	// 	traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	// }
 
-		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
-	}
-
-	return session, nil
-	*/
+	// return session, nil
 	return &api.Session{}, nil
 }
 
 func (s *ApiServer) AuthenticateSteam(ctx context.Context, in *api.AuthenticateSteamRequest) (*api.Session, error) {
-	/*
 	// Before hook.
-	if fn := s.runtime.BeforeAuthenticateSteam(); fn != nil {
-		beforeFn := func(clientIP, clientPort string) error {
-			result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
-			if err != nil {
-				return status.Error(code, err.Error())
-			}
-			if result == nil {
-				// If result is nil, requested resource is disabled.
-				s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
-				return status.Error(codes.NotFound, "Requested resource was not found.")
-			}
-			in = result
-			return nil
-		}
+	// if fn := s.runtime.BeforeAuthenticateSteam(); fn != nil {
+	// 	beforeFn := func(clientIP, clientPort string) error {
+	// 		result, err, code := fn(ctx, s.logger, "", "", nil, 0, clientIP, clientPort, in)
+	// 		if err != nil {
+	// 			return status.Error(code, err.Error())
+	// 		}
+	// 		if result == nil {
+	// 			// If result is nil, requested resource is disabled.
+	// 			s.logger.Warn("Intercepted a disabled resource.", zap.Any("resource", ctx.Value(ctxFullMethodKey{}).(string)))
+	// 			return status.Error(codes.NotFound, "Requested resource was not found.")
+	// 		}
+	// 		in = result
+	// 		return nil
+	// 	}
 
-		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// 	// Execute the before function lambda wrapped in a trace for stats measurement.
+	// 	err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
-	if s.config.GetSocial().Steam.PublisherKey == "" || s.config.GetSocial().Steam.AppID == 0 {
-		return nil, status.Error(codes.FailedPrecondition, "Steam authentication is not configured.")
-	}
+	// if s.config.GetSocial().Steam.PublisherKey == "" || s.config.GetSocial().Steam.AppID == 0 {
+	// 	return nil, status.Error(codes.FailedPrecondition, "Steam authentication is not configured.")
+	// }
 
-	if in.Account == nil || in.Account.Token == "" {
-		return nil, status.Error(codes.InvalidArgument, "Steam access token is required.")
-	}
+	// if in.Account == nil || in.Account.Token == "" {
+	// 	return nil, status.Error(codes.InvalidArgument, "Steam access token is required.")
+	// }
 
-	username := in.Username
-	if username == "" {
-		username = generateUsername()
-	} else if invalidUsernameRegex.MatchString(username) {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
-	} else if len(username) > 128 {
-		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
-	}
+	// username := in.Username
+	// if username == "" {
+	// 	username = generateUsername()
+	// } else if invalidUsernameRegex.MatchString(username) {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, no spaces or control characters allowed.")
+	// } else if len(username) > 128 {
+	// 	return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
+	// }
 
-	create := in.Create == nil || in.Create.Value
+	// create := in.Create == nil || in.Create.Value
+	// //TODO : 타겟디비지정
+	// targetdbId := 1
+	// dbUserID, dbUsername, steamID, created, err := AuthenticateSteam(ctx, s.logger, s.db[targetdbId], s.socialClient, s.config.GetSocial().Steam.AppID, s.config.GetSocial().Steam.PublisherKey, in.Account.Token, username, create)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	dbUserID, dbUsername, steamID, created, err := AuthenticateSteam(ctx, s.logger, s.db, s.socialClient, s.config.GetSocial().Steam.AppID, s.config.GetSocial().Steam.PublisherKey, in.Account.Token, username, create)
-	if err != nil {
-		return nil, err
-	}
+	// // Import friends if requested.
+	// if in.Sync != nil && in.Sync.Value {
+	// 	_ = importSteamFriends(ctx, s.logger, s.db, s.router, s.socialClient, uuid.FromStringOrNil(dbUserID), dbUsername, s.config.GetSocial().Steam.PublisherKey, steamID, false)
+	// }
 
-	// Import friends if requested.
-	if in.Sync != nil && in.Sync.Value {
-		_ = importSteamFriends(ctx, s.logger, s.db, s.router, s.socialClient, uuid.FromStringOrNil(dbUserID), dbUsername, s.config.GetSocial().Steam.PublisherKey, steamID, false)
-	}
+	// token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
+	// refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
+	// s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
+	// session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
 
-	token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
-	refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
-	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
-	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+	// // After hook.
+	// if fn := s.runtime.AfterAuthenticateSteam(); fn != nil {
+	// 	afterFn := func(clientIP, clientPort string) error {
+	// 		return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
+	// 	}
 
-	// After hook.
-	if fn := s.runtime.AfterAuthenticateSteam(); fn != nil {
-		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
-		}
+	// 	// Execute the after function lambda wrapped in a trace for stats measurement.
+	// 	traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	// }
 
-		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, s.metrics, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
-	}
-
-	return session, nil
-	*/
+	// return session, nil
 	return &api.Session{}, nil
 }
 

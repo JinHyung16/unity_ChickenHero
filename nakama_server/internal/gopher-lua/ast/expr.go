@@ -52,7 +52,6 @@ type StringExpr struct {
 
 type Comma3Expr struct {
 	ExprBase
-	AdjustRet bool
 }
 
 type IdentExpr struct {

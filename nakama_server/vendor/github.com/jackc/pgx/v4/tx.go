@@ -42,12 +42,7 @@ type TxOptions struct {
 	DeferrableMode TxDeferrableMode
 }
 
-var emptyTxOptions TxOptions
-
 func (txOptions TxOptions) beginSQL() string {
-	if txOptions == emptyTxOptions {
-		return "begin"
-	}
 	buf := &bytes.Buffer{}
 	buf.WriteString("begin")
 	if txOptions.IsoLevel != "" {

@@ -23,12 +23,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/heroiclabs/nakama-common/runtime"
 	"strconv"
 	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/heroiclabs/nakama-common/api"
+	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/jackc/pgtype"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -92,16 +92,16 @@ func ListFriends(ctx context.Context, logger *zap.Logger, db *runtime.DBManager,
 	if cursor != "" {
 		cb, err := base64.StdEncoding.DecodeString(cursor)
 		if err != nil {
-			return nil, runtime.ErrFriendInvalidCursor
+			return nil, ErrFriendInvalidCursor
 		}
 		incomingCursor = &edgeListCursor{}
 		if err := gob.NewDecoder(bytes.NewReader(cb)).Decode(incomingCursor); err != nil {
-			return nil, runtime.ErrFriendInvalidCursor
+			return nil, ErrFriendInvalidCursor
 		}
 
 		// Cursor and filter mismatch. Perhaps the caller has sent an old cursor with a changed filter.
 		if state != nil && int64(state.Value) != incomingCursor.State {
-			return nil, runtime.ErrFriendInvalidCursor
+			return nil, ErrFriendInvalidCursor
 		}
 	}
 
@@ -180,18 +180,24 @@ FROM users, user_edge WHERE id = destination_id AND source_id = $1`
 			break
 		}
 
+		friendID := uuid.FromStringOrNil(id)
+		online := false
+		if tracker != nil {
+			online = tracker.StreamExists(PresenceStream{Mode: StreamModeStatus, Subject: friendID})
+		}
+
 		user := &api.User{
-			Id:          id,
-			Username:    username.String,
-			DisplayName: displayName.String,
-			AvatarUrl:   avatarURL.String,
-			LangTag:     lang.String,
-			Location:    location.String,
-			Timezone:    timezone.String,
-			Metadata:    string(metadata),
-			CreateTime:  &timestamppb.Timestamp{Seconds: createTime.Time.Unix()},
-			UpdateTime:  &timestamppb.Timestamp{Seconds: updateTime.Time.Unix()},
-			// Online filled below.
+			Id:                    friendID.String(),
+			Username:              username.String,
+			DisplayName:           displayName.String,
+			AvatarUrl:             avatarURL.String,
+			LangTag:               lang.String,
+			Location:              location.String,
+			Timezone:              timezone.String,
+			Metadata:              string(metadata),
+			CreateTime:            &timestamppb.Timestamp{Seconds: createTime.Time.Unix()},
+			UpdateTime:            &timestamppb.Timestamp{Seconds: updateTime.Time.Unix()},
+			Online:                online,
 			FacebookId:            facebookID.String,
 			GoogleId:              googleID.String,
 			GamecenterId:          gamecenterID.String,
@@ -213,16 +219,10 @@ FROM users, user_edge WHERE id = destination_id AND source_id = $1`
 		return nil, err
 	}
 
-	/*
-	if statusRegistry != nil {
-		statusRegistry.FillOnlineFriends(friends)
-	}
-	*/
-	
-
 	return &api.FriendList{Friends: friends, Cursor: outgoingCursor}, nil
 }
 
+//변경전
 func AddFriends(ctx context.Context, logger *zap.Logger, db *runtime.DBManager, messageRouter MessageRouter, userID uuid.UUID, username string, friendIDs []string) error {
 	uniqueFriendIDs := make(map[string]struct{})
 	for _, fid := range friendIDs {
@@ -255,6 +255,7 @@ func AddFriends(ctx context.Context, logger *zap.Logger, db *runtime.DBManager, 
 		return err
 	}
 
+	///////////친구수락 또는 요청 결과 노티 전송 부분//////////
 	notifications := make(map[uuid.UUID][]*api.Notification)
 	content, _ := json.Marshal(map[string]interface{}{"username": username})
 	for id, isFriendAccept := range notificationToSend {
@@ -276,17 +277,76 @@ func AddFriends(ctx context.Context, logger *zap.Logger, db *runtime.DBManager, 
 		}}
 	}
 
+	//TODO : 친구의 db에 저장되도록, 친구가 어느채널에 접속해있을줄 모르므로 NotificationSend전에
+	//친구접속여부를 redis를 통해확인 후, 친구가 접속해 있는 채널로의 실시간 알림을 보내야함...
+
 	// Any error is already logged before it's returned here.
 	_ = NotificationSend(ctx, logger, db, messageRouter, notifications)
 
 	return nil
 }
 
+//변경 후
+/*
+func AddFriends(ctx context.Context, logger *zap.Logger, db map[int]*sql.DB, targetdbId int, messageRouter MessageRouter, userID uuid.UUID, username string, friendIDs []string) error {
+	uniqueFriendIDs := make(map[string]struct{})
+	for _, fid := range friendIDs {
+		uniqueFriendIDs[fid] = struct{}{}
+	}
+
+	var notificationToSend map[string]bool
+
+	for id := range uniqueFriendIDs {
+		isFriendAccept, addFriendErr := addFriend(ctx, logger, userID, id)
+		if addFriendErr == nil {
+			notificationToSend[id] = isFriendAccept
+		} else if addFriendErr != sql.ErrNoRows { // Check to see if friend had blocked user.
+			return addFriendErr
+		}
+	}
+
+	///////////친구수락 또는 요청 결과 노티 전송 부분//////////
+	notifications := make(map[uuid.UUID][]*api.Notification)
+	content, _ := json.Marshal(map[string]interface{}{"username": username})
+	for id, isFriendAccept := range notificationToSend {
+		uid := uuid.FromStringOrNil(id)
+		code := NotificationCodeFriendRequest
+		subject := fmt.Sprintf("%v wants to add you as a friend", username)
+		if isFriendAccept {
+			code = NotificationCodeFriendAccept
+			subject = fmt.Sprintf("%v accepted your friend request", username)
+		}
+		notifications[uid] = []*api.Notification{{
+			Id:         uuid.Must(uuid.NewV4()).String(),
+			Subject:    subject,
+			Content:    string(content),
+			SenderId:   userID.String(),
+			Code:       code,
+			Persistent: true,
+			CreateTime: &timestamppb.Timestamp{Seconds: time.Now().UTC().Unix()},
+		}}
+	}
+
+	//TODO : 친구의 db에 저장되도록, 친구가 어느채널에 접속해있을줄 모르므로 NotificationSend전에
+	//친구접속여부를 redis를 통해확인 후, 친구가 접속해 있는 채널로의 실시간 알림을 보내야함...
+
+	// Any error is already logged before it's returned here.
+	_ = NotificationSend(ctx, logger, db, messageRouter, notifications)
+
+	return nil
+}
+
+*/
+
+//변경 전
 // Returns "true" if accepting an invite, otherwise false
 func addFriend(ctx context.Context, logger *zap.Logger, tx *sql.Tx, userID uuid.UUID, friendID string) (bool, error) {
+
+	//state구분 friend(0), invite_sent(1), invite_received(2), blocked(3)
+
 	// Check to see if user has already blocked friend, if so ignore.
 	var blockState int
-	err := tx.QueryRowContext(ctx, "SELECT state FROM user_edge WHERE source_id = $1 AND destination_id = $2 AND state = 3", userID, friendID).Scan(&blockState)
+	err := tx.QueryRowContext(ctx, "SELECT state FROM user_edge WHERE source_id = ? AND destination_id = ? AND state = 3", userID, friendID).Scan(&blockState)
 	// ignore if the error is sql.ErrNoRows as means block was not found - continue as intended.
 	if err != nil && err != sql.ErrNoRows {
 		// genuine DB error was found.
@@ -299,11 +359,9 @@ func addFriend(ctx context.Context, logger *zap.Logger, tx *sql.Tx, userID uuid.
 	}
 
 	// Mark an invite as accepted, if one was in place.
-	res, err := tx.ExecContext(ctx, `
-UPDATE user_edge SET state = 0, update_time = now()
-WHERE (source_id = $1 AND destination_id = $2 AND state = 1)
-OR (source_id = $2 AND destination_id = $1 AND state = 2)
-  `, friendID, userID)
+	//TODO : 2개로 나누어서 실행
+	//res, err := tx.ExecContext(ctx, `UPDATE user_edge SET state = 0, update_time = now() WHERE (source_id = $1 AND destination_id = $2 AND state = 1) OR (source_id = $2 AND destination_id = $1 AND state = 2)`, friendID, userID)
+	res, err := tx.ExecContext(ctx, `UPDATE user_edge SET state = 0, update_time = now() WHERE (source_id = ? AND destination_id = ? AND state = 1) OR (source_id = ? AND destination_id = ? AND state = 2)`, friendID, userID, friendID, userID)
 	if err != nil {
 		logger.Debug("Failed to update user state.", zap.Error(err), zap.String("user", userID.String()), zap.String("friend", friendID))
 		return false, err
@@ -372,6 +430,97 @@ AND EXISTS
 	return false, nil
 }
 
+//변경 후
+// func addFriend(ctx context.Context, logger *zap.Logger, userID uuid.UUID, friendID string) (bool, error) {
+
+// 	//state구분 friend(0), invite_sent(1), invite_received(2), blocked(3)
+
+// 	// Check to see if user has already blocked friend, if so ignore.
+// 	var blockState int
+// 	err := tx.QueryRowContext(ctx, "SELECT state FROM user_edge WHERE source_id = ? AND destination_id = ? AND state = 3", userID, friendID).Scan(&blockState)
+// 	// ignore if the error is sql.ErrNoRows as means block was not found - continue as intended.
+// 	if err != nil && err != sql.ErrNoRows {
+// 		// genuine DB error was found.
+// 		logger.Debug("Failed to check edge state.", zap.Error(err), zap.String("user", userID.String()), zap.String("friend", friendID))
+// 		return false, err
+// 	} else if err == nil {
+// 		// the block was found, return early.
+// 		logger.Info("Ignoring previously blocked friend. Delete friend first before attempting to add.", zap.String("user", userID.String()), zap.String("friend", friendID))
+// 		return false, nil
+// 	}
+
+// 	// Mark an invite as accepted, if one was in place.
+// 	//TODO : 2개로 나누어서 실행
+// 	//res, err := tx.ExecContext(ctx, `UPDATE user_edge SET state = 0, update_time = now() WHERE (source_id = $1 AND destination_id = $2 AND state = 1) OR (source_id = $2 AND destination_id = $1 AND state = 2)`, friendID, userID)
+// 	res, err := tx.ExecContext(ctx, `UPDATE user_edge SET state = 0, update_time = now() WHERE (source_id = ? AND destination_id = ? AND state = 1) OR (source_id = ? AND destination_id = ? AND state = 2)`, friendID, userID, friendID, userID)
+// 	if err != nil {
+// 		logger.Debug("Failed to update user state.", zap.Error(err), zap.String("user", userID.String()), zap.String("friend", friendID))
+// 		return false, err
+// 	}
+
+// 	// If both edges were updated, it was accepting an invite was successful.
+// 	if rowsAffected, _ := res.RowsAffected(); rowsAffected == 2 {
+// 		logger.Debug("Accepting friend invitation.", zap.String("user", userID.String()), zap.String("friend", friendID))
+// 		return true, nil
+// 	}
+
+// 	position := fmt.Sprintf("%v", time.Now().UTC().UnixNano())
+
+// 	// If no edge updates took place, it's either a new invite being set up, or user was blocked off by friend.
+// 	_, err = tx.ExecContext(ctx, `
+// INSERT INTO user_edge (source_id, destination_id, state, position, update_time)
+// SELECT source_id, destination_id, state, position, update_time
+// FROM (VALUES
+//   ($1::UUID, $2::UUID, 1, $3::BIGINT, now()),
+//   ($2::UUID, $1::UUID, 2, $3::BIGINT, now())
+// ) AS ue(source_id, destination_id, state, position, update_time)
+// WHERE
+// 	EXISTS (SELECT id FROM users WHERE id = $2::UUID)
+// 	AND
+// 	NOT EXISTS
+// 	(SELECT state
+//    FROM user_edge
+//    WHERE source_id = $2::UUID AND destination_id = $1::UUID AND state = 3
+//   )
+// ON CONFLICT (source_id, destination_id) DO NOTHING
+// `, userID, friendID, position)
+// 	if err != nil {
+// 		logger.Debug("Failed to insert new user edge link.", zap.Error(err), zap.String("user", userID.String()), zap.String("friend", friendID))
+// 		return false, err
+// 	}
+
+// 	// Update friend count if we've just created the relationship.
+// 	// This check is done by comparing the the timestamp(position) to the timestamp available.
+// 	// i.e. only increase count when the relationship was first formed.
+// 	// This is caused by an existing bug in CockroachDB: https://github.com/cockroachdb/cockroach/issues/10264
+// 	if res, err = tx.ExecContext(ctx, `
+// UPDATE users
+// SET edge_count = edge_count +1, update_time = now()
+// WHERE
+// 	(id = $1::UUID OR id = $2::UUID)
+// AND EXISTS
+// 	(SELECT state
+//    FROM user_edge
+//    WHERE
+//    	(source_id = $1::UUID AND destination_id = $2::UUID AND position = $3::BIGINT)
+//    	OR
+//    	(source_id = $2::UUID AND destination_id = $1::UUID AND position = $3::BIGINT)
+//   )
+// `, userID, friendID, position); err != nil {
+// 		logger.Debug("Failed to update user count.", zap.Error(err), zap.String("user", userID.String()), zap.String("friend", friendID))
+// 		return false, err
+// 	}
+
+// 	// An invite was successfully added if both components were inserted.
+// 	if rowsAffected, _ := res.RowsAffected(); rowsAffected != 2 {
+// 		logger.Debug("Did not add new friend as friend connection already exists or user is blocked.", zap.String("user", userID.String()), zap.String("friend", friendID))
+// 		return false, sql.ErrNoRows
+// 	}
+
+// 	logger.Debug("Added new friend invitation.", zap.String("user", userID.String()), zap.String("friend", friendID))
+// 	return false, nil
+// }
+
 func DeleteFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, currentUser uuid.UUID, ids []string) error {
 	uniqueFriendIDs := make(map[string]struct{})
 	for _, fid := range ids {
@@ -427,13 +576,13 @@ func deleteFriend(ctx context.Context, logger *zap.Logger, tx *sql.Tx, userID uu
 	return nil
 }
 
-func BlockFriends(ctx context.Context, logger *zap.Logger, db *runtime.DBManager, currentUser uuid.UUID, ids []string) error {
+func BlockFriends(ctx context.Context, logger *zap.Logger, db *sql.DB, currentUser uuid.UUID, ids []string) error {
 	uniqueFriendIDs := make(map[string]struct{})
 	for _, fid := range ids {
 		uniqueFriendIDs[fid] = struct{}{}
 	}
 
-	tx, err := db.Hugh_db.BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		logger.Error("Could not begin database transaction.", zap.Error(err))
 		return err

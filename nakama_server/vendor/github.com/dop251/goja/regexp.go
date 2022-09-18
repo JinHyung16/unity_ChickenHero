@@ -511,11 +511,10 @@ func (r *regexpObject) execResultToArray(target valueString, result []int) Value
 	captureCount := len(result) >> 1
 	valueArray := make([]Value, captureCount)
 	matchIndex := result[0]
-	valueArray[0] = target.substring(result[0], result[1])
-	lowerBound := 0
-	for index := 1; index < captureCount; index++ {
+	lowerBound := matchIndex
+	for index := 0; index < captureCount; index++ {
 		offset := index << 1
-		if result[offset] >= 0 && result[offset+1] >= lowerBound {
+		if result[offset] >= lowerBound {
 			valueArray[index] = target.substring(result[offset], result[offset+1])
 			lowerBound = result[offset]
 		} else {

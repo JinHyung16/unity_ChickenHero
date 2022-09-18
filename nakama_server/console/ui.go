@@ -25,15 +25,10 @@ import (
 var embedFS embed.FS
 var UIFS = &uiFS{}
 
-type uiFS struct {
-	Nt bool
-}
+type uiFS struct{}
 
 func (fs *uiFS) Open(name string) (fs.File, error) {
-	if fs.Nt {
-		return embedFS.Open(path.Join("ui", "dist", "prod-nt", name))
-	}
-	return embedFS.Open(path.Join("ui", "dist", "prod", name))
+	return embedFS.Open(path.Join("ui", "dist", name))
 }
 
 var UI = http.FileServer(http.FS(UIFS))

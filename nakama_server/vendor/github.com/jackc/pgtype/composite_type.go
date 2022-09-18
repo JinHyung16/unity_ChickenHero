@@ -491,10 +491,6 @@ func (cfs *CompositeTextScanner) Next() bool {
 				} else {
 					break
 				}
-			} else if ch == '\\' {
-				cfs.rp++
-				cfs.fieldBytes = append(cfs.fieldBytes, cfs.src[cfs.rp])
-				cfs.rp++
 			} else {
 				cfs.fieldBytes = append(cfs.fieldBytes, ch)
 				cfs.rp++

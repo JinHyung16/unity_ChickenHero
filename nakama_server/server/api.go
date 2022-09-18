@@ -21,7 +21,6 @@ import (
 	"crypto"
 	"crypto/tls"
 	"crypto/x509"
-	//"database/sql"
 	"encoding/base64"
 	"fmt"
 	"math"
@@ -30,14 +29,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gofrs/uuid"
-	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	grpcgw "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/heroiclabs/nakama-common/api"
+	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/heroiclabs/nakama/v3/apigrpc"
 	"github.com/heroiclabs/nakama/v3/social"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -48,7 +49,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"github.com/heroiclabs/nakama-common/runtime"
 )
 
 // Used as part of JSON input validation.
@@ -64,25 +64,23 @@ type ctxFullMethodKey struct{}
 
 type ApiServer struct {
 	apigrpc.UnimplementedNakamaServer
-	logger               *zap.Logger
-	db                   *runtime.DBManager
-	config               Config
-	socialClient         *social.Client
-	//leaderboardCache     LeaderboardCache
-	//leaderboardRankCache LeaderboardRankCache
-	sessionCache         SessionCache
-	statusRegistry       *StatusRegistry
-	matchRegistry        MatchRegistry
-	tracker              Tracker
-	router               MessageRouter
-	streamManager        StreamManager
-	//metrics              Metrics
-	runtime              *Runtime
-	grpcServer           *grpc.Server
-	grpcGatewayServer    *http.Server
+	logger       *zap.Logger
+	db           *runtime.DBManager
+	config       Config
+	socialClient *social.Client
+	// leaderboardCache     LeaderboardCache
+	// leaderboardRankCache LeaderboardRankCache
+	sessionCache  SessionCache
+	matchRegistry MatchRegistry
+	tracker       Tracker
+	router        MessageRouter
+	// metrics              *Metrics
+	runtime           *Runtime
+	grpcServer        *grpc.Server
+	grpcGatewayServer *http.Server
 }
 
-func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *runtime.DBManager, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, config Config, socialClient *social.Client, /*leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache,*/ sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry *StatusRegistry, matchRegistry MatchRegistry, matchmaker Matchmaker, tracker Tracker, router MessageRouter, streamManager StreamManager, /*metrics Metrics,*/ pipeline *Pipeline, runtime *Runtime) *ApiServer {
+func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *runtime.DBManager, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, config Config, socialClient *social.Client /* leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache,*/, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry *StatusRegistry, matchRegistry MatchRegistry, matchmaker Matchmaker, tracker Tracker, router MessageRouter /*metrics *Metrics,*/, pipeline *Pipeline, runtime *Runtime) *ApiServer {
 	var gatewayContextTimeoutMs string
 	if config.GetSocket().IdleTimeoutMs > 500 {
 		// Ensure the GRPC Gateway timeout is just under the idle timeout (if possible) to ensure it has priority.
@@ -94,7 +92,7 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *runtime.D
 	}
 
 	serverOpts := []grpc.ServerOption{
-		//grpc.StatsHandler(&MetricsGrpcHandler{MetricsFn: metrics.Api}),
+		// grpc.StatsHandler(&MetricsGrpcHandler{metrics: metrics}),
 		grpc.MaxRecvMsgSize(int(config.GetSocket().MaxRequestSizeBytes)),
 		grpc.UnaryInterceptor(func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 			ctx, err := securityInterceptorFunc(logger, config, sessionCache, ctx, req, info)
@@ -110,21 +108,19 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *runtime.D
 	grpcServer := grpc.NewServer(serverOpts...)
 
 	s := &ApiServer{
-		logger:               logger,
-		db:                   db,
-		config:               config,
-		socialClient:         socialClient,
-		//leaderboardCache:     leaderboardCache,
-		//leaderboardRankCache: leaderboardRankCache,
-		sessionCache:         sessionCache,
-		//statusRegistry:       statusRegistry,
-		matchRegistry:        matchRegistry,
-		tracker:              tracker,
-		router:               router,
-		streamManager:        streamManager,
-		//metrics:              metrics,
-		runtime:              runtime,
-		grpcServer:           grpcServer,
+		logger:       logger,
+		db:           db,
+		config:       config,
+		socialClient: socialClient,
+		// leaderboardCache:     leaderboardCache,
+		// leaderboardRankCache: leaderboardRankCache,
+		sessionCache:  sessionCache,
+		matchRegistry: matchRegistry,
+		tracker:       tracker,
+		router:        router,
+		// metrics:              metrics,
+		runtime:    runtime,
+		grpcServer: grpcServer,
 	}
 
 	// Register and start GRPC server.
@@ -206,7 +202,7 @@ func StartApiServer(logger *zap.Logger, startupLogger *zap.Logger, db *runtime.D
 	grpcGatewayRouter := mux.NewRouter()
 	// Special case routes. Do NOT enable compression on WebSocket route, it results in "http: response.Write on hijacked connection" errors.
 	grpcGatewayRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) }).Methods("GET")
-	grpcGatewayRouter.HandleFunc("/ws", NewSocketWsAcceptor(db, logger, config, sessionRegistry, sessionCache, statusRegistry, matchmaker, tracker, /*metrics,*/ runtime, protojsonMarshaler, protojsonUnmarshaler, pipeline)).Methods("GET")
+	grpcGatewayRouter.HandleFunc("/ws", NewSocketWsAcceptor(db, logger, config, sessionRegistry, sessionCache, statusRegistry, matchmaker, tracker /* metrics,*/, runtime, protojsonMarshaler, protojsonUnmarshaler, pipeline)).Methods("GET")
 
 	// Another nested router to hijack RPC requests bound for GRPC Gateway.
 	grpcGatewayMux := mux.NewRouter()
@@ -503,7 +499,7 @@ func extractClientAddressFromContext(logger *zap.Logger, ctx context.Context) (s
 		clientAddr = peerInfo.Addr.String()
 	}
 
-	return extractClientAddress(logger, clientAddr, ctx, "context")
+	return extractClientAddress(logger, clientAddr)
 }
 
 func extractClientAddressFromRequest(logger *zap.Logger, r *http.Request) (string, string) {
@@ -514,10 +510,10 @@ func extractClientAddressFromRequest(logger *zap.Logger, r *http.Request) (strin
 		clientAddr = r.RemoteAddr
 	}
 
-	return extractClientAddress(logger, clientAddr, r, "request")
+	return extractClientAddress(logger, clientAddr)
 }
 
-func extractClientAddress(logger *zap.Logger, clientAddr string, source interface{}, sourceType string) (string, string) {
+func extractClientAddress(logger *zap.Logger, clientAddr string) (string, string) {
 	var clientIP, clientPort string
 
 	if clientAddr != "" {
@@ -540,17 +536,10 @@ func extractClientAddress(logger *zap.Logger, clientAddr string, source interfac
 		// At this point err may still be a non-nil value that's not a *net.AddrError, ignore the address.
 	}
 
-	if clientIP == "" {
-		if r, isRequest := source.(*http.Request); isRequest {
-			source = map[string]interface{}{"headers": r.Header, "remote_addr": r.RemoteAddr}
-		}
-		logger.Warn("cannot extract client address", zap.String("address_source_type", sourceType), zap.Any("address_source", source))
-	}
-
 	return clientIP, clientPort
 }
 
-func traceApiBefore(ctx context.Context, logger *zap.Logger, /*metrics Metrics,*/ fullMethodName string, fn func(clientIP, clientPort string) error) error {
+func traceApiBefore(ctx context.Context, logger *zap.Logger /*metrics *Metrics,*/, fullMethodName string, fn func(clientIP, clientPort string) error) error {
 	clientIP, clientPort := extractClientAddressFromContext(logger, ctx)
 	//start := time.Now()
 
@@ -562,14 +551,12 @@ func traceApiBefore(ctx context.Context, logger *zap.Logger, /*metrics Metrics,*
 	return err
 }
 
-func traceApiAfter(ctx context.Context, logger *zap.Logger, /*metrics Metrics,*/ fullMethodName string, fn func(clientIP, clientPort string) error) {
-	/*
-	clientIP, clientPort := extractClientAddressFromContext(logger, ctx)
-	start := time.Now()
+func traceApiAfter(ctx context.Context, logger *zap.Logger /*metrics *Metrics,*/, fullMethodName string, fn func(clientIP, clientPort string) error) {
+	//clientIP, clientPort := extractClientAddressFromContext(logger, ctx)
+	//start := time.Now()
 
 	// Execute the after hook itself.
-	err := fn(clientIP, clientPort)
+	//err := fn(clientIP, clientPort)
 
-	metrics.ApiAfter(fullMethodName, time.Since(start), err != nil)
-	*/
+	//metrics.ApiAfter(fullMethodName, time.Since(start), err != nil)
 }

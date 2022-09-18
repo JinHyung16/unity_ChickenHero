@@ -1,8 +1,6 @@
 package goja
 
 import (
-	"math"
-	"math/bits"
 	"reflect"
 	"strconv"
 
@@ -13,20 +11,6 @@ type objectGoSlice struct {
 	baseObject
 	data       *[]interface{}
 	lengthProp valueProperty
-}
-
-func (r *Runtime) newObjectGoSlice(data *[]interface{}) *objectGoSlice {
-	obj := &Object{runtime: r}
-	a := &objectGoSlice{
-		baseObject: baseObject{
-			val: obj,
-		},
-		data: data,
-	}
-	obj.self = a
-	a.init()
-
-	return a
 }
 
 func (o *objectGoSlice) init() {
@@ -43,14 +27,11 @@ func (o *objectGoSlice) updateLen() {
 	o.lengthProp.value = intToValue(int64(len(*o.data)))
 }
 
-func (o *objectGoSlice) _getIdx(idx int) Value {
-	return o.val.runtime.ToValue((*o.data)[idx])
-}
-
 func (o *objectGoSlice) getStr(name unistring.String, receiver Value) Value {
 	var ownProp Value
 	if idx := strToGoIdx(name); idx >= 0 && idx < len(*o.data) {
-		ownProp = o._getIdx(idx)
+		v := (*o.data)[idx]
+		ownProp = o.val.runtime.ToValue(v)
 	} else if name == "length" {
 		ownProp = &o.lengthProp
 	}
@@ -60,7 +41,8 @@ func (o *objectGoSlice) getStr(name unistring.String, receiver Value) Value {
 
 func (o *objectGoSlice) getIdx(idx valueInt, receiver Value) Value {
 	if idx := int64(idx); idx >= 0 && idx < int64(len(*o.data)) {
-		return o._getIdx(int(idx))
+		v := (*o.data)[idx]
+		return o.val.runtime.ToValue(v)
 	}
 	if o.prototype != nil {
 		if receiver == nil {
@@ -74,8 +56,9 @@ func (o *objectGoSlice) getIdx(idx valueInt, receiver Value) Value {
 func (o *objectGoSlice) getOwnPropStr(name unistring.String) Value {
 	if idx := strToGoIdx(name); idx >= 0 {
 		if idx < len(*o.data) {
+			v := o.val.runtime.ToValue((*o.data)[idx])
 			return &valueProperty{
-				value:      o._getIdx(idx),
+				value:      v,
 				writable:   true,
 				enumerable: true,
 			}
@@ -90,8 +73,9 @@ func (o *objectGoSlice) getOwnPropStr(name unistring.String) Value {
 
 func (o *objectGoSlice) getOwnPropIdx(idx valueInt) Value {
 	if idx := int64(idx); idx >= 0 && idx < int64(len(*o.data)) {
+		v := o.val.runtime.ToValue((*o.data)[idx])
 		return &valueProperty{
-			value:      o._getIdx(int(idx)),
+			value:      v,
 			writable:   true,
 			enumerable: true,
 		}
@@ -131,11 +115,8 @@ func (o *objectGoSlice) putIdx(idx int, v Value, throw bool) {
 	(*o.data)[idx] = v.Export()
 }
 
-func (o *objectGoSlice) putLength(v uint32, throw bool) bool {
-	if bits.UintSize == 32 && v > math.MaxInt32 {
-		panic(rangeError("Integer value overflows 32-bit int"))
-	}
-	newLen := int(v)
+func (o *objectGoSlice) putLength(v Value, throw bool) bool {
+	newLen := toIntStrict(toLength(v))
 	curLen := len(*o.data)
 	if newLen > curLen {
 		o.grow(newLen)
@@ -175,7 +156,7 @@ func (o *objectGoSlice) setOwnStr(name unistring.String, val Value, throw bool) 
 		o.putIdx(idx, val, throw)
 	} else {
 		if name == "length" {
-			return o.putLength(o.val.runtime.toLengthUint32(val), throw)
+			return o.putLength(val, throw)
 		}
 		if res, ok := o._setForeignStr(name, nil, val, o.val, throw); !ok {
 			o.val.runtime.typeErrorResult(throw, "Can't set property '%s' on Go slice", name)
@@ -206,7 +187,7 @@ func (o *objectGoSlice) hasOwnPropertyStr(name unistring.String) bool {
 	if idx := strToIdx64(name); idx >= 0 {
 		return idx < int64(len(*o.data))
 	}
-	return name == "length"
+	return false
 }
 
 func (o *objectGoSlice) defineOwnPropertyIdx(idx valueInt, descr PropertyDescriptor, throw bool) bool {
@@ -244,6 +225,20 @@ func (o *objectGoSlice) defineOwnPropertyStr(name unistring.String, descr Proper
 	return false
 }
 
+func (o *objectGoSlice) toPrimitiveNumber() Value {
+	return o.toPrimitiveString()
+}
+
+func (o *objectGoSlice) toPrimitiveString() Value {
+	return o.val.runtime.arrayproto_join(FunctionCall{
+		This: o.val,
+	})
+}
+
+func (o *objectGoSlice) toPrimitive() Value {
+	return o.toPrimitiveString()
+}
+
 func (o *objectGoSlice) _deleteIdx(idx int64) {
 	if idx < int64(len(*o.data)) {
 		(*o.data)[idx] = nil
@@ -275,20 +270,20 @@ func (i *goslicePropIter) next() (propIterItem, iterNextFunc) {
 	if i.idx < i.limit && i.idx < len(*i.o.data) {
 		name := strconv.Itoa(i.idx)
 		i.idx++
-		return propIterItem{name: newStringValue(name), enumerable: _ENUM_TRUE}, i.next
+		return propIterItem{name: unistring.String(name), enumerable: _ENUM_TRUE}, i.next
 	}
 
 	return propIterItem{}, nil
 }
 
-func (o *objectGoSlice) iterateStringKeys() iterNextFunc {
+func (o *objectGoSlice) enumerateOwnKeys() iterNextFunc {
 	return (&goslicePropIter{
 		o:     o,
 		limit: len(*o.data),
 	}).next
 }
 
-func (o *objectGoSlice) stringKeys(_ bool, accum []Value) []Value {
+func (o *objectGoSlice) ownKeys(_ bool, accum []Value) []Value {
 	for i := range *o.data {
 		accum = append(accum, asciiString(strconv.Itoa(i)))
 	}
@@ -311,26 +306,20 @@ func (o *objectGoSlice) equal(other objectImpl) bool {
 	return false
 }
 
-func (o *objectGoSlice) esValue() Value {
-	return o.val
+func (o *objectGoSlice) sortLen() int64 {
+	return int64(len(*o.data))
 }
 
-func (o *objectGoSlice) reflectValue() reflect.Value {
-	return reflect.ValueOf(o.data).Elem()
-}
-
-func (o *objectGoSlice) setReflectValue(value reflect.Value) {
-	o.data = value.Addr().Interface().(*[]interface{})
-}
-
-func (o *objectGoSlice) sortLen() int {
-	return len(*o.data)
-}
-
-func (o *objectGoSlice) sortGet(i int) Value {
+func (o *objectGoSlice) sortGet(i int64) Value {
 	return o.getIdx(valueInt(i), nil)
 }
 
-func (o *objectGoSlice) swap(i int, j int) {
-	(*o.data)[i], (*o.data)[j] = (*o.data)[j], (*o.data)[i]
+func (o *objectGoSlice) swap(i, j int64) {
+	ii := valueInt(i)
+	jj := valueInt(j)
+	x := o.getIdx(ii, nil)
+	y := o.getIdx(jj, nil)
+
+	o.setOwnIdx(ii, y, false)
+	o.setOwnIdx(jj, x, false)
 }

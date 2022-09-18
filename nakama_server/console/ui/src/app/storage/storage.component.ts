@@ -139,7 +139,7 @@ export class StorageListComponent implements OnInit {
 
   deleteAllowed(): boolean {
     // only admin and developers are allowed.
-    return this.authService.sessionRole <= UserRole.USER_ROLE_MAINTAINER;
+    return this.authService.sessionRole <= UserRole.USER_ROLE_DEVELOPER;
   }
 
   viewObject(o: ApiStorageObject): void {

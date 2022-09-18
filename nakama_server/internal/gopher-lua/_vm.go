@@ -415,7 +415,7 @@ func init() {
 					if ret.Type() == LTNumber {
 						reg.SetNumber(RA, ret.(LNumber))
 					} else {
-						reg.Set(RA, ret)
+						reg.SetNumber(RA, LNumber(0))
 					}
 				} else if lv.Type() == LTTable {
 					reg.SetNumber(RA, LNumber(lv.(*LTable).Len()))

@@ -23,15 +23,14 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
-	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt/v4"
+	"github.com/dgrijalva/jwt-go"
 )
 
 const (
@@ -53,15 +52,6 @@ const (
 
 const accessTokenExpiresGracePeriod = 300 // 5 min grace period
 
-type ValidationError struct {
-	Err        error
-	StatusCode int
-	Payload    string
-}
-
-func (e *ValidationError) Error() string { return e.Err.Error() }
-func (e *ValidationError) Unwrap() error { return e.Err }
-
 var (
 	ErrNon200ServiceApple     = errors.New("non-200 response from Apple service")
 	ErrNon200ServiceGoogle    = errors.New("non-200 response from Google service")
@@ -71,15 +61,6 @@ var (
 
 var cachedTokenGoogle accessTokenGoogle
 var cachedTokenHuawei accessTokenHuawei
-
-func init() {
-	// Hint to the JWT encoder that single-string arrays should be marshaled as strings.
-	// This ensures that for example `["foo"]` is marshaled as `"foo"`.
-	// Note: this is required particularly for Google IAP verification JWT audience fields.
-	jwt.MarshalSingleStringAsArray = false
-}
-
-// Apple
 
 type ValidateReceiptAppleResponseReceiptInApp struct {
 	OriginalTransactionID string `json:"original_transaction_id"`
@@ -94,46 +75,11 @@ type ValidateReceiptAppleResponseReceipt struct {
 	InApp                  []*ValidateReceiptAppleResponseReceiptInApp `json:"in_app"`
 }
 
-type ValidateReceiptAppleResponseLatestReceiptInfo struct {
-	CancellationDateMs          string `json:"cancellation_date_ms"`
-	CancellationReason          string `json:"cancellation_reason"`
-	ExpiresDateMs               string `json:"expires_date_ms"`
-	InAppOwnershipType          string `json:"in_app_ownership_type"`
-	IsInIntroOfferPeriod        string `json:"is_in_intro_offer_period"` // "true" or "false"
-	IsTrialPeriod               string `json:"is_trial_period"`
-	IsUpgraded                  string `json:"is_upgraded"`
-	OfferCodeRefName            string `json:"offer_code_ref_name"`
-	OriginalPurchaseDateMs      string `json:"original_purchase_date_ms"`
-	OriginalTransactionId       string `json:"original_transaction_id"` // First subscription transaction
-	ProductId                   string `json:"product_id"`
-	PromotionalOfferId          string `json:"promotional_offer_id"`
-	PurchaseDateMs              string `json:"purchase_date_ms"`
-	Quantity                    string `json:"quantity"`
-	SubscriptionGroupIdentifier string `json:"subscription_group_identifier"`
-	TransactionId               string `json:"transaction_id"` // Different from OriginalTransactionId if the user Auto-renews subscription or restores a purchase.
-}
-
-type ValidateReceiptAppleResponsePendingRenewalInfo struct {
-	AutoRenewProductId       string `json:"auto_renew_product_id"`
-	AutoRenewStatus          string `json:"auto_renew_status"` // 1: subscription will renew at end of current subscription period, 0: the customer has turned off automatic renewal for the subscription.
-	ExpirationIntent         string `json:"expiration_intent"`
-	GracePeriodExpiresDateMs string `json:"grace_period_expires_date_ms"`
-	IsInBillingRetryPeriod   string `json:"is_in_billing_retry_period"`
-	OfferCodeRefName         string `json:"offer_code_ref_name"`
-	OriginalTransactionId    string `json:"original_transaction_id"`
-	PriceConsentStatus       string `json:"price_consent_status"`
-	ProductId                string `json:"product_id"`
-	PromotionalOfferId       string `json:"promotional_offer_id"`
-}
-
 type ValidateReceiptAppleResponse struct {
-	Environment        string                                           `json:"environment"`  // possible values: 'Sandbox', 'Production'.
-	IsRetryable        bool                                             `json:"is-retryable"` // If true, request must be retried later.
-	LatestReceipt      string                                           `json:"latest_receipt"`
-	LatestReceiptInfo  []ValidateReceiptAppleResponseLatestReceiptInfo  `json:"latest_receipt_info"`  // Only returned for auto-renewable subscriptions.
-	PendingRenewalInfo []ValidateReceiptAppleResponsePendingRenewalInfo `json:"pending_renewal_info"` // Only returned for auto-renewable subscriptions.
-	Receipt            *ValidateReceiptAppleResponseReceipt             `json:"receipt"`
-	Status             int                                              `json:"status"`
+	IsRetryable bool                                 `json:"is-retryable"` // If true, request must be retried later.
+	Status      int                                  `json:"status"`
+	Receipt     *ValidateReceiptAppleResponseReceipt `json:"receipt"`
+	Environment string                               `json:"environment"` // possible values: 'Sandbox', 'Production'.
 }
 
 // Validate an IAP receipt with Apple. This function will check against both the production and sandbox Apple URLs.
@@ -189,22 +135,17 @@ func ValidateReceiptAppleWithUrl(ctx context.Context, httpc *http.Client, url, r
 	}
 	defer resp.Body.Close()
 
-	buf, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	switch resp.StatusCode {
 	case 200:
+		buf, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		var out ValidateReceiptAppleResponse
 		if err := json.Unmarshal(buf, &out); err != nil {
 			return nil, nil, err
 		}
-
-		// Sort by ExpiresDateMs in desc order
-		sort.Slice(out.LatestReceiptInfo, func(i, j int) bool {
-			return sort.StringsAreSorted([]string{out.LatestReceiptInfo[j].ExpiresDateMs, out.LatestReceiptInfo[i].ExpiresDateMs})
-		})
 
 		switch out.Status {
 		case AppleReceiptIsFromTestSandbox:
@@ -215,15 +156,9 @@ func ValidateReceiptAppleWithUrl(ctx context.Context, httpc *http.Client, url, r
 			return &out, buf, nil
 		}
 	default:
-		return nil, nil, &ValidationError{
-			Err:        ErrNon200ServiceApple,
-			StatusCode: resp.StatusCode,
-			Payload:    string(buf),
-		}
+		return nil, nil, ErrNon200ServiceApple
 	}
 }
-
-// Google
 
 type ReceiptGoogle struct {
 	OrderID       string `json:"orderId"`
@@ -305,16 +240,16 @@ func getGoogleAccessToken(ctx context.Context, httpc *http.Client, email string,
 	}
 	type GoogleClaims struct {
 		Scope string `json:"scope,omitempty"`
-		jwt.RegisteredClaims
+		jwt.StandardClaims
 	}
 
 	now := time.Now()
 	claims := &GoogleClaims{
 		"https://www.googleapis.com/auth/androidpublisher",
-		jwt.RegisteredClaims{
-			Audience:  jwt.ClaimStrings{authUrl},
-			ExpiresAt: &jwt.NumericDate{now.Add(1 * time.Hour)},
-			IssuedAt:  &jwt.NumericDate{now},
+		jwt.StandardClaims{
+			Audience:  authUrl,
+			ExpiresAt: now.Add(1 * time.Hour).Unix(),
+			IssuedAt:  now.Unix(),
 			Issuer:    email,
 		},
 	}
@@ -352,24 +287,20 @@ func getGoogleAccessToken(ctx context.Context, httpc *http.Client, email string,
 	}
 	defer resp.Body.Close()
 
-	buf, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
 	switch resp.StatusCode {
 	case 200:
+		buf, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "", err
+		}
+
 		cachedTokenGoogle.fetchedAt = time.Now()
 		if err := json.Unmarshal(buf, &cachedTokenGoogle); err != nil {
 			return "", err
 		}
 		return cachedTokenGoogle.AccessToken, nil
 	default:
-		return "", &ValidationError{
-			Err:        errors.New("non-200 response from Google auth"),
-			StatusCode: resp.StatusCode,
-			Payload:    string(buf),
-		}
+		return "", fmt.Errorf("non-200 response from Google auth: %+v", resp)
 	}
 }
 
@@ -430,140 +361,23 @@ func validateReceiptGoogleWithIDs(ctx context.Context, httpc *http.Client, token
 
 	defer resp.Body.Close()
 
-	buf, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
 	switch resp.StatusCode {
 	case 200:
+		buf, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
 		out := &ValidateReceiptGoogleResponse{}
-		out.PurchaseType = -1 // Set sentinel value as this field is omitted in production, and if set to 0 it means the purchase was done in sandbox env.
 		if err := json.Unmarshal(buf, &out); err != nil {
 			return nil, nil, nil, err
 		}
 
 		return out, gr, buf, nil
 	default:
-		return nil, nil, nil, &ValidationError{
-			Err:        ErrNon200ServiceGoogle,
-			StatusCode: resp.StatusCode,
-			Payload:    string(buf),
-		}
+		return nil, nil, nil, ErrNon200ServiceGoogle
 	}
 }
-
-// https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.subscriptions#get
-type ValidateSubscriptionReceiptGoogleResponse struct {
-	// TODO: add introductoryPriceInfo, cancelSurveyResult and priceChange fields
-	Kind                        string `json:"kind"`
-	StartTimeMillis             string `json:"startTimeMillis"`
-	ExpiryTimeMillis            string `json:"expiryTimeMillis"`
-	AutoResumeTimeMillis        string `json:"autoResumeTimeMillis"`
-	AutoRenewing                bool   `json:"autoRenewing"`
-	PriceCurrencyCode           string `json:"priceCurrencyCode"`
-	PriceAmountMicros           string `json:"priceAmountMicros"`
-	CountryCode                 string `json:"countryCode"`
-	DeveloperPayload            string `json:"developerPayload"`
-	PaymentState                int    `json:"paymentState"`
-	CancelReason                int    `json:"cancelReason"`
-	UserCancellationTimeMillis  string `json:"userCancellationTimeMillis"`
-	OrderId                     string `json:"orderId"`
-	LinkedPurchaseToken         string `json:"linkedPurchaseToken"`
-	PurchaseType                int    `json:"purchaseType"`
-	ProfileName                 string `json:"profileName"`
-	EmailAddress                string `json:"emailAddress"`
-	GivenName                   string `json:"givenName"`
-	FamilyName                  string `json:"familyName"`
-	ProfileId                   string `json:"profileId"`
-	AcknowledgementState        int    `json:"acknowledgementState"`
-	ExternalAccountId           string `json:"externalAccountId"`
-	PromotionType               int    `json:"promotionType"`
-	PromotionCode               string `json:"promotionCode"`
-	ObfuscatedExternalAccountId string `json:"obfuscatedExternalAccountId"`
-	ObfuscatedExternalProfileId string `json:"obfuscatedExternalProfileId"`
-}
-
-// Validate an IAP Subscription receipt with the Android Publisher API and the Google credentials.
-func ValidateSubscriptionReceiptGoogle(ctx context.Context, httpc *http.Client, clientEmail string, privateKey string, receipt string) (*ValidateSubscriptionReceiptGoogleResponse, *ReceiptGoogle, []byte, error) {
-	if len(clientEmail) < 1 {
-		return nil, nil, nil, errors.New("'clientEmail' must not be empty")
-	}
-
-	if len(privateKey) < 1 {
-		return nil, nil, nil, errors.New("'privateKey' must not be empty")
-	}
-
-	if len(receipt) < 1 {
-		return nil, nil, nil, errors.New("'receipt' must not be empty")
-	}
-
-	token, err := getGoogleAccessToken(ctx, httpc, clientEmail, privateKey)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	return ValidateSubscriptionReceiptGoogleWithIDs(ctx, httpc, token, receipt)
-}
-
-func ValidateSubscriptionReceiptGoogleWithIDs(ctx context.Context, httpc *http.Client, token, receipt string) (*ValidateSubscriptionReceiptGoogleResponse, *ReceiptGoogle, []byte, error) {
-	if len(token) < 1 {
-		return nil, nil, nil, errors.New("'token' must not be empty")
-	}
-
-	if len(receipt) < 1 {
-		return nil, nil, nil, errors.New("'receipt' must not be empty")
-	}
-
-	gr, err := decodeReceiptGoogle(receipt)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	u := &url.URL{
-		Host:     "androidpublisher.googleapis.com",
-		Path:     fmt.Sprintf("androidpublisher/v3/applications/%s/purchases/subscriptions/%s/tokens/%s", gr.PackageName, gr.ProductID, gr.PurchaseToken),
-		RawQuery: fmt.Sprintf("access_token=%s", token),
-		Scheme:   "https",
-	}
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := httpc.Do(req)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	defer resp.Body.Close()
-
-	buf, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	switch resp.StatusCode {
-	case 200:
-		out := &ValidateSubscriptionReceiptGoogleResponse{}
-		out.PurchaseType = -1 // Set sentinel value as this field is omitted in production, and if set to 0 it means the purchase was done in sandbox env
-		if err := json.Unmarshal(buf, &out); err != nil {
-			return nil, nil, nil, err
-		}
-
-		return out, gr, buf, nil
-	default:
-		return nil, nil, nil, &ValidationError{
-			Err:        ErrNon200ServiceGoogle,
-			StatusCode: resp.StatusCode,
-			Payload:    string(buf),
-		}
-	}
-}
-
-// Huawei
 
 type InAppPurchaseDataHuawei struct {
 	ApplicationID string `json:"applicationId"`
@@ -636,24 +450,20 @@ func getHuaweiAccessToken(ctx context.Context, httpc *http.Client, clientID, cli
 	}
 	defer resp.Body.Close()
 
-	buf, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
 	switch resp.StatusCode {
 	case 200:
+		buf, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "", err
+		}
+
 		var out accessTokenHuawei
 		if err := json.Unmarshal(buf, &out); err != nil {
 			return "", err
 		}
 		return out.AccessToken, nil
 	default:
-		return "", &ValidationError{
-			Err:        errors.New("non-200 response from Huawei auth"),
-			StatusCode: resp.StatusCode,
-			Payload:    string(buf),
-		}
+		return "", fmt.Errorf("non-200 response from Huawei auth: %+v", resp)
 	}
 }
 
@@ -714,13 +524,13 @@ func ValidateReceiptHuawei(ctx context.Context, httpc *http.Client, pubKey, clie
 		return nil, nil, nil, err
 	}
 
-	buf, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, data, nil, err
-	}
-
 	switch res.StatusCode {
 	case 200:
+		buf, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return nil, data, nil, err
+		}
+
 		out := &ValidateReceiptHuaweiResponse{}
 		if err := json.Unmarshal(buf, &out); err != nil {
 			return nil, data, nil, err
@@ -728,11 +538,7 @@ func ValidateReceiptHuawei(ctx context.Context, httpc *http.Client, pubKey, clie
 
 		return out, data, buf, nil
 	default:
-		return nil, nil, nil, &ValidationError{
-			Err:        ErrNon200ServiceHuawei,
-			StatusCode: res.StatusCode,
-			Payload:    string(buf),
-		}
+		return nil, nil, nil, ErrNon200ServiceHuawei
 	}
 }
 

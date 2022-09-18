@@ -16,6 +16,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -39,19 +40,16 @@ type SessionCache interface {
 	Ban(userIDs []uuid.UUID)
 	// Unban a set of users.
 	Unban(userIDs []uuid.UUID)
-
-	GetTargetDBId(userId uuid.UUID) (int, bool)
 }
 
 type sessionCacheUser struct {
 	sessionTokens map[string]int64
 	refreshTokens map[string]int64
-
-	targetdbId    int
 }
 
 type LocalSessionCache struct {
 	sync.RWMutex
+	config Config
 
 	ctx         context.Context
 	ctxCancelFn context.CancelFunc
@@ -59,10 +57,12 @@ type LocalSessionCache struct {
 	cache map[uuid.UUID]*sessionCacheUser
 }
 
-func NewLocalSessionCache(tokenExpirySec int64) SessionCache {
+func NewLocalSessionCache(config Config) SessionCache {
 	ctx, ctxCancelFn := context.WithCancel(context.Background())
 
 	s := &LocalSessionCache{
+		config: config,
+
 		ctx:         ctx,
 		ctxCancelFn: ctxCancelFn,
 
@@ -70,7 +70,7 @@ func NewLocalSessionCache(tokenExpirySec int64) SessionCache {
 	}
 
 	go func() {
-		ticker := time.NewTicker(2 * time.Duration(tokenExpirySec) * time.Second)
+		ticker := time.NewTicker(2 * time.Duration(config.GetSession().TokenExpirySec) * time.Second)
 		for {
 			select {
 			case <-s.ctx.Done():
@@ -139,6 +139,7 @@ func (s *LocalSessionCache) Add(userID uuid.UUID, sessionExp int64, sessionToken
 			refreshTokens: make(map[string]int64),
 		}
 		s.cache[userID] = cache
+		fmt.Println("LocalSessionCache Add : ", userID.String())
 	}
 	if sessionToken != "" {
 		cache.sessionTokens[sessionToken] = sessionExp + 1
@@ -165,6 +166,7 @@ func (s *LocalSessionCache) Remove(userID uuid.UUID, sessionExp int64, sessionTo
 	if len(cache.sessionTokens) == 0 && len(cache.refreshTokens) == 0 {
 		delete(s.cache, userID)
 	}
+	fmt.Println("LocalSessionCache Remove : ", userID.String())
 	s.Unlock()
 }
 
@@ -183,16 +185,3 @@ func (s *LocalSessionCache) Ban(userIDs []uuid.UUID) {
 }
 
 func (s *LocalSessionCache) Unban(userIDs []uuid.UUID) {}
-
-func (s *LocalSessionCache) GetTargetDBId(userID uuid.UUID) (int, bool) {
-	s.RLock()
-	cache, found := s.cache[userID]
-	if !found {
-		s.RUnlock()
-
-		return 0, found
-	}
-
-	s.RUnlock()
-	return cache.targetdbId, found
-}

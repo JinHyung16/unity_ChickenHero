@@ -15,24 +15,24 @@ const (
 )
 
 var (
-	stringTrue        valueString = asciiString("true")
-	stringFalse       valueString = asciiString("false")
-	stringNull        valueString = asciiString("null")
-	stringUndefined   valueString = asciiString("undefined")
-	stringObjectC     valueString = asciiString("object")
-	stringFunction    valueString = asciiString("function")
-	stringBoolean     valueString = asciiString("boolean")
-	stringString      valueString = asciiString("string")
-	stringSymbol      valueString = asciiString("symbol")
-	stringNumber      valueString = asciiString("number")
-	stringNaN         valueString = asciiString("NaN")
-	stringInfinity                = asciiString("Infinity")
-	stringNegInfinity             = asciiString("-Infinity")
-	stringBound_      valueString = asciiString("bound ")
-	stringEmpty       valueString = asciiString("")
+	stringTrue         valueString = asciiString("true")
+	stringFalse        valueString = asciiString("false")
+	stringNull         valueString = asciiString("null")
+	stringUndefined    valueString = asciiString("undefined")
+	stringObjectC      valueString = asciiString("object")
+	stringFunction     valueString = asciiString("function")
+	stringBoolean      valueString = asciiString("boolean")
+	stringString       valueString = asciiString("string")
+	stringSymbol       valueString = asciiString("symbol")
+	stringNumber       valueString = asciiString("number")
+	stringNaN          valueString = asciiString("NaN")
+	stringInfinity                 = asciiString("Infinity")
+	stringPlusInfinity             = asciiString("+Infinity")
+	stringNegInfinity              = asciiString("-Infinity")
+	stringBound_       valueString = asciiString("bound ")
+	stringEmpty        valueString = asciiString("")
 
 	stringError          valueString = asciiString("Error")
-	stringAggregateError valueString = asciiString("AggregateError")
 	stringTypeError      valueString = asciiString("TypeError")
 	stringReferenceError valueString = asciiString("ReferenceError")
 	stringSyntaxError    valueString = asciiString("SyntaxError")
@@ -42,6 +42,7 @@ var (
 	stringGoError        valueString = asciiString("GoError")
 
 	stringObjectNull      valueString = asciiString("[object Null]")
+	stringObjectObject    valueString = asciiString("[object Object]")
 	stringObjectUndefined valueString = asciiString("[object Undefined]")
 	stringInvalidDate     valueString = asciiString("Invalid Date")
 )
@@ -188,9 +189,12 @@ func (s *stringObject) getStr(name unistring.String, receiver Value) Value {
 }
 
 func (s *stringObject) getIdx(idx valueInt, receiver Value) Value {
-	i := int(idx)
-	if i >= 0 && i < s.length {
-		return s._getIdx(i)
+	i := int64(idx)
+	if i >= 0 {
+		if i < int64(s.length) {
+			return s._getIdx(int(i))
+		}
+		return nil
 	}
 	return s.baseObject.getStr(idx.string(), receiver)
 }
@@ -256,8 +260,8 @@ func (s *stringObject) setForeignIdx(idx valueInt, val, receiver Value, throw bo
 
 func (s *stringObject) defineOwnPropertyStr(name unistring.String, descr PropertyDescriptor, throw bool) bool {
 	if i := strToGoIdx(name); i >= 0 && i < s.length {
-		_, ok := s._defineOwnProperty(name, &valueProperty{enumerable: true}, descr, throw)
-		return ok
+		s.val.runtime.typeErrorResult(throw, "Cannot redefine property: %d", i)
+		return false
 	}
 
 	return s.baseObject.defineOwnPropertyStr(name, descr, throw)
@@ -283,13 +287,13 @@ func (i *stringPropIter) next() (propIterItem, iterNextFunc) {
 	if i.idx < i.length {
 		name := strconv.Itoa(i.idx)
 		i.idx++
-		return propIterItem{name: asciiString(name), enumerable: _ENUM_TRUE}, i.next
+		return propIterItem{name: unistring.String(name), enumerable: _ENUM_TRUE}, i.next
 	}
 
-	return i.obj.baseObject.iterateStringKeys()()
+	return i.obj.baseObject.enumerateOwnKeys()()
 }
 
-func (s *stringObject) iterateStringKeys() iterNextFunc {
+func (s *stringObject) enumerateOwnKeys() iterNextFunc {
 	return (&stringPropIter{
 		str:    s.value,
 		obj:    s,
@@ -297,12 +301,12 @@ func (s *stringObject) iterateStringKeys() iterNextFunc {
 	}).next
 }
 
-func (s *stringObject) stringKeys(all bool, accum []Value) []Value {
+func (s *stringObject) ownKeys(all bool, accum []Value) []Value {
 	for i := 0; i < s.length; i++ {
 		accum = append(accum, asciiString(strconv.Itoa(i)))
 	}
 
-	return s.baseObject.stringKeys(all, accum)
+	return s.baseObject.ownKeys(all, accum)
 }
 
 func (s *stringObject) deleteStr(name unistring.String, throw bool) bool {

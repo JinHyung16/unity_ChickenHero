@@ -7,24 +7,16 @@ public class TestLogin : MonoBehaviour
 {
     public Button loginTestButton;
 
-    public void Awake()
-    {
-       // PlayerPrefs.DeleteAll();
-    }
 
     public void Start()
     {
-        loginTestButton.onClick.AddListener(Login);
+        PlayerPrefs.DeleteAll();
+        loginTestButton.onClick.AddListener(LoginTest);
     }
 
     private async void LoginTest()
     {
-        await GameServer.GetInstance.DeviceLogin();
-        Debug.LogFormat("<color=orange><b>[Game-Server]</b> Login Test : SUCCESS");
-    }
-
-    public void Login()
-    {
-        LoginTest();
+        await LoginServer.GetInstance.DeviceLogin();
+        Debug.LogFormat("<color=orange><b>[Login-Server]</b> Login Test : SUCCESS");
     }
 }

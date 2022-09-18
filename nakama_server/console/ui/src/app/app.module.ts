@@ -42,16 +42,11 @@ import {StorageListComponent} from './storage/storage.component';
 import {StorageObjectComponent} from './storage-object/storage-object.component';
 import {AccountListComponent} from './accounts/accounts.component';
 import {AccountComponent} from './account/account.component';
-import {GroupListComponent} from './groups/groups.component';
-import {GroupComponent} from './group/group.component';
 import {ProfileComponent} from './account/profile/profile.component';
-import {GroupDetailsComponent} from './group/details/groupDetailsComponent';
 import {AuthenticationComponent} from './account/authentication/authentication.component';
 import {FriendsComponent} from './account/friends/friends.component';
 import {WalletComponent} from './account/wallet/wallet.component';
 import {GroupsComponent} from './account/groups/groups.component';
-import {GroupMembersComponent} from "./group/members/groupMembers.component";
-import {ChatListComponent} from "./channels/chatMessages.component";
 import {MatchesComponent} from './matches/matches.component';
 import {LeaderboardsComponent} from './leaderboards/leaderboards.component';
 import {LeaderboardComponent} from './leaderboard/leaderboard.component';
@@ -59,7 +54,6 @@ import {LeaderboardDetailsComponent} from './leaderboard/details/details.compone
 import {LeaderboardRecordsComponent} from './leaderboard/records/records.component';
 import {ApiExplorerComponent} from './apiexplorer/apiexplorer.component';
 import {PurchasesComponent} from './account/purchases/purchases.component';
-import {SubscriptionsComponent} from './account/subscriptions/subscriptions.component';
 
 @NgModule({
   declarations: [
@@ -80,9 +74,6 @@ import {SubscriptionsComponent} from './account/subscriptions/subscriptions.comp
     WalletComponent,
     FriendsComponent,
     GroupsComponent,
-    GroupComponent,
-    GroupDetailsComponent,
-    GroupMembersComponent,
     MatchesComponent,
     LeaderboardsComponent,
     LeaderboardComponent,
@@ -90,9 +81,6 @@ import {SubscriptionsComponent} from './account/subscriptions/subscriptions.comp
     LeaderboardRecordsComponent,
     ApiExplorerComponent,
     PurchasesComponent,
-    SubscriptionsComponent,
-    GroupListComponent,
-    ChatListComponent,
   ],
   imports: [
     NgxFileDropModule,
@@ -102,7 +90,7 @@ import {SubscriptionsComponent} from './account/subscriptions/subscriptions.comp
     HttpClientModule,
     NgbModule,
     NgxChartsModule,
-    SegmentModule.forRoot({ apiKey: environment.segment_write_key, debug: !environment.production, loadOnInitialization: !environment.nt }),
+    SegmentModule.forRoot({ apiKey: environment.segment_write_key, debug: !environment.production, loadOnInitialization: true }),
     NoopAnimationsModule,
     ReactiveFormsModule,
     FormsModule,

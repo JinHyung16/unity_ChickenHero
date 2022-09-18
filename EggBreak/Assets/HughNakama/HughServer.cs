@@ -5,30 +5,30 @@ using Nakama;
 
 public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
 {
-    protected string scheme = "http";
-    //protected string host = "35.197.17.99"; // @GCP VM: hugh-server 외부 ip
-    protected string host = "localhost";
+    protected string Scheme = "http";
+    //protected string Host = "35.197.17.99"; // @GCP VM: hugh-server 외부 ip
+    protected string Host = "localhost";
 
-    protected int port = 7350;
-    protected string serverKey = "defaultkey";
+    protected int Port = 7350;
+    protected string ServerKey = "defaultkey";
 
     protected string sessionPrefName;
 
 
-    protected IClient client;
-    protected ISession session;
-    protected ISocket socket;
+    protected IClient Client;
+    protected ISession Session;
+    protected ISocket Socket;
 
     protected UnityMainThreadDispatcher mainThread;
     protected virtual void ConnectToServer(string host, int port)
     {
-        client = new Nakama.Client(scheme, host, port, serverKey);
+        Client = new Nakama.Client(this.Scheme, host, port, this.ServerKey);
     }
 
     protected async Task SocketConnect()
     {
-        socket = client.NewSocket(false);        
-        await socket.ConnectAsync(session, true);
+        Socket = Client.NewSocket(false);        
+        await Socket.ConnectAsync(Session, true);
 
         BindSocketEvents();
     }
@@ -51,31 +51,31 @@ public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
 
     public virtual async Task Disconnect()
     {
-        if (socket != null)
+        if (Socket != null)
         {            
-            await socket.CloseAsync();
-            socket = null;
+            await Socket.CloseAsync();
+            Socket = null;
         }
 
-        if (session != null)
+        if (Session != null)
         {         
             //   await client.SessionLogoutAsync(session);
-            session = null;
+            Session = null;
         }
     }
 
 
     protected async Task<IApiRpc> GetRPC(string rpcId)
     {
-        if (session == null) return null;
+        if (Session == null) return null;
 
-        return await client.RpcAsync(session, rpcId, "");
+        return await Client.RpcAsync(Session, rpcId, "");
     }
 
     protected async Task<IApiRpc> PutRPC(string rpcId, string param)
     {
-        if (session == null) return null;
+        if (Session == null) return null;
 
-        return await client.RpcAsync(session, rpcId, param);
+        return await Client.RpcAsync(Session, rpcId, param);
     }
 }

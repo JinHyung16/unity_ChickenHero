@@ -121,7 +121,6 @@ const (
 	Debug                                = 0x0080 // "d"
 	ECMAScript                           = 0x0100 // "e"
 	RE2                                  = 0x0200 // RE2 (regexp package) compatibility mode
-	Unicode                              = 0x0400 // "u"
 )
 
 func (re *Regexp) RightToLeft() bool {

@@ -16,10 +16,10 @@ package server
 
 import (
 	"context"
-	"github.com/heroiclabs/nakama-common/runtime"
 
 	"github.com/gofrs/uuid"
 	"github.com/heroiclabs/nakama-common/api"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -45,7 +45,7 @@ func (s *ApiServer) ListChannelMessages(ctx context.Context, in *api.ListChannel
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -72,11 +72,11 @@ func (s *ApiServer) ListChannelMessages(ctx context.Context, in *api.ListChannel
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Invalid channel ID.")
 	}
-
+	//TODO : 타겟디비지정, 채널메세지 가져올필요없을것같은데...
 	messageList, err := ChannelMessagesList(ctx, s.logger, s.db.Hugh_db, userID, streamConversionResult.Stream, in.ChannelId, limit, forward, in.Cursor)
-	if err == runtime.ErrChannelCursorInvalid {
+	if err == ErrChannelCursorInvalid {
 		return nil, status.Error(codes.InvalidArgument, "Cursor is invalid or expired.")
-	} else if err == runtime.ErrChannelGroupNotFound {
+	} else if err == ErrChannelGroupNotFound {
 		return nil, status.Error(codes.InvalidArgument, "Group not found.")
 	} else if err != nil {
 		return nil, status.Error(codes.Internal, "Error listing messages from channel.")
@@ -89,7 +89,7 @@ func (s *ApiServer) ListChannelMessages(ctx context.Context, in *api.ListChannel
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return messageList, nil

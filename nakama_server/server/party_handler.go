@@ -15,14 +15,25 @@
 package server
 
 import (
-	"context"
+	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/gofrs/uuid"
 	"github.com/heroiclabs/nakama-common/rtapi"
-	"github.com/heroiclabs/nakama-common/runtime"
 	"go.uber.org/zap"
+)
+
+var (
+	ErrPartyClosed           = errors.New("party closed")
+	ErrPartyFull             = errors.New("party full")
+	ErrPartyJoinRequestsFull = errors.New("party join requests full")
+	ErrPartyNotLeader        = errors.New("party leader only")
+	ErrPartyNotMember        = errors.New("party member not found")
+	ErrPartyNotRequest       = errors.New("party join request not found")
+	ErrPartyAcceptRequest    = errors.New("party could not accept request")
+	ErrPartyRemove           = errors.New("party could not remove")
+	ErrPartyRemoveSelf       = errors.New("party cannot remove self")
 )
 
 type PartyHandler struct {
@@ -42,8 +53,6 @@ type PartyHandler struct {
 	Stream  PresenceStream
 
 	stopped                  bool
-	ctx                      context.Context
-	ctxCancelFn              context.CancelFunc
 	expectedInitialLeader    *rtapi.UserPresence
 	leader                   *PresenceID
 	leaderUserPresence       *rtapi.UserPresence
@@ -56,7 +65,6 @@ type PartyHandler struct {
 
 func NewPartyHandler(logger *zap.Logger, partyRegistry PartyRegistry, matchmaker Matchmaker, tracker Tracker, streamManager StreamManager, router MessageRouter, id uuid.UUID, node string, open bool, maxSize int, presence *rtapi.UserPresence) *PartyHandler {
 	idStr := fmt.Sprintf("%v.%v", id.String(), node)
-	ctx, ctxCancelFn := context.WithCancel(context.Background())
 	return &PartyHandler{
 		logger:        logger.With(zap.String("party_id", idStr)),
 		partyRegistry: partyRegistry,
@@ -73,8 +81,6 @@ func NewPartyHandler(logger *zap.Logger, partyRegistry PartyRegistry, matchmaker
 		Stream:  PresenceStream{Mode: StreamModeParty, Subject: id, Label: node},
 
 		stopped:                  false,
-		ctx:                      ctx,
-		ctxCancelFn:              ctxCancelFn,
 		expectedInitialLeader:    presence,
 		leader:                   nil,
 		leaderUserPresence:       nil,
@@ -87,7 +93,6 @@ func NewPartyHandler(logger *zap.Logger, partyRegistry PartyRegistry, matchmaker
 }
 
 func (p *PartyHandler) stop() {
-	p.ctxCancelFn()
 	p.partyRegistry.Delete(p.ID)
 	p.tracker.UntrackByStream(p.Stream)
 	_ = p.matchmaker.RemovePartyAll(p.IDStr)
@@ -97,13 +102,13 @@ func (p *PartyHandler) JoinRequest(presence *Presence) (bool, error) {
 	p.Lock()
 	if p.stopped {
 		p.Unlock()
-		return false, runtime.ErrPartyClosed
+		return false, ErrPartyClosed
 	}
 
 	// Check if party is full.
 	if len(p.members)+p.joinsInProgress >= p.MaxSize {
 		p.Unlock()
-		return false, runtime.ErrPartyFull
+		return false, ErrPartyFull
 	}
 	// Check if party is open, and therefore automatically accepts join requests.
 	if p.Open {
@@ -114,7 +119,7 @@ func (p *PartyHandler) JoinRequest(presence *Presence) (bool, error) {
 	// Check if party has room for more join requests.
 	if len(p.joinRequests) >= p.MaxSize {
 		p.Unlock()
-		return false, runtime.ErrPartyJoinRequestsFull
+		return false, ErrPartyJoinRequestsFull
 	}
 
 	p.joinRequests = append(p.joinRequests, presence)
@@ -298,13 +303,13 @@ func (p *PartyHandler) Promote(sessionID, node string, presence *rtapi.UserPrese
 	p.Lock()
 	if p.stopped {
 		p.Unlock()
-		return runtime.ErrPartyClosed
+		return ErrPartyClosed
 	}
 
 	// Only the party leader may promote.
 	if p.leader == nil || p.leader.SessionID.String() != sessionID || p.leader.Node != node {
 		p.Unlock()
-		return runtime.ErrPartyNotLeader
+		return ErrPartyNotLeader
 	}
 
 	var envelope *rtapi.Envelope
@@ -331,7 +336,7 @@ func (p *PartyHandler) Promote(sessionID, node string, presence *rtapi.UserPrese
 
 	// Attempted to promote a party member that did not exist.
 	if envelope == nil {
-		return runtime.ErrPartyNotMember
+		return ErrPartyNotMember
 	}
 
 	p.router.SendToStream(p.logger, p.Stream, envelope, true)
@@ -343,19 +348,19 @@ func (p *PartyHandler) Accept(sessionID, node string, presence *rtapi.UserPresen
 	p.Lock()
 	if p.stopped {
 		p.Unlock()
-		return runtime.ErrPartyClosed
+		return ErrPartyClosed
 	}
 
 	// Only the party leader may promote.
 	if p.leader == nil || p.leader.SessionID.String() != sessionID || p.leader.Node != node {
 		p.Unlock()
-		return runtime.ErrPartyNotLeader
+		return ErrPartyNotLeader
 	}
 
 	// Check if there's room to accept the new party member.
 	if len(p.members)+p.joinsInProgress >= p.MaxSize {
 		p.Unlock()
-		return runtime.ErrPartyFull
+		return ErrPartyFull
 	}
 
 	// Check if the presence has actually requested to join.
@@ -377,7 +382,7 @@ func (p *PartyHandler) Accept(sessionID, node string, presence *rtapi.UserPresen
 	}
 	if joinRequestPresence == nil {
 		p.Unlock()
-		return runtime.ErrPartyNotRequest
+		return ErrPartyNotRequest
 	}
 
 	p.joinsInProgress++
@@ -389,7 +394,7 @@ func (p *PartyHandler) Accept(sessionID, node string, presence *rtapi.UserPresen
 		p.Lock()
 		p.joinsInProgress--
 		p.Unlock()
-		return runtime.ErrPartyAcceptRequest
+		return ErrPartyAcceptRequest
 	}
 
 	return nil
@@ -399,19 +404,19 @@ func (p *PartyHandler) Remove(sessionID, node string, presence *rtapi.UserPresen
 	p.Lock()
 	if p.stopped {
 		p.Unlock()
-		return runtime.ErrPartyClosed
+		return ErrPartyClosed
 	}
 
 	// Only the party leader may remove.
 	if p.leader == nil || p.leader.SessionID.String() != sessionID || p.leader.Node != node {
 		p.Unlock()
-		return runtime.ErrPartyNotLeader
+		return ErrPartyNotLeader
 	}
 
 	// Check if the leader is attempting to remove its own presence.
 	if p.leader.SessionID.String() == presence.SessionId && p.leaderUserPresence.GetUserId() == presence.UserId && p.leaderUserPresence.GetUsername() == presence.Username {
 		p.Unlock()
-		return runtime.ErrPartyRemoveSelf
+		return ErrPartyRemoveSelf
 	}
 
 	// Remove the party member, if found.
@@ -455,13 +460,13 @@ func (p *PartyHandler) Remove(sessionID, node string, presence *rtapi.UserPresen
 	p.Unlock()
 
 	if removeMember == nil {
-		return runtime.ErrPartyNotMember
+		return ErrPartyNotMember
 	}
 
 	// Remove the presence from the party stream, which will trigger the Leave() hook above.
 	err := p.streamManager.UserLeave(p.Stream, uuid.FromStringOrNil(removeMember.UserId), uuid.FromStringOrNil(removeMember.SessionId))
 	if err != nil {
-		return runtime.ErrPartyRemove
+		return ErrPartyRemove
 	}
 
 	p.router.SendToPresenceIDs(p.logger, []*PresenceID{removePresenceID}, &rtapi.Envelope{Message: &rtapi.Envelope_PartyClose{PartyClose: &rtapi.PartyClose{
@@ -475,13 +480,13 @@ func (p *PartyHandler) Close(sessionID, node string) error {
 	p.Lock()
 	if p.stopped {
 		p.Unlock()
-		return runtime.ErrPartyClosed
+		return ErrPartyClosed
 	}
 
 	// Only the party leader may close the party.
 	if p.leader == nil || p.leader.SessionID.String() != sessionID || p.leader.Node != node {
 		p.Unlock()
-		return runtime.ErrPartyNotLeader
+		return ErrPartyNotLeader
 	}
 
 	p.stopped = true
@@ -499,13 +504,13 @@ func (p *PartyHandler) JoinRequestList(sessionID, node string) ([]*rtapi.UserPre
 	p.RLock()
 	if p.stopped {
 		p.RUnlock()
-		return nil, runtime.ErrPartyClosed
+		return nil, ErrPartyClosed
 	}
 
 	// Only the party leader may request a list of pending join requests.
 	if p.leader == nil || p.leader.SessionID.String() != sessionID || p.leader.Node != node {
 		p.RUnlock()
-		return nil, runtime.ErrPartyNotLeader
+		return nil, ErrPartyNotLeader
 	}
 
 	joinRequestUserPresences := make([]*rtapi.UserPresence, len(p.joinRequestUserPresences))
@@ -516,17 +521,17 @@ func (p *PartyHandler) JoinRequestList(sessionID, node string) ([]*rtapi.UserPre
 	return joinRequestUserPresences, nil
 }
 
-func (p *PartyHandler) MatchmakerAdd(sessionID, node, query string, minCount, maxCount, countMultiple int, stringProperties map[string]string, numericProperties map[string]float64) (string, []*PresenceID, error) {
+func (p *PartyHandler) MatchmakerAdd(sessionID, node, query string, minCount, maxCount int, stringProperties map[string]string, numericProperties map[string]float64) (string, []*PresenceID, error) {
 	p.RLock()
 	if p.stopped {
 		p.RUnlock()
-		return "", nil, runtime.ErrPartyClosed
+		return "", nil, ErrPartyClosed
 	}
 
 	// Only the party leader may start a matchmaking process.
 	if p.leader == nil || p.leader.SessionID.String() != sessionID || p.leader.Node != node {
 		p.RUnlock()
-		return "", nil, runtime.ErrPartyNotLeader
+		return "", nil, ErrPartyNotLeader
 	}
 
 	// Prepare the list of presences that will go into the matchmaker as part of the party.
@@ -549,7 +554,7 @@ func (p *PartyHandler) MatchmakerAdd(sessionID, node, query string, minCount, ma
 
 	p.RUnlock()
 
-	ticket, _, err := p.matchmaker.Add(p.ctx, presences, "", p.IDStr, query, minCount, maxCount, countMultiple, stringProperties, numericProperties)
+	ticket, err := p.matchmaker.Add(presences, "", p.IDStr, query, minCount, maxCount, stringProperties, numericProperties)
 	if err != nil {
 		return "", nil, err
 	}
@@ -560,13 +565,13 @@ func (p *PartyHandler) MatchmakerRemove(sessionID, node, ticket string) error {
 	p.RLock()
 	if p.stopped {
 		p.RUnlock()
-		return runtime.ErrPartyClosed
+		return ErrPartyClosed
 	}
 
 	// Only the party leader may stop a matchmaking process.
 	if p.leader == nil || p.leader.SessionID.String() != sessionID || p.leader.Node != node {
 		p.RUnlock()
-		return runtime.ErrPartyNotLeader
+		return ErrPartyNotLeader
 	}
 
 	p.RUnlock()
@@ -578,7 +583,7 @@ func (p *PartyHandler) DataSend(sessionID, node string, opCode int64, data []byt
 	p.RLock()
 	if p.stopped {
 		p.RUnlock()
-		return runtime.ErrPartyClosed
+		return ErrPartyClosed
 	}
 
 	// Check if the sender is a party member.
@@ -603,7 +608,7 @@ func (p *PartyHandler) DataSend(sessionID, node string, opCode int64, data []byt
 	p.RUnlock()
 
 	if sender == nil {
-		return runtime.ErrPartyNotMember
+		return ErrPartyNotMember
 	}
 	if len(recipients) == 0 {
 		return nil

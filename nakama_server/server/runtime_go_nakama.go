@@ -24,8 +24,8 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/heroiclabs/nakama-common/api"
-	"github.com/heroiclabs/nakama-common/rtapi"
 	"github.com/heroiclabs/nakama-common/runtime"
+	"github.com/heroiclabs/nakama-common/rtapi"
 	"github.com/heroiclabs/nakama/v3/social"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -35,22 +35,22 @@ import (
 
 type RuntimeGoNakamaModule struct {
 	sync.RWMutex
-	logger               *zap.Logger
-	db                   *runtime.DBManager
-	protojsonMarshaler   *protojson.MarshalOptions
-	config               Config
-	socialClient         *social.Client
-	//leaderboardCache     LeaderboardCache
-	//leaderboardRankCache LeaderboardRankCache
-	//leaderboardScheduler LeaderboardScheduler
-	sessionRegistry      SessionRegistry
-	sessionCache         SessionCache
-	statusRegistry       *StatusRegistry
-	matchRegistry        MatchRegistry
-	tracker              Tracker
-	//metrics              Metrics
-	streamManager        StreamManager
-	router               MessageRouter
+	logger *zap.Logger
+	//db                 map[int]*sql.DB
+	db                 *runtime.DBManager
+	protojsonMarshaler *protojson.MarshalOptions
+	config             Config
+	socialClient       *social.Client
+	// leaderboardCache     LeaderboardCache
+	// leaderboardRankCache LeaderboardRankCache
+	// leaderboardScheduler LeaderboardScheduler
+	sessionRegistry SessionRegistry
+	sessionCache    SessionCache
+	matchRegistry   MatchRegistry
+	tracker         Tracker
+	// metrics              *Metrics
+	streamManager StreamManager
+	router        MessageRouter
 
 	eventFn RuntimeEventCustomFunction
 
@@ -59,51 +59,49 @@ type RuntimeGoNakamaModule struct {
 	matchCreateFn RuntimeMatchCreateFunction
 }
 
-//func NewRuntimeGoNakamaModule(logger *zap.Logger, db *runtime.DBManager, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client, /*leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler,*/ sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry *StatusRegistry, matchRegistry MatchRegistry, tracker Tracker, /*metrics Metrics,*/ streamManager StreamManager, router MessageRouter) *RuntimeGoNakamaModule {
 func NewRuntimeGoNakamaModule(logger *zap.Logger, db *runtime.DBManager, protojsonMarshaler *protojson.MarshalOptions, config Config, socialClient *social.Client /*leaderboardCache LeaderboardCache, leaderboardRankCache LeaderboardRankCache, leaderboardScheduler LeaderboardScheduler,*/, sessionRegistry SessionRegistry, sessionCache SessionCache, matchRegistry MatchRegistry, tracker Tracker /*metrics *Metrics,*/, streamManager StreamManager, router MessageRouter) *RuntimeGoNakamaModule {
 	return &RuntimeGoNakamaModule{
-		logger:               logger,
-		db:                   db,
-		protojsonMarshaler:   protojsonMarshaler,
-		config:               config,
-		socialClient:         socialClient,
-		//leaderboardCache:     leaderboardCache,
-		//leaderboardRankCache: leaderboardRankCache,
-		//leaderboardScheduler: leaderboardScheduler,
-		sessionRegistry:      sessionRegistry,
-		sessionCache:         sessionCache,
-		//statusRegistry:       statusRegistry,
-		matchRegistry:        matchRegistry,
-		tracker:              tracker,
-		//metrics:              metrics,
-		streamManager:        streamManager,
-		router:               router,
+		logger:             logger,
+		db:                 db,
+		protojsonMarshaler: protojsonMarshaler,
+		config:             config,
+		socialClient:       socialClient,
+		// leaderboardCache:     leaderboardCache,
+		// leaderboardRankCache: leaderboardRankCache,
+		// leaderboardScheduler: leaderboardScheduler,
+		sessionRegistry: sessionRegistry,
+		sessionCache:    sessionCache,
+		matchRegistry:   matchRegistry,
+		tracker:         tracker,
+		// metrics:              metrics,
+		streamManager: streamManager,
+		router:        router,
 
 		node: config.GetName(),
 	}
 }
 
+// func (n *RuntimeGoNakamaModule) AuthenticateApple(ctx context.Context, token, username string, create bool) (string, string, bool, error) {
+// 	if n.config.GetSocial().Apple.BundleId == "" {
+// 		return "", "", false, errors.New("Apple authentication is not configured")
+// 	}
+
+// 	if token == "" {
+// 		return "", "", false, errors.New("expects token string")
+// 	}
+
+// 	if username == "" {
+// 		username = generateUsername()
+// 	} else if invalidUsernameRegex.MatchString(username) {
+// 		return "", "", false, errors.New("expects username to be valid, no spaces or control characters allowed")
+// 	} else if len(username) > 128 {
+// 		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
+// 	}
+
+// 	return AuthenticateApple(ctx, n.logger, n.db, n.socialClient, n.config.GetSocial().Apple.BundleId, token, username, create)
+// }
+
 /*
-func (n *RuntimeGoNakamaModule) AuthenticateApple(ctx context.Context, token, username string, create bool) (string, string, bool, error) {
-	if n.config.GetSocial().Apple.BundleId == "" {
-		return "", "", false, errors.New("Apple authentication is not configured")
-	}
-
-	if token == "" {
-		return "", "", false, errors.New("expects token string")
-	}
-
-	if username == "" {
-		username = generateUsername()
-	} else if invalidUsernameRegex.MatchString(username) {
-		return "", "", false, errors.New("expects username to be valid, no spaces or control characters allowed")
-	} else if len(username) > 128 {
-		return "", "", false, errors.New("expects id to be valid, must be 1-128 bytes")
-	}
-
-	return AuthenticateApple(ctx, n.logger, n.db, n.socialClient, n.config.GetSocial().Apple.BundleId, token, username, create)
-}
-
 func (n *RuntimeGoNakamaModule) AuthenticateCustom(ctx context.Context, id, username string, create bool) (string, string, bool, error) {
 	if id == "" {
 		return "", "", false, errors.New("expects id string")
@@ -123,7 +121,8 @@ func (n *RuntimeGoNakamaModule) AuthenticateCustom(ctx context.Context, id, user
 
 	return AuthenticateCustom(ctx, n.logger, n.db, id, username, create)
 }
-
+*/
+/*
 func (n *RuntimeGoNakamaModule) AuthenticateDevice(ctx context.Context, id, username string, create bool) (string, string, bool, error) {
 	if id == "" {
 		return "", "", false, errors.New("expects id string")
@@ -143,7 +142,9 @@ func (n *RuntimeGoNakamaModule) AuthenticateDevice(ctx context.Context, id, user
 
 	return AuthenticateDevice(ctx, n.logger, n.db, id, username, create)
 }
+*/
 
+/*
 func (n *RuntimeGoNakamaModule) AuthenticateEmail(ctx context.Context, email, password, username string, create bool) (string, string, bool, error) {
 	var attemptUsernameLogin bool
 	if email == "" {
@@ -291,20 +292,16 @@ func (n *RuntimeGoNakamaModule) AuthenticateSteam(ctx context.Context, token, us
 	return userID, username, created, err
 }
 */
-
 func (n *RuntimeGoNakamaModule) AuthenticateTokenGenerate(userID, username string, exp int64, vars map[string]string) (string, int64, error) {
 	if userID == "" {
 		return "", 0, errors.New("expects user id")
 	}
-	/*
-	uid, err := uuid.FromString(userID)
-	if err != nil {
-		return "", 0, errors.New("expects valid user id")
-	}
-	*/
+	//uid, err := uuid.FromString(userID)
+	// if err != nil {
+	// 	return "", 0, errors.New("expects valid user id")
+	// }
 
 	if username == "" {
-		//username = generateUsername()
 		return "", 0, errors.New("expects username")
 	}
 
@@ -325,7 +322,7 @@ func (n *RuntimeGoNakamaModule) AccountGetId(ctx context.Context, userID string)
 		return nil, errors.New("invalid user id")
 	}
 
-	account, err := GetAccount(ctx, n.logger, n.db, n.statusRegistry, u)
+	account, err := GetAccount(ctx, n.logger, n.db, n.tracker, u)
 	if err != nil {
 		return nil, err
 	}
@@ -344,7 +341,7 @@ func (n *RuntimeGoNakamaModule) AccountsGetId(ctx context.Context, userIDs []str
 		}
 	}
 
-	return GetAccounts(ctx, n.logger, n.db, n.statusRegistry, userIDs)
+	return GetAccounts(ctx, n.logger, n.db, n.tracker, userIDs)
 }
 
 func (n *RuntimeGoNakamaModule) AccountUpdateId(ctx context.Context, userID, username string, metadata map[string]interface{}, displayName, timezone, location, langTag, avatarUrl string) error {
@@ -434,7 +431,7 @@ func (n *RuntimeGoNakamaModule) UsersGetId(ctx context.Context, userIDs []string
 		}
 	}
 
-	users, err := GetUsers(ctx, n.logger, n.db, n.statusRegistry, userIDs, nil, facebookIDs)
+	users, err := GetUsers(ctx, n.logger, n.db, n.tracker, userIDs, nil, facebookIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -453,7 +450,7 @@ func (n *RuntimeGoNakamaModule) UsersGetUsername(ctx context.Context, usernames 
 		}
 	}
 
-	users, err := GetUsers(ctx, n.logger, n.db, n.statusRegistry, nil, usernames, nil)
+	users, err := GetUsers(ctx, n.logger, n.db, n.tracker, nil, usernames, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -470,7 +467,7 @@ func (n *RuntimeGoNakamaModule) UsersGetRandom(ctx context.Context, count int) (
 		return nil, errors.New("count must be 0-1000")
 	}
 
-	return GetRandomUsers(ctx, n.logger, n.db, n.statusRegistry, count)
+	return GetRandomUsers(ctx, n.logger, n.db, n.tracker, count)
 }
 
 func (n *RuntimeGoNakamaModule) UsersBanId(ctx context.Context, userIDs []string) error {
@@ -673,7 +670,6 @@ func (n *RuntimeGoNakamaModule) UnlinkSteam(ctx context.Context, userID, token s
 	return UnlinkSteam(ctx, n.logger, n.db, n.config, n.socialClient, id, token)
 }
 */
-
 func (n *RuntimeGoNakamaModule) StreamUserList(mode uint8, subject, subcontext, label string, includeHidden, includeNotHidden bool) ([]runtime.Presence, error) {
 	stream := PresenceStream{
 		Mode:  mode,
@@ -1068,12 +1064,11 @@ func (n *RuntimeGoNakamaModule) MatchCreate(ctx context.Context, module string, 
 	fn := n.matchCreateFn
 	n.RUnlock()
 
-	return n.matchRegistry.CreateMatch(ctx, fn, module, params)
+	return n.matchRegistry.CreateMatch(ctx, n.logger, fn, module, params)
 }
 
 func (n *RuntimeGoNakamaModule) MatchGet(ctx context.Context, id string) (*api.Match, error) {
-	match, _, err := n.matchRegistry.GetMatch(ctx, id)
-	return match, err
+	return n.matchRegistry.GetMatch(ctx, id)
 }
 
 func (n *RuntimeGoNakamaModule) MatchList(ctx context.Context, limit int, authoritative bool, label string, minSize, maxSize *int, query string) ([]*api.Match, error) {
@@ -1094,12 +1089,8 @@ func (n *RuntimeGoNakamaModule) MatchList(ctx context.Context, limit int, author
 	if maxSize != nil {
 		maxSizeWrapper = &wrapperspb.Int32Value{Value: int32(*maxSize)}
 	}
-	matches, _, err := n.matchRegistry.ListMatches(ctx, limit, authoritativeWrapper, labelWrapper, minSizeWrapper, maxSizeWrapper, queryWrapper, nil)
-	return matches, err
-}
 
-func (n *RuntimeGoNakamaModule) MatchSignal(ctx context.Context, id string, data string) (string, error) {
-	return n.matchRegistry.Signal(ctx, id, data)
+	return n.matchRegistry.ListMatches(ctx, limit, authoritativeWrapper, labelWrapper, minSizeWrapper, maxSizeWrapper, queryWrapper)
 }
 
 func (n *RuntimeGoNakamaModule) NotificationSend(ctx context.Context, userID, subject string, content map[string]interface{}, code int, sender string, persistent bool) error {
@@ -1198,69 +1189,6 @@ func (n *RuntimeGoNakamaModule) NotificationsSend(ctx context.Context, notificat
 	return NotificationSend(ctx, n.logger, n.db, n.router, ns)
 }
 
-func (n *RuntimeGoNakamaModule) NotificationSendAll(ctx context.Context, subject string, content map[string]interface{}, code int, persistent bool) error {
-	if subject == "" {
-		return errors.New("expects subject to be a non-empty string")
-	}
-
-	contentBytes, err := json.Marshal(content)
-	if err != nil {
-		return fmt.Errorf("failed to convert content: %s", err.Error())
-	}
-	contentString := string(contentBytes)
-
-	if code <= 0 {
-		return errors.New("expects code to number above 0")
-	}
-
-	senderID := uuid.Nil.String()
-	createTime := &timestamppb.Timestamp{Seconds: time.Now().UTC().Unix()}
-
-	not := &api.Notification{
-		Id:         uuid.Must(uuid.NewV4()).String(),
-		Subject:    subject,
-		Content:    contentString,
-		Code:       int32(code),
-		SenderId:   senderID,
-		Persistent: persistent,
-		CreateTime: createTime,
-	}
-
-	return NotificationSendAll(ctx, n.logger, n.db, n.tracker, n.router, not)
-}
-
-func (n *RuntimeGoNakamaModule) NotificationsDelete(ctx context.Context, notifications []*runtime.NotificationDelete) error {
-	ns := make(map[uuid.UUID][]string)
-
-	for _, notification := range notifications {
-		uid, err := uuid.FromString(notification.UserID)
-		if err != nil {
-			return errors.New("expects userID to be a valid UUID")
-		}
-
-		_, err = uuid.FromString(notification.NotificationID)
-		if err != nil {
-			return errors.New("expects notificationID to be a valid UUID")
-		}
-
-		no := ns[uid]
-		if no == nil {
-			no = make([]string, 0, 1)
-		}
-		no = append(no, notification.NotificationID)
-		ns[uid] = no
-	}
-
-	for uid, notificationIDs := range ns {
-		err := NotificationDelete(ctx, n.logger, n.db, uid, notificationIDs)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-
 /*
 func (n *RuntimeGoNakamaModule) WalletUpdate(ctx context.Context, userID string, changeset map[string]int64, metadata map[string]interface{}, updateLedger bool) (map[string]int64, map[string]int64, error) {
 	uid, err := uuid.FromString(userID)
@@ -1352,7 +1280,7 @@ func (n *RuntimeGoNakamaModule) WalletLedgerList(ctx context.Context, userID str
 		return nil, "", errors.New("expects limit to be 0-100")
 	}
 
-	items, newCursor, _, err := ListWalletLedger(ctx, n.logger, n.db, uid, &limit, cursor)
+	items, newCursor, err := ListWalletLedger(ctx, n.logger, n.db, uid, &limit, cursor)
 	if err != nil {
 		return nil, "", err
 	}
@@ -1463,7 +1391,7 @@ func (n *RuntimeGoNakamaModule) StorageWrite(ctx context.Context, writes []*runt
 		ops = append(ops, op)
 	}
 
-	acks, _, err := StorageWriteObjects(ctx, n.logger, n.db, n.metrics, true, ops)
+	acks, _, err := StorageWriteObjects(ctx, n.logger, n.db, true, ops)
 	if err != nil {
 		return nil, err
 	}
@@ -1624,7 +1552,7 @@ func (n *RuntimeGoNakamaModule) MultiUpdate(ctx context.Context, accountUpdates 
 		}
 	}
 
-	return MultiUpdate(ctx, n.logger, n.db, n.metrics, accountUpdateOps, storageWriteOps, walletUpdateOps, updateLedger)
+	return MultiUpdate(ctx, n.logger, n.db, accountUpdateOps, storageWriteOps, walletUpdateOps, updateLedger)
 }
 
 func (n *RuntimeGoNakamaModule) LeaderboardCreate(ctx context.Context, id string, authoritative bool, sortOrder, operator, resetSchedule string, metadata map[string]interface{}) error {
@@ -1796,32 +1724,11 @@ func (n *RuntimeGoNakamaModule) LeaderboardRecordDelete(ctx context.Context, id,
 	return LeaderboardRecordDelete(ctx, n.logger, n.db, n.leaderboardCache, n.leaderboardRankCache, uuid.Nil, id, ownerID)
 }
 
-func (n *RuntimeGoNakamaModule) LeaderboardRecordsHaystack(ctx context.Context, id, ownerID string, limit int, cursor string, expiry int64) (*api.LeaderboardRecordList, error) {
-	if id == "" {
-		return nil, errors.New("expects a leaderboard ID string")
-	}
-
-	owner, err := uuid.FromString(ownerID)
-	if err != nil {
-		return nil, errors.New("expects owner ID to be a valid identifier")
-	}
-
-	if limit < 1 || limit > 100 {
-		return nil, errors.New("limit must be 1-100")
-	}
-
-	if expiry < 0 {
-		return nil, errors.New("expiry should be time since epoch in seconds and has to be a positive integer")
-	}
-
-	return LeaderboardRecordsHaystack(ctx, n.logger, n.db, n.leaderboardCache, n.leaderboardRankCache, id, cursor, owner, limit, expiry)
-}
-
 func (n *RuntimeGoNakamaModule) LeaderboardsGetId(ctx context.Context, IDs []string) ([]*api.Leaderboard, error) {
 	return LeaderboardsGet(n.leaderboardCache, IDs), nil
 }
 
-func (n *RuntimeGoNakamaModule) TournamentCreate(ctx context.Context, id string, authoritative bool, sortOrder, operator, resetSchedule string, metadata map[string]interface{}, title, description string, category, startTime, endTime, duration, maxSize, maxNumScore int, joinRequired bool) error {
+func (n *RuntimeGoNakamaModule) TournamentCreate(ctx context.Context, id string, sortOrder, operator, resetSchedule string, metadata map[string]interface{}, title, description string, category, startTime, endTime, duration, maxSize, maxNumScore int, joinRequired bool) error {
 	if id == "" {
 		return errors.New("expects a tournament ID string")
 	}
@@ -1877,8 +1784,8 @@ func (n *RuntimeGoNakamaModule) TournamentCreate(ctx context.Context, id string,
 	if endTime != 0 && endTime < startTime {
 		return errors.New("endTime must be >= startTime")
 	}
-	if duration <= 0 {
-		return errors.New("duration must be > 0")
+	if duration < 0 {
+		return errors.New("duration must be >= 0")
 	}
 	if maxSize < 0 {
 		return errors.New("maxSize must be >= 0")
@@ -1887,7 +1794,7 @@ func (n *RuntimeGoNakamaModule) TournamentCreate(ctx context.Context, id string,
 		return errors.New("maxNumScore must be >= 0")
 	}
 
-	return TournamentCreate(ctx, n.logger, n.leaderboardCache, n.leaderboardScheduler, id, authoritative, sort, oper, resetSchedule, metadataStr, title, description, category, startTime, endTime, duration, maxSize, maxNumScore, joinRequired)
+	return TournamentCreate(ctx, n.logger, n.leaderboardCache, n.leaderboardScheduler, id, sort, oper, resetSchedule, metadataStr, title, description, category, startTime, endTime, duration, maxSize, maxNumScore, joinRequired)
 }
 
 func (n *RuntimeGoNakamaModule) TournamentDelete(ctx context.Context, id string) error {
@@ -1939,7 +1846,7 @@ func (n *RuntimeGoNakamaModule) TournamentsGetId(ctx context.Context, tournament
 		return []*api.Tournament{}, nil
 	}
 
-	return TournamentsGet(ctx, n.logger, n.db, n.leaderboardCache, tournamentIDs)
+	return TournamentsGet(ctx, n.logger, n.db, tournamentIDs)
 }
 
 func (n *RuntimeGoNakamaModule) TournamentList(ctx context.Context, categoryStart, categoryEnd, startTime, endTime, limit int, cursor string) (*api.TournamentList, error) {
@@ -2038,7 +1945,7 @@ func (n *RuntimeGoNakamaModule) TournamentRecordWrite(ctx context.Context, id, o
 	return TournamentRecordWrite(ctx, n.logger, n.db, n.leaderboardCache, n.leaderboardRankCache, uuid.Nil, id, owner, username, score, subscore, metadataStr, operator)
 }
 
-func (n *RuntimeGoNakamaModule) TournamentRecordsHaystack(ctx context.Context, id, ownerID string, limit int, cursor string, expiry int64) (*api.TournamentRecordList, error) {
+func (n *RuntimeGoNakamaModule) TournamentRecordsHaystack(ctx context.Context, id, ownerID string, limit int, expiry int64) ([]*api.LeaderboardRecord, error) {
 	if id == "" {
 		return nil, errors.New("expects a tournament ID string")
 	}
@@ -2056,16 +1963,16 @@ func (n *RuntimeGoNakamaModule) TournamentRecordsHaystack(ctx context.Context, i
 		return nil, errors.New("expiry should be time since epoch in seconds and has to be a positive integer")
 	}
 
-	return TournamentRecordsHaystack(ctx, n.logger, n.db, n.leaderboardCache, n.leaderboardRankCache, id, cursor, owner, limit, expiry)
+	return TournamentRecordsHaystack(ctx, n.logger, n.db, n.leaderboardCache, n.leaderboardRankCache, id, owner, limit, expiry)
 }
 
-func (n *RuntimeGoNakamaModule) PurchaseValidateApple(ctx context.Context, userID, receipt string, persist bool, passwordOverride ...string) (*api.ValidatePurchaseResponse, error) {
+func (n *RuntimeGoNakamaModule) PurchaseValidateApple(ctx context.Context, userID, receipt string, passwordOverride ...string) (*api.ValidatePurchaseResponse, error) {
 	if n.config.GetIAP().Apple.SharedPassword == "" && len(passwordOverride) == 0 {
-		return nil, errors.New("apple IAP is not configured")
+		return nil, errors.New("Apple IAP is not configured.")
 	}
 	password := n.config.GetIAP().Apple.SharedPassword
 	if len(passwordOverride) > 1 {
-		return nil, errors.New("expects a single password override parameter")
+		return nil, errors.New("Expects a single password override parameter")
 	} else if len(passwordOverride) == 1 {
 		password = passwordOverride[0]
 	}
@@ -2079,7 +1986,7 @@ func (n *RuntimeGoNakamaModule) PurchaseValidateApple(ctx context.Context, userI
 		return nil, errors.New("receipt cannot be empty string")
 	}
 
-	validation, err := ValidatePurchasesApple(ctx, n.logger, n.db, uid, password, receipt, persist)
+	validation, err := ValidatePurchasesApple(ctx, n.logger, n.db, uid, password, receipt)
 	if err != nil {
 		return nil, err
 	}
@@ -2087,26 +1994,9 @@ func (n *RuntimeGoNakamaModule) PurchaseValidateApple(ctx context.Context, userI
 	return validation, nil
 }
 
-func (n *RuntimeGoNakamaModule) PurchaseValidateGoogle(ctx context.Context, userID, receipt string, persist bool, overrides ...struct {
-	ClientEmail string
-	PrivateKey  string
-}) (*api.ValidatePurchaseResponse, error) {
-	clientEmail := n.config.GetIAP().Google.ClientEmail
-	privateKey := n.config.GetIAP().Google.PrivateKey
-
-	if len(overrides) > 1 {
-		return nil, errors.New("expects a single override parameter")
-	} else if len(overrides) == 1 {
-		if overrides[0].ClientEmail != "" {
-			clientEmail = overrides[0].ClientEmail
-		}
-		if overrides[0].PrivateKey != "" {
-			privateKey = overrides[0].PrivateKey
-		}
-	}
-
-	if clientEmail == "" || privateKey == "" {
-		return nil, errors.New("google IAP is not configured")
+func (n *RuntimeGoNakamaModule) PurchaseValidateGoogle(ctx context.Context, userID, receipt string) (*api.ValidatePurchaseResponse, error) {
+	if n.config.GetIAP().Google.ClientEmail == "" || n.config.GetIAP().Google.PrivateKey == "" {
+		return nil, errors.New("Google IAP is not configured.")
 	}
 
 	uid, err := uuid.FromString(userID)
@@ -2118,7 +2008,7 @@ func (n *RuntimeGoNakamaModule) PurchaseValidateGoogle(ctx context.Context, user
 		return nil, errors.New("receipt cannot be empty string")
 	}
 
-	validation, err := ValidatePurchaseGoogle(ctx, n.logger, n.db, uid, &IAPGoogleConfig{clientEmail, privateKey, ""}, receipt, persist)
+	validation, err := ValidatePurchaseGoogle(ctx, n.logger, n.db, uid, n.config.GetIAP().Google, receipt)
 	if err != nil {
 		return nil, err
 	}
@@ -2126,7 +2016,7 @@ func (n *RuntimeGoNakamaModule) PurchaseValidateGoogle(ctx context.Context, user
 	return validation, nil
 }
 
-func (n *RuntimeGoNakamaModule) PurchaseValidateHuawei(ctx context.Context, userID, signature, inAppPurchaseData string, persist bool) (*api.ValidatePurchaseResponse, error) {
+func (n *RuntimeGoNakamaModule) PurchaseValidateHuawei(ctx context.Context, userID, signature, inAppPurchaseData string) (*api.ValidatePurchaseResponse, error) {
 	if n.config.GetIAP().Huawei.ClientID == "" ||
 		n.config.GetIAP().Huawei.ClientSecret == "" ||
 		n.config.GetIAP().Huawei.PublicKey == "" {
@@ -2146,7 +2036,7 @@ func (n *RuntimeGoNakamaModule) PurchaseValidateHuawei(ctx context.Context, user
 		return nil, errors.New("inAppPurchaseData cannot be empty string")
 	}
 
-	validation, err := ValidatePurchaseHuawei(ctx, n.logger, n.db, uid, n.config.GetIAP().Huawei, inAppPurchaseData, signature, persist)
+	validation, err := ValidatePurchaseHuawei(ctx, n.logger, n.db, uid, n.config.GetIAP().Huawei, inAppPurchaseData, signature)
 	if err != nil {
 		return nil, err
 	}
@@ -2174,99 +2064,6 @@ func (n *RuntimeGoNakamaModule) PurchaseGetByTransactionId(ctx context.Context, 
 	}
 
 	return GetPurchaseByTransactionID(ctx, n.logger, n.db, transactionID)
-}
-
-func (n *RuntimeGoNakamaModule) SubscriptionValidateApple(ctx context.Context, userID, receipt string, persist bool, passwordOverride ...string) (*api.ValidateSubscriptionResponse, error) {
-	if n.config.GetIAP().Apple.SharedPassword == "" && len(passwordOverride) == 0 {
-		return nil, errors.New("apple IAP is not configured")
-	}
-	password := n.config.GetIAP().Apple.SharedPassword
-	if len(passwordOverride) > 1 {
-		return nil, errors.New("expects a single password override parameter")
-	} else if len(passwordOverride) == 1 {
-		password = passwordOverride[0]
-	}
-
-	uid, err := uuid.FromString(userID)
-	if err != nil {
-		return nil, errors.New("user ID must be a valid id string")
-	}
-
-	if len(receipt) < 1 {
-		return nil, errors.New("receipt cannot be empty string")
-	}
-
-	validation, err := ValidateSubscriptionApple(ctx, n.logger, n.db, uid, password, receipt, persist)
-	if err != nil {
-		return nil, err
-	}
-
-	return validation, nil
-}
-
-func (n *RuntimeGoNakamaModule) SubscriptionValidateGoogle(ctx context.Context, userID, receipt string, persist bool, overrides ...struct {
-	ClientEmail string
-	PrivateKey  string
-}) (*api.ValidateSubscriptionResponse, error) {
-	clientEmail := n.config.GetIAP().Google.ClientEmail
-	privateKey := n.config.GetIAP().Google.PrivateKey
-
-	if len(overrides) > 1 {
-		return nil, errors.New("expects a single override parameter")
-	} else if len(overrides) == 1 {
-		if overrides[0].ClientEmail != "" {
-			clientEmail = overrides[0].ClientEmail
-		}
-		if overrides[0].PrivateKey != "" {
-			privateKey = overrides[0].PrivateKey
-		}
-	}
-
-	if clientEmail == "" || privateKey == "" {
-		return nil, errors.New("google IAP is not configured")
-	}
-
-	uid, err := uuid.FromString(userID)
-	if err != nil {
-		return nil, errors.New("user ID must be a valid id string")
-	}
-
-	if len(receipt) < 1 {
-		return nil, errors.New("receipt cannot be empty string")
-	}
-
-	validation, err := ValidateSubscriptionGoogle(ctx, n.logger, n.db, uid, &IAPGoogleConfig{clientEmail, privateKey, ""}, receipt, persist)
-	if err != nil {
-		return nil, err
-	}
-
-	return validation, nil
-}
-
-func (n *RuntimeGoNakamaModule) SubscriptionsList(ctx context.Context, userID string, limit int, cursor string) (*api.SubscriptionList, error) {
-	if userID != "" {
-		if _, err := uuid.FromString(userID); err != nil {
-			return nil, errors.New("expects a valid user ID")
-		}
-	}
-
-	if limit <= 0 || limit > 100 {
-		return nil, errors.New("limit must be a positive value <= 100")
-	}
-
-	return ListSubscriptions(ctx, n.logger, n.db, userID, limit, cursor)
-}
-
-func (n *RuntimeGoNakamaModule) SubscriptionGetByProductId(ctx context.Context, userID, productID string) (string, *api.ValidatedSubscription, error) {
-	if _, err := uuid.FromString(userID); err != nil {
-		return "", nil, errors.New("expects a valid user ID")
-	}
-
-	if productID == "" {
-		return "", nil, errors.New("expects a product id string.")
-	}
-
-	return GetSubscriptionByProductId(ctx, n.logger, n.db, userID, productID)
 }
 
 func (n *RuntimeGoNakamaModule) GroupsGetId(ctx context.Context, groupIDs []string) ([]*api.Group, error) {
@@ -2363,7 +2160,12 @@ func (n *RuntimeGoNakamaModule) GroupUpdate(ctx context.Context, id, name, creat
 		metadataWrapper = &wrapperspb.StringValue{Value: string(metadataBytes)}
 	}
 
-	return UpdateGroup(ctx, n.logger, n.db, groupID, uuid.Nil, creator, nameWrapper, langTagWrapper, descriptionWrapper, avatarURLWrapper, metadataWrapper, openWrapper, maxCount)
+	maxCountValue := 0
+	if maxCount > 0 && maxCount <= 100 {
+		maxCountValue = maxCount
+	}
+
+	return UpdateGroup(ctx, n.logger, n.db, groupID, uuid.Nil, creator, nameWrapper, langTagWrapper, descriptionWrapper, avatarURLWrapper, metadataWrapper, openWrapper, maxCountValue)
 }
 
 func (n *RuntimeGoNakamaModule) GroupDelete(ctx context.Context, id string) error {
@@ -2408,7 +2210,7 @@ func (n *RuntimeGoNakamaModule) GroupUserLeave(ctx context.Context, groupID, use
 		return errors.New("expects a username string")
 	}
 
-	return LeaveGroup(ctx, n.logger, n.db, n.tracker, n.router, n.streamManager, group, user, username)
+	return LeaveGroup(ctx, n.logger, n.db, n.router, group, user, username)
 }
 
 func (n *RuntimeGoNakamaModule) GroupUsersAdd(ctx context.Context, callerID, groupID string, userIDs []string) error {
@@ -2444,39 +2246,6 @@ func (n *RuntimeGoNakamaModule) GroupUsersAdd(ctx context.Context, callerID, gro
 	return AddGroupUsers(ctx, n.logger, n.db, n.router, caller, group, users)
 }
 
-func (n *RuntimeGoNakamaModule) GroupUsersBan(ctx context.Context, callerID, groupID string, userIDs []string) error {
-	caller := uuid.Nil
-	if callerID != "" {
-		var err error
-		if caller, err = uuid.FromString(callerID); err != nil {
-			return errors.New("expects caller ID to be a valid identifier")
-		}
-	}
-
-	group, err := uuid.FromString(groupID)
-	if err != nil {
-		return errors.New("expects group ID to be a valid identifier")
-	}
-
-	if len(userIDs) == 0 {
-		return nil
-	}
-
-	users := make([]uuid.UUID, 0, len(userIDs))
-	for _, userID := range userIDs {
-		uid, err := uuid.FromString(userID)
-		if err != nil {
-			return errors.New("expects each user ID to be a valid identifier")
-		}
-		if uid == uuid.Nil {
-			return errors.New("cannot ban the root user")
-		}
-		users = append(users, uid)
-	}
-
-	return BanGroupUsers(ctx, n.logger, n.db, n.tracker, n.router, n.streamManager, caller, group, users)
-}
-
 func (n *RuntimeGoNakamaModule) GroupUsersKick(ctx context.Context, callerID, groupID string, userIDs []string) error {
 	caller := uuid.Nil
 	if callerID != "" {
@@ -2507,7 +2276,7 @@ func (n *RuntimeGoNakamaModule) GroupUsersKick(ctx context.Context, callerID, gr
 		users = append(users, uid)
 	}
 
-	return KickGroupUsers(ctx, n.logger, n.db, n.tracker, n.router, n.streamManager, caller, group, users)
+	return KickGroupUsers(ctx, n.logger, n.db, n.router, caller, group, users)
 }
 
 func (n *RuntimeGoNakamaModule) GroupUsersPromote(ctx context.Context, callerID, groupID string, userIDs []string) error {
@@ -2595,7 +2364,7 @@ func (n *RuntimeGoNakamaModule) GroupUsersList(ctx context.Context, id string, l
 		stateWrapper = &wrapperspb.Int32Value{Value: int32(stateValue)}
 	}
 
-	users, err := ListGroupUsers(ctx, n.logger, n.db, n.statusRegistry, groupID, limit, stateWrapper, cursor)
+	users, err := ListGroupUsers(ctx, n.logger, n.db, n.tracker, groupID, limit, stateWrapper, cursor)
 	if err != nil {
 		return nil, "", err
 	}
@@ -2652,7 +2421,6 @@ func (n *RuntimeGoNakamaModule) UserGroupsList(ctx context.Context, userID strin
 	return groups.UserGroups, groups.Cursor, nil
 }
 */
-
 func (n *RuntimeGoNakamaModule) Event(ctx context.Context, evt *api.Event) error {
 	if ctx == nil {
 		return errors.New("expects a non-nil context")
@@ -2684,7 +2452,6 @@ func (n *RuntimeGoNakamaModule) MetricsTimerRecord(name string, tags map[string]
 	n.metrics.CustomTimer(name, tags, value)
 }
 */
-
 func (n *RuntimeGoNakamaModule) FriendsList(ctx context.Context, userID string, limit int, state *int, cursor string) ([]*api.Friend, string, error) {
 	uid, err := uuid.FromString(userID)
 	if err != nil {
@@ -2712,159 +2479,6 @@ func (n *RuntimeGoNakamaModule) FriendsList(ctx context.Context, userID string, 
 	return friends.Friends, friends.Cursor, nil
 }
 
-
-func (n *RuntimeGoNakamaModule) FriendsAdd(ctx context.Context, userID string, username string, ids []string, usernames []string) error {
-	userUUID, err := uuid.FromString(userID)
-	if err != nil {
-		return errors.New("expects user ID to be a valid identifier")
-	}
-
-	if len(ids) == 0 && len(usernames) == 0 {
-		return nil
-	}
-
-	for _, id := range ids {
-		if userID == id {
-			return errors.New("cannot add self as friend")
-		}
-		if uid, err := uuid.FromString(id); err != nil || uid == uuid.Nil {
-			return fmt.Errorf("invalid user ID '%v'", id)
-		}
-	}
-
-	for _, u := range usernames {
-		if u == "" {
-			return errors.New("username to add must not be empty")
-		}
-		if username == u {
-			return errors.New("cannot add self as friend")
-		}
-	}
-
-	fetchIDs, err := fetchUserID(ctx, n.db, usernames)
-	if err != nil {
-		n.logger.Error("Could not fetch user IDs.", zap.Error(err), zap.Strings("usernames", usernames))
-		return errors.New("error while trying to add friends")
-	}
-
-	if len(fetchIDs)+len(ids) == 0 {
-		return errors.New("no valid ID or username was provided")
-	}
-
-	allIDs := make([]string, 0, len(ids)+len(fetchIDs))
-	allIDs = append(allIDs, ids...)
-	allIDs = append(allIDs, fetchIDs...)
-
-	err = AddFriends(ctx, n.logger, n.db, n.router, userUUID, username, allIDs)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-
-func (n *RuntimeGoNakamaModule) FriendsDelete(ctx context.Context, userID string, username string, ids []string, usernames []string) error {
-	userUUID, err := uuid.FromString(userID)
-	if err != nil {
-		return errors.New("expects user ID to be a valid identifier")
-	}
-
-	if len(ids) == 0 && len(usernames) == 0 {
-		return nil
-	}
-
-	for _, id := range ids {
-		if userID == id {
-			return errors.New("cannot delete self")
-		}
-		if uid, err := uuid.FromString(id); err != nil || uid == uuid.Nil {
-			return fmt.Errorf("invalid user ID '%v'", id)
-		}
-	}
-
-	for _, u := range usernames {
-		if u == "" {
-			return errors.New("username to delete must not be empty")
-		}
-		if username == u {
-			return errors.New("cannot delete self")
-		}
-	}
-
-	fetchIDs, err := fetchUserID(ctx, n.db, usernames)
-	if err != nil {
-		n.logger.Error("Could not fetch user IDs.", zap.Error(err), zap.Strings("usernames", usernames))
-		return errors.New("error while trying to delete friends")
-	}
-
-	if len(fetchIDs)+len(ids) == 0 {
-		return errors.New("no valid ID or username was provided")
-	}
-
-	allIDs := make([]string, 0, len(ids)+len(fetchIDs))
-	allIDs = append(allIDs, ids...)
-	allIDs = append(allIDs, fetchIDs...)
-
-	err = DeleteFriends(ctx, n.logger, n.db.Hugh_db, userUUID, allIDs)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (n *RuntimeGoNakamaModule) FriendsBlock(ctx context.Context, userID string, username string, ids []string, usernames []string) error {
-	userUUID, err := uuid.FromString(userID)
-	if err != nil {
-		return errors.New("expects user ID to be a valid identifier")
-	}
-
-	if len(ids) == 0 && len(usernames) == 0 {
-		return nil
-	}
-
-	for _, id := range ids {
-		if userID == id {
-			return errors.New("cannot block self")
-		}
-		if uid, err := uuid.FromString(id); err != nil || uid == uuid.Nil {
-			return fmt.Errorf("invalid user ID '%v'", id)
-		}
-	}
-
-	for _, u := range usernames {
-		if u == "" {
-			return errors.New("username to block must not be empty")
-		}
-		if username == u {
-			return errors.New("cannot block self")
-		}
-	}
-
-	fetchIDs, err := fetchUserID(ctx, n.db, usernames)
-	if err != nil {
-		n.logger.Error("Could not fetch user IDs.", zap.Error(err), zap.Strings("usernames", usernames))
-		return errors.New("error while trying to block friends")
-	}
-
-	if len(fetchIDs)+len(ids) == 0 {
-		return errors.New("no valid ID or username was provided")
-	}
-
-	allIDs := make([]string, 0, len(ids)+len(fetchIDs))
-	allIDs = append(allIDs, ids...)
-	allIDs = append(allIDs, fetchIDs...)
-
-	err = BlockFriends(ctx, n.logger, n.db, userUUID, allIDs)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-
 func (n *RuntimeGoNakamaModule) SetEventFn(fn RuntimeEventCustomFunction) {
 	n.Lock()
 	n.eventFn = fn
@@ -2890,53 +2504,8 @@ func (n *RuntimeGoNakamaModule) ChannelMessageSend(ctx context.Context, channelI
 	return ChannelMessageSend(ctx, n.logger, n.db, n.router, channelIdToStreamResult.Stream, channelId, contentStr, senderId, senderUsername, persist)
 }
 
-func (n *RuntimeGoNakamaModule) ChannelMessageUpdate(ctx context.Context, channelId, messageId string, content map[string]interface{}, senderId, senderUsername string, persist bool) (*rtapi.ChannelMessageAck, error) {
-	channelIdToStreamResult, err := ChannelIdToStream(channelId)
-	if err != nil {
-		return nil, err
-	}
-
-	contentStr := "{}"
-	if content != nil {
-		contentBytes, err := json.Marshal(content)
-		if err != nil {
-			return nil, fmt.Errorf("error encoding content: %v", err.Error())
-		}
-		contentStr = string(contentBytes)
-	}
-
-	return ChannelMessageUpdate(ctx, n.logger, n.db, n.router, channelIdToStreamResult.Stream, channelId, messageId, contentStr, senderId, senderUsername, persist)
-}
-
-func (n *RuntimeGoNakamaModule) ChannelMessagesList(ctx context.Context, channelId string, limit int, forward bool, cursor string) ([]*api.ChannelMessage, string, string, error) {
-	channelIdToStreamResult, err := ChannelIdToStream(channelId)
-	if err != nil {
-		return nil, "", "", err
-	}
-
-	if limit < 1 || limit > 100 {
-		return nil, "", "", errors.New("limit must be 1-100")
-	}
-
-	list, err := ChannelMessagesList(ctx, n.logger, n.db, uuid.Nil, channelIdToStreamResult.Stream, channelId, limit, forward, cursor)
-	if err != nil {
-		return nil, "", "", err
-	}
-
-	return list.Messages, list.NextCursor, list.PrevCursor, nil
-}
-
-func (n *RuntimeGoNakamaModule) ChannelIdBuild(ctx context.Context, senderId, target string, chanType runtime.ChannelType) (string, error) {
-	senderUUID := uuid.Nil
-	if senderId != "" {
-		var err error
-		senderUUID, err = uuid.FromString(senderId)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	channelId, _, err := BuildChannelId(ctx, n.logger, n.db, senderUUID, target, rtapi.ChannelJoin_Type(chanType))
+func (n *RuntimeGoNakamaModule) ChannelIdBuild(ctx context.Context, target string, chanType runtime.ChannelType) (string, error) {
+	channelId, _, err := BuildChannelId(ctx, n.logger, n.db, uuid.Nil, target, rtapi.ChannelJoin_Type(chanType))
 	if err != nil {
 		return "", err
 	}

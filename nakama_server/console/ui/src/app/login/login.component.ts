@@ -17,7 +17,6 @@ import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {ActivatedRoute, ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot} from '@angular/router';
 import {AuthenticationService} from '../authentication.service';
 import {SegmentService} from 'ngx-segment-analytics';
-import {environment} from "../../environments/environment";
 
 @Component({
   templateUrl: './login.component.html',
@@ -38,9 +37,7 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (!environment.nt) {
-      this.segment.page('/login');
-    }
+    this.segment.page('/login');
     this.loginForm = this.formBuilder.group({
       username: ['', Validators.compose([Validators.required])],
       password: ['', Validators.compose([Validators.required, Validators.minLength(8)])],

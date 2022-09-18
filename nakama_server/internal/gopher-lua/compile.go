@@ -115,7 +115,7 @@ func isVarArgReturnExpr(expr ast.Expr) bool {
 	case *ast.FuncCallExpr:
 		return !ex.AdjustRet
 	case *ast.Comma3Expr:
-		return !ex.AdjustRet
+		return true
 	}
 	return false
 }
@@ -724,12 +724,8 @@ func compileReturnStmt(context *funcContext, stmt *ast.ReturnStmt) { // {{{
 				return
 			}
 		case *ast.FuncCallExpr:
-			if ex.AdjustRet { // return (func())
-				reg += compileExpr(context, reg, ex, ecnone(0))
-			} else {
-				reg += compileExpr(context, reg, ex, ecnone(-2))
-				code.SetOpCode(code.LastPC(), OP_TAILCALL)
-			}
+			reg += compileExpr(context, reg, ex, ecnone(-2))
+			code.SetOpCode(code.LastPC(), OP_TAILCALL)
 			code.AddABC(OP_RETURN, a, 0, 0, sline(stmt))
 			return
 		}

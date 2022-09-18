@@ -45,11 +45,10 @@ func (dst *Inet) Set(src interface{}) error {
 			*dst = Inet{IPNet: &net.IPNet{Mask: mask, IP: value}, Status: Present}
 		}
 	case string:
-		ip, ipnet, err := net.ParseCIDR(value)
+		_, ipnet, err := net.ParseCIDR(value)
 		if err != nil {
 			return err
 		}
-		ipnet.IP = ip
 		*dst = Inet{IPNet: ipnet, Status: Present}
 	case *net.IPNet:
 		if value == nil {
@@ -132,22 +131,18 @@ func (dst *Inet) DecodeText(ci *ConnInfo, src []byte) error {
 	var err error
 
 	if ip := net.ParseIP(string(src)); ip != nil {
-		if ipv4 := ip.To4(); ipv4 != nil {
+		ipv4 := ip.To4()
+		if ipv4 != nil {
 			ip = ipv4
 		}
 		bitCount := len(ip) * 8
 		mask := net.CIDRMask(bitCount, bitCount)
 		ipnet = &net.IPNet{Mask: mask, IP: ip}
 	} else {
-		ip, ipnet, err = net.ParseCIDR(string(src))
+		_, ipnet, err = net.ParseCIDR(string(src))
 		if err != nil {
 			return err
 		}
-		if ipv4 := ip.To4(); ipv4 != nil {
-			ip = ipv4
-		}
-		ones, _ := ipnet.Mask.Size()
-		*ipnet = net.IPNet{IP: ip, Mask: net.CIDRMask(ones, len(ip)*8)}
 	}
 
 	*dst = Inet{IPNet: ipnet, Status: Present}
@@ -172,10 +167,7 @@ func (dst *Inet) DecodeBinary(ci *ConnInfo, src []byte) error {
 	var ipnet net.IPNet
 	ipnet.IP = make(net.IP, int(addressLength))
 	copy(ipnet.IP, src[4:])
-	if ipv4 := ipnet.IP.To4(); ipv4 != nil {
-		ipnet.IP = ipv4
-	}
-	ipnet.Mask = net.CIDRMask(int(bits), len(ipnet.IP)*8)
+	ipnet.Mask = net.CIDRMask(int(bits), int(addressLength)*8)
 
 	*dst = Inet{IPNet: &ipnet, Status: Present}
 

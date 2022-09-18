@@ -48,7 +48,7 @@ func (s *ApiServer) ListNotifications(ctx context.Context, in *api.ListNotificat
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +89,7 @@ func (s *ApiServer) ListNotifications(ctx context.Context, in *api.ListNotificat
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return notificationList, nil
@@ -99,7 +99,7 @@ func (s *ApiServer) DeleteNotifications(ctx context.Context, in *api.DeleteNotif
 	userID := ctx.Value(ctxUserIDKey{}).(uuid.UUID)
 
 	// Before hook.
-	if fn := s.runtime.BeforeDeleteNotifications(); fn != nil {
+	if fn := s.runtime.BeforeDeleteNotification(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
 			result, err, code := fn(ctx, s.logger, ctx.Value(ctxUserIDKey{}).(uuid.UUID).String(), ctx.Value(ctxUsernameKey{}).(string), ctx.Value(ctxVarsKey{}).(map[string]string), ctx.Value(ctxExpiryKey{}).(int64), clientIP, clientPort, in)
 			if err != nil {
@@ -115,7 +115,7 @@ func (s *ApiServer) DeleteNotifications(ctx context.Context, in *api.DeleteNotif
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -125,18 +125,18 @@ func (s *ApiServer) DeleteNotifications(ctx context.Context, in *api.DeleteNotif
 		return &emptypb.Empty{}, nil
 	}
 
-	if err := NotificationDelete(ctx, s.logger, s.db, userID, in.GetIds()); err != nil {
+	if err := NotificationDelete(ctx, s.logger, s.db.Hugh_db, userID, in.GetIds()); err != nil {
 		return nil, status.Error(codes.Internal, "Error while deleting notifications.")
 	}
 
 	// After hook.
-	if fn := s.runtime.AfterDeleteNotifications(); fn != nil {
+	if fn := s.runtime.AfterDeleteNotification(); fn != nil {
 		afterFn := func(clientIP, clientPort string) error {
 			return fn(ctx, s.logger, ctx.Value(ctxUserIDKey{}).(uuid.UUID).String(), ctx.Value(ctxUsernameKey{}).(string), ctx.Value(ctxVarsKey{}).(map[string]string), ctx.Value(ctxExpiryKey{}).(int64), clientIP, clientPort, in)
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return &emptypb.Empty{}, nil

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	//app "HughCommon/Go/src/App"
 	user "HughCommon/Go/src/User"
 
 	"github.com/heroiclabs/nakama-common/runtime"

@@ -24,8 +24,8 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/heroiclabs/nakama-common/rtapi"
 	"github.com/heroiclabs/nakama-common/runtime"
+	"github.com/heroiclabs/nakama-common/rtapi"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -62,10 +62,10 @@ type sessionWS struct {
 	statusRegistry  *StatusRegistry
 	matchmaker      Matchmaker
 	tracker         Tracker
-	//metrics         Metrics
-	pipeline        *Pipeline
-	runtime         *Runtime
-	db         *runtime.DBManager
+	//metrics         *Metrics
+	pipeline     *Pipeline
+	runtime *Runtime
+	db           *runtime.DBManager
 
 	stopped                bool
 	conn                   *websocket.Conn
@@ -75,7 +75,7 @@ type sessionWS struct {
 	outgoingCh             chan []byte
 }
 
-func NewSessionWS(db *runtime.DBManager, logger *zap.Logger, config Config, format SessionFormat, sessionID, userID uuid.UUID, username string, vars map[string]string, expiry int64, clientIP, clientPort, lang string, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, conn *websocket.Conn, sessionRegistry SessionRegistry, statusRegistry *StatusRegistry, matchmaker Matchmaker, tracker Tracker, /*metrics Metrics,*/ pipeline *Pipeline, runtime *Runtime) Session {
+func NewSessionWS(db *runtime.DBManager, logger *zap.Logger, config Config, format SessionFormat, sessionID, userID uuid.UUID, username string, vars map[string]string, expiry int64, clientIP, clientPort, lang string, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, conn *websocket.Conn, sessionRegistry SessionRegistry, statusRegistry *StatusRegistry, matchmaker Matchmaker, tracker Tracker /*metrics *Metrics,*/, pipeline *Pipeline, runtime *Runtime) Session {
 	sessionLogger := logger.With(zap.String("uid", userID.String()), zap.String("sid", sessionID.String()))
 
 	sessionLogger.Info("New WebSocket session connected", zap.Uint8("format", uint8(format)))
@@ -115,8 +115,9 @@ func NewSessionWS(db *runtime.DBManager, logger *zap.Logger, config Config, form
 		matchmaker:      matchmaker,
 		tracker:         tracker,
 		//metrics:         metrics,
-		pipeline:        pipeline,
-		runtime:         runtime,
+		pipeline:     pipeline,
+		runtime: runtime,
+		db:           db,
 
 		stopped:                false,
 		conn:                   conn,
@@ -423,7 +424,7 @@ func (s *sessionWS) SendBytes(payload []byte, reliable bool) error {
 	}
 }
 
-func (s *sessionWS) Close(msg string, reason runtime.PresenceReason, envelopes ...*rtapi.Envelope) {
+func (s *sessionWS) Close(msg string, reason runtime.PresenceReason) {
 	s.Lock()
 	if s.stopped {
 		s.Unlock()
@@ -462,50 +463,6 @@ func (s *sessionWS) Close(msg string, reason runtime.PresenceReason, envelopes .
 	// Clean up internals.
 	s.pingTimer.Stop()
 	close(s.outgoingCh)
-
-	/*
-	// Send final messages, if any are specified.
-	for _, envelope := range envelopes {
-		var payload []byte
-		var err error
-		switch s.format {
-		case SessionFormatProtobuf:
-			payload, err = proto.Marshal(envelope)
-		case SessionFormatJson:
-			fallthrough
-		default:
-			if buf, err := s.protojsonMarshaler.Marshal(envelope); err == nil {
-				payload = buf
-			}
-		}
-		if err != nil {
-			s.logger.Warn("Could not marshal envelope", zap.Error(err))
-			continue
-		}
-
-		if s.logger.Core().Enabled(zap.DebugLevel) {
-			switch envelope.Message.(type) {
-			case *rtapi.Envelope_Error:
-				s.logger.Debug("Sending error message", zap.Binary("payload", payload))
-			default:
-				s.logger.Debug(fmt.Sprintf("Sending %T message", envelope.Message), zap.Any("envelope", envelope))
-			}
-		}
-
-		s.Lock()
-		if err := s.conn.SetWriteDeadline(time.Now().Add(s.writeWaitDuration)); err != nil {
-			s.Unlock()
-			s.logger.Warn("Failed to set write deadline", zap.Error(err))
-			continue
-		}
-		if err := s.conn.WriteMessage(s.wsMessageType, payload); err != nil {
-			s.Unlock()
-			s.logger.Warn("Could not write message", zap.Error(err))
-			continue
-		}
-		s.Unlock()
-	}
-	*/
 
 	// Send close message.
 	if err := s.conn.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(s.writeWaitDuration)); err != nil {

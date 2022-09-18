@@ -155,10 +155,10 @@ func newJSONEncoder(format LoggingFormat) zapcore.Encoder {
 			LevelKey:       "severity",
 			NameKey:        "logger",
 			CallerKey:      "caller",
-			MessageKey:     "message",
+			MessageKey:     "msg",
 			StacktraceKey:  "stacktrace",
 			EncodeLevel:    StackdriverLevelEncoder,
-			EncodeTime:     zapcore.RFC3339NanoTimeEncoder,
+			EncodeTime:     zapcore.RFC3339TimeEncoder,
 			EncodeDuration: zapcore.StringDurationEncoder,
 			EncodeCaller:   zapcore.ShortCallerEncoder,
 		})
