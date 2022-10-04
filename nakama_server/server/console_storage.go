@@ -64,6 +64,7 @@ func (s *ConsoleServer) DeleteStorageObject(ctx context.Context, in *console.Del
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
 	}
+
 	code, err := StorageDeleteObjects(ctx, s.logger, s.db.Hugh_db, true, StorageOpDeletes{
 		&StorageOpDelete{
 			OwnerID: in.UserId,
@@ -99,6 +100,7 @@ func (s *ConsoleServer) GetStorage(ctx context.Context, in *api.ReadStorageObjec
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid user ID.")
 	}
+
 	objects, err := StorageReadObjects(ctx, s.logger, s.db.Hugh_db, uuid.Nil, []*api.ReadStorageObjectId{in})
 	if err != nil {
 		// Errors already logged in function above.
@@ -246,6 +248,7 @@ func (s *ConsoleServer) ListStorage(ctx context.Context, in *console.ListStorage
 	default:
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid combination of filters.")
 	}
+
 	rows, err := s.db.Hugh_db.QueryContext(ctx, query, params...)
 	if err != nil {
 		s.logger.Error("Error querying storage objects.", zap.Any("in", in), zap.Error(err))
@@ -254,8 +257,20 @@ func (s *ConsoleServer) ListStorage(ctx context.Context, in *console.ListStorage
 
 	objects := make([]*api.StorageObject, 0, defaultLimit)
 	var nextCursor *consoleStorageCursor
+	var previousObj *api.StorageObject
 
 	for rows.Next() {
+		// Check limit before processing for the use case where (last page == limit) => null cursor.
+		if limit > 0 && len(objects) >= limit {
+			nextCursor = &consoleStorageCursor{
+				Key:        previousObj.Key,
+				UserID:     uuid.FromStringOrNil(previousObj.UserId),
+				Collection: previousObj.Collection,
+				Read:       previousObj.PermissionRead,
+			}
+			break
+		}
+
 		o := &api.StorageObject{CreateTime: &timestamppb.Timestamp{}, UpdateTime: &timestamppb.Timestamp{}}
 		var createTime pgtype.Timestamptz
 		var updateTime pgtype.Timestamptz
@@ -270,15 +285,7 @@ func (s *ConsoleServer) ListStorage(ctx context.Context, in *console.ListStorage
 		o.UpdateTime.Seconds = updateTime.Time.Unix()
 
 		objects = append(objects, o)
-		if limit > 0 && len(objects) >= limit {
-			nextCursor = &consoleStorageCursor{
-				Key:        o.Key,
-				UserID:     uuid.FromStringOrNil(o.UserId),
-				Collection: o.Collection,
-				Read:       o.PermissionRead,
-			}
-			break
-		}
+		previousObj = o
 	}
 	_ = rows.Close()
 
@@ -326,7 +333,8 @@ func (s *ConsoleServer) WriteStorageObject(ctx context.Context, in *console.Writ
 	if maybeJSON := []byte(in.Value); !json.Valid(maybeJSON) || bytes.TrimSpace(maybeJSON)[0] != byteBracket {
 		return nil, status.Error(codes.InvalidArgument, "Requires a valid JSON object value.")
 	}
-	acks, code, err := StorageWriteObjects(ctx, s.logger, s.db.Hugh_db, true, StorageOpWrites{
+
+	acks, code, err := StorageWriteObjects(ctx, s.logger, s.db.Hugh_db, /*s.metrics,*/ true, StorageOpWrites{
 		&StorageOpWrite{
 			OwnerID: in.UserId,
 			Object: &api.WriteStorageObject{
@@ -368,25 +376,26 @@ func countDatabase(ctx context.Context, logger *zap.Logger, db *sql.DB, tableNam
 			return 0
 		}
 	}
-	if count.Valid && count.Int64 != 0 {
+	// It may return -1 if there are no statistics collected (PG14)
+	if count.Valid && count.Int64 > 0 {
 		// Use this count result.
 		return int32(count.Int64)
 	}
 
 	// If the first fast count failed, returned NULL, or returned 0 try a fast count on partitioned table metadata.
-	if err := db.QueryRowContext(ctx, "SELECT sum(reltuples::BIGINT) FROM pg_class WHERE relname ilike $1", tableName+"%_pkey").Scan(&count); err != nil {
+	if err := db.QueryRowContext(ctx, "SELECT sum(reltuples)::BIGINT FROM pg_class WHERE relname ILIKE $1", tableName+"%_pkey").Scan(&count); err != nil {
 		logger.Warn("Error counting storage objects.", zap.Error(err))
 		if err == context.Canceled {
 			// If the context was cancelled do not attempt any further counts.
 			return 0
 		}
 	}
-	if count.Valid && count.Int64 != 0 {
+	if count.Valid && count.Int64 > 0 {
 		// Use this count result.
 		return int32(count.Int64)
 	}
 
-	// If both fast counts failed, returned NULL, or returned 0 try a full count.
+	// If both fast counts failed, returned NULL, returned 0 or -1 try a full count.
 	// NOTE: PostgreSQL parses the expression count(*) as a special case taking no
 	// arguments, while count(1) takes an argument and PostgreSQL has to check that
 	// 1 is indeed still not NULL for every row.

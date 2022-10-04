@@ -1,8 +1,7 @@
-using Nakama;
+using UnityEngine;
 using System.Threading.Tasks;
 using Packet.GameServer;
 using Newtonsoft.Json;
-using System.Net.Http;
 
 public partial class GameServer
 {

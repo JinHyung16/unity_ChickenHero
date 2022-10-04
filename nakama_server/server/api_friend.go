@@ -16,6 +16,7 @@ package server
 
 import (
 	"context"
+	"github.com/heroiclabs/nakama-common/runtime"
 	"strconv"
 
 	"github.com/gofrs/uuid"
@@ -46,7 +47,7 @@ func (s *ApiServer) ListFriends(ctx context.Context, in *api.ListFriendsRequest)
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +70,7 @@ func (s *ApiServer) ListFriends(ctx context.Context, in *api.ListFriendsRequest)
 
 	friends, err := ListFriends(ctx, s.logger, s.db, s.tracker, userID, limit, state, in.GetCursor())
 	if err != nil {
-		if err == ErrFriendInvalidCursor {
+		if err == runtime.ErrFriendInvalidCursor {
 			return nil, status.Error(codes.InvalidArgument, "Cursor is invalid.")
 		}
 		return nil, status.Error(codes.Internal, "Error while trying to list friends.")
@@ -82,7 +83,7 @@ func (s *ApiServer) ListFriends(ctx context.Context, in *api.ListFriendsRequest)
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return friends, nil
@@ -108,7 +109,7 @@ func (s *ApiServer) AddFriends(ctx context.Context, in *api.AddFriendsRequest) (
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -129,33 +130,31 @@ func (s *ApiServer) AddFriends(ctx context.Context, in *api.AddFriendsRequest) (
 		}
 	}
 
-	//userName으로 해당 유저의 ID 값 가져오기..(기능 삭제, username말고 userid로만 친구추가가능하도록)
-	// for _, u := range in.GetUsernames() {
-	// 	if u == "" {
-	// 		return nil, status.Error(codes.InvalidArgument, "Username must not be emptypb.")
-	// 	}
-	// 	if username == u {
-	// 		return nil, status.Error(codes.InvalidArgument, "Cannot add self as friend.")
-	// 	}
-	// }
+	/*
+	for _, u := range in.GetUsernames() {
+		if u == "" {
+			return nil, status.Error(codes.InvalidArgument, "Username must not be empty.")
+		}
+		if username == u {
+			return nil, status.Error(codes.InvalidArgument, "Cannot add self as friend.")
+		}
+	}
 
-	// userIDs, err := fetchUserID(ctx, s.db[targetdbId], in.GetUsernames())
-	// if err != nil {
-	// 	s.logger.Error("Could not fetch user IDs.", zap.Error(err), zap.Strings("usernames", in.GetUsernames()))
-	// 	return nil, status.Error(codes.Internal, "Error while trying to add friends.")
-	// }
+	userIDs, err := fetchUserID(ctx, s.db, in.GetUsernames())
+	if err != nil {
+		s.logger.Error("Could not fetch user IDs.", zap.Error(err), zap.Strings("usernames", in.GetUsernames()))
+		return nil, status.Error(codes.Internal, "Error while trying to add friends.")
+	}
+	*/
 
-	// if len(userIDs)+len(in.GetIds()) == 0 {
-	// 	return nil, status.Error(codes.InvalidArgument, "No valid ID or username was provided.")
-	// }
-
-	if len(in.GetIds()) == 0 {
+	if len(in.GetIds())+len(in.GetIds()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "No valid ID or username was provided.")
 	}
 
-	//친구추가할 유저ID 리스트 생성
+	// 친구 추가할 유저ID 리스트 생성
 	//allIDs := make([]string, 0, len(in.GetIds())+len(userIDs))
 	allIDs := make([]string, 0, len(in.GetIds()))
+	allIDs = append(allIDs, in.GetIds()...)
 	allIDs = append(allIDs, in.GetIds()...)
 	//allIDs = append(allIDs, userIDs...)
 
@@ -170,7 +169,7 @@ func (s *ApiServer) AddFriends(ctx context.Context, in *api.AddFriendsRequest) (
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -196,7 +195,7 @@ func (s *ApiServer) DeleteFriends(ctx context.Context, in *api.DeleteFriendsRequ
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -218,14 +217,14 @@ func (s *ApiServer) DeleteFriends(ctx context.Context, in *api.DeleteFriendsRequ
 	username := ctx.Value(ctxUsernameKey{}).(string)
 	for _, u := range in.GetUsernames() {
 		if u == "" {
-			return nil, status.Error(codes.InvalidArgument, "Username must not be emptypb.")
+			return nil, status.Error(codes.InvalidArgument, "Username must not be empty.")
 		}
 		if username == u {
 			return nil, status.Error(codes.InvalidArgument, "Cannot delete self.")
 		}
 	}
 
-	userIDs, err := fetchUserID(ctx, s.db.Hugh_db, in.GetUsernames())
+	userIDs, err := fetchUserID(ctx, s.db, in.GetUsernames())
 	if err != nil {
 		s.logger.Error("Could not fetch user IDs.", zap.Error(err), zap.Strings("usernames", in.GetUsernames()))
 		return nil, status.Error(codes.Internal, "Error while trying to delete friends.")
@@ -251,7 +250,7 @@ func (s *ApiServer) DeleteFriends(ctx context.Context, in *api.DeleteFriendsRequ
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -277,7 +276,7 @@ func (s *ApiServer) BlockFriends(ctx context.Context, in *api.BlockFriendsReques
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -299,14 +298,14 @@ func (s *ApiServer) BlockFriends(ctx context.Context, in *api.BlockFriendsReques
 	username := ctx.Value(ctxUsernameKey{}).(string)
 	for _, u := range in.GetUsernames() {
 		if u == "" {
-			return nil, status.Error(codes.InvalidArgument, "Username must not be emptypb.")
+			return nil, status.Error(codes.InvalidArgument, "Username must not be empty.")
 		}
 		if username == u {
 			return nil, status.Error(codes.InvalidArgument, "Cannot block self.")
 		}
 	}
 
-	userIDs, err := fetchUserID(ctx, s.db.Hugh_db, in.GetUsernames())
+	userIDs, err := fetchUserID(ctx, s.db, in.GetUsernames())
 	if err != nil {
 		s.logger.Error("Could not fetch user IDs.", zap.Error(err), zap.Strings("usernames", in.GetUsernames()))
 		return nil, status.Error(codes.Internal, "Error while trying to block friends.")
@@ -320,7 +319,7 @@ func (s *ApiServer) BlockFriends(ctx context.Context, in *api.BlockFriendsReques
 	allIDs = append(allIDs, in.GetIds()...)
 	allIDs = append(allIDs, userIDs...)
 
-	if err := BlockFriends(ctx, s.logger, s.db.Hugh_db, userID, allIDs); err != nil {
+	if err := BlockFriends(ctx, s.logger, s.db, userID, allIDs); err != nil {
 		return nil, status.Error(codes.Internal, "Error while trying to block friends.")
 	}
 
@@ -331,7 +330,7 @@ func (s *ApiServer) BlockFriends(ctx context.Context, in *api.BlockFriendsReques
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -355,7 +354,7 @@ func (s *ApiServer) ImportFacebookFriends(ctx context.Context, in *api.ImportFac
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -378,7 +377,7 @@ func (s *ApiServer) ImportFacebookFriends(ctx context.Context, in *api.ImportFac
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -406,7 +405,7 @@ func (s *ApiServer) ImportSteamFriends(ctx context.Context, in *api.ImportSteamF
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -440,7 +439,7 @@ func (s *ApiServer) ImportSteamFriends(ctx context.Context, in *api.ImportSteamF
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return &emptypb.Empty{}, nil

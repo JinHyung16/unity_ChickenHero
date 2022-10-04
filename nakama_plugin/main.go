@@ -14,6 +14,6 @@ func InitModule(ctx context.Context, logger runtime.Logger, db *runtime.DBManage
 	user.RegisterUserRPC(logger, initializer)
 
 
-	fmt.Println("[Init Runtime Module] : 0518_1800")
+	fmt.Println("[Init Runtime Module] : nakama_plugin SUCCESS")
 	return nil
 }

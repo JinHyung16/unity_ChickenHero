@@ -48,7 +48,7 @@ type accountUpdate struct {
 	metadata    *wrapperspb.StringValue
 }
 
-func GetAccount(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker Tracker, userID uuid.UUID) (*api.Account, error) {
+func GetAccount(ctx context.Context, logger *zap.Logger, db *sql.DB, /*statusRegistry *StatusRegistry,*/ tracker Tracker, userID uuid.UUID) (*api.Account, error) {
 	var displayName sql.NullString
 	var username sql.NullString
 	var avatarURL sql.NullString
@@ -103,6 +103,7 @@ WHERE u.id = $1`
 
 	online := false
 	if tracker != nil {
+		//online = statusRegistry.IsOnline(userID)
 		online = tracker.StreamExists(PresenceStream{Mode: StreamModeStatus, Subject: userID})
 	}
 
@@ -136,7 +137,7 @@ WHERE u.id = $1`
 	}, nil
 }
 
-func GetAccounts(ctx context.Context, logger *zap.Logger, db *sql.DB, tracker Tracker, userIDs []string) ([]*api.Account, error) {
+func GetAccounts(ctx context.Context, logger *zap.Logger, db *sql.DB, statusRegistry *StatusRegistry, userIDs []string) ([]*api.Account, error) {
 	statements := make([]string, 0, len(userIDs))
 	parameters := make([]interface{}, 0, len(userIDs))
 	for _, userID := range userIDs {
@@ -155,7 +156,6 @@ WHERE u.id IN (` + strings.Join(statements, ",") + `)`
 		logger.Error("Error retrieving user accounts.", zap.Error(err))
 		return nil, err
 	}
-	defer rows.Close()
 
 	accounts := make([]*api.Account, 0, len(userIDs))
 	for rows.Next() {
@@ -185,6 +185,7 @@ WHERE u.id IN (` + strings.Join(statements, ",") + `)`
 
 		err = rows.Scan(&userID, &username, &displayName, &avatarURL, &langTag, &location, &timezone, &metadata, &wallet, &email, &apple, &facebook, &facebookInstantGame, &google, &gamecenter, &steam, &customID, &edgeCount, &createTime, &updateTime, &verifyTime, &disableTime, &deviceIDs)
 		if err != nil {
+			_ = rows.Close()
 			logger.Error("Error retrieving user accounts.", zap.Error(err))
 			return nil, err
 		}
@@ -201,11 +202,6 @@ WHERE u.id IN (` + strings.Join(statements, ",") + `)`
 		var disableTimestamp *timestamppb.Timestamp
 		if disableTime.Status == pgtype.Present && disableTime.Time.Unix() != 0 {
 			disableTimestamp = &timestamppb.Timestamp{Seconds: disableTime.Time.Unix()}
-		}
-
-		online := false
-		if tracker != nil {
-			online = tracker.StreamExists(PresenceStream{Mode: StreamModeStatus, Subject: uuid.FromStringOrNil(userID)})
 		}
 
 		accounts = append(accounts, &api.Account{
@@ -227,7 +223,7 @@ WHERE u.id IN (` + strings.Join(statements, ",") + `)`
 				EdgeCount:             int32(edgeCount),
 				CreateTime:            &timestamppb.Timestamp{Seconds: createTime.Time.Unix()},
 				UpdateTime:            &timestamppb.Timestamp{Seconds: updateTime.Time.Unix()},
-				Online:                online,
+				// Online filled below.
 			},
 			Wallet:      wallet.String,
 			Email:       email.String,
@@ -236,6 +232,11 @@ WHERE u.id IN (` + strings.Join(statements, ",") + `)`
 			VerifyTime:  verifyTimestamp,
 			DisableTime: disableTimestamp,
 		})
+	}
+	_ = rows.Close()
+
+	if statusRegistry != nil {
+		statusRegistry.FillOnlineAccounts(accounts)
 	}
 
 	return accounts, nil
@@ -428,7 +429,7 @@ func ExportAccount(ctx context.Context, logger *zap.Logger, db *sql.DB, userID u
 	}
 
 	// History of user's wallet.
-	walletLedgers, _, err := ListWalletLedger(ctx, logger, db, userID, nil, "")
+	walletLedgers, _, _, err := ListWalletLedger(ctx, logger, db, userID, nil, "")
 	if err != nil {
 		logger.Error("Could not fetch wallet ledger items", zap.Error(err), zap.String("user_id", userID.String()))
 		return nil, status.Error(codes.Internal, "An error occurred while trying to export user data.")

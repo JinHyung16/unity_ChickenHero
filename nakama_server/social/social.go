@@ -35,7 +35,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"go.uber.org/zap"
 )
 
@@ -83,10 +83,21 @@ type AppleProfile struct {
 
 // FacebookProfile is an abbreviated version of a Facebook profile.
 type FacebookProfile struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Email   string `json:"email"`
-	Picture string `json:"picture"`
+	ID      string              `json:"id"`
+	Name    string              `json:"name"`
+	Email   string              `json:"email"`
+	Picture FacebookPictureData `json:"picture"`
+}
+
+type FacebookPictureData struct {
+	Data FacebookPicture `json:"data"`
+}
+
+type FacebookPicture struct {
+	Height       int    `json:"height"`
+	Width        int    `json:"width"`
+	IsSilhouette bool   `json:"is_silhouette"`
+	Url          string `json:"url"`
 }
 
 type facebookPagingCursors struct {
@@ -166,8 +177,8 @@ func NewClient(logger *zap.Logger, timeout time.Duration) *Client {
 func (c *Client) GetFacebookProfile(ctx context.Context, accessToken string) (*FacebookProfile, error) {
 	c.logger.Debug("Getting Facebook profile", zap.String("token", accessToken))
 
-	path := "https://graph.facebook.com/v9.0/me?access_token=" + url.QueryEscape(accessToken) +
-		"&fields=" + url.QueryEscape("name,email")
+	path := "https://graph.facebook.com/v11.0/me?access_token=" + url.QueryEscape(accessToken) +
+		"&fields=" + url.QueryEscape("id,name,email,picture")
 	var profile FacebookProfile
 	err := c.request(ctx, "facebook profile", path, nil, &profile)
 	if err != nil {
@@ -185,7 +196,7 @@ func (c *Client) GetFacebookFriends(ctx context.Context, accessToken string) ([]
 	after := ""
 	for {
 		// In FB Graph API 2.0+ this only returns friends that also use the same app.
-		path := "https://graph.facebook.com/v9.0/me/friends?access_token=" + url.QueryEscape(accessToken)
+		path := "https://graph.facebook.com/v11.0/me/friends?access_token=" + url.QueryEscape(accessToken)
 		if after != "" {
 			path += "&after=" + after
 		}
@@ -638,8 +649,10 @@ func (c *Client) CheckAppleToken(ctx context.Context, bundleId string, idToken s
 	})
 
 	// Check if verification attempt has failed.
-	if token == nil || err != nil {
-		return nil, errors.New("apple id token invalid")
+	if err != nil {
+		return nil, fmt.Errorf("apple id token invalid: %s", err.Error())
+	} else if token == nil {
+		return nil, fmt.Errorf("apple id token invalid")
 	}
 
 	// Extract the claims we need now that we know the token is valid.
@@ -807,7 +820,7 @@ func (c *Client) CheckFacebookLimitedLoginToken(ctx context.Context, appId strin
 		}
 	}
 	if v, ok := claims["picture"]; ok {
-		if profile.Picture, ok = v.(string); !ok {
+		if profile.Picture.Data.Url, ok = v.(string); !ok {
 			return nil, errors.New("facebook limited login token picture field invalid")
 		}
 	}
@@ -855,7 +868,7 @@ func (c *Client) requestRaw(ctx context.Context, provider, path string, headers 
 	case 401:
 		return nil, fmt.Errorf("%v error url %v, status code %v, body %s", provider, path, resp.StatusCode, body)
 	default:
-		c.logger.Warn("error response code from social request", zap.String("provider", provider), zap.Int("code", resp.StatusCode))
+		c.logger.Warn("error response code from social request", zap.String("provider", provider), zap.Int("code", resp.StatusCode), zap.String("body", string(body)))
 		return nil, fmt.Errorf("%v error url %v, status code %v, body %s", provider, path, resp.StatusCode, body)
 	}
 }

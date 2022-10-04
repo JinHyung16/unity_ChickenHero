@@ -1,4 +1,4 @@
-create table user (
+create table user_history (
     user_index int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id varchar(40) NOT NULL,
     user_name varchar(24) NOT NULL,

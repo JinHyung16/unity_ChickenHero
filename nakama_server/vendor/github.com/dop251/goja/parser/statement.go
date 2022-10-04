@@ -3,14 +3,13 @@ package parser
 import (
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
+	"strings"
+
 	"github.com/dop251/goja/ast"
 	"github.com/dop251/goja/file"
 	"github.com/dop251/goja/token"
 	"github.com/go-sourcemap/sourcemap"
-	"io/ioutil"
-	"net/url"
-	"path"
-	"strings"
 )
 
 func (self *_parser) parseBlockStatement() *ast.BlockStatement {
@@ -68,7 +67,7 @@ func (self *_parser) parseStatement() ast.Statement {
 		return self.parseVariableStatement()
 	case token.LET:
 		tok := self.peek()
-		if tok == token.LEFT_BRACKET || self.scope.allowLet && (tok == token.IDENTIFIER || tok == token.LET || tok == token.LEFT_BRACE) {
+		if tok == token.LEFT_BRACKET || self.scope.allowLet && (token.IsId(tok) || tok == token.LEFT_BRACE) {
 			return self.parseLexicalDeclaration(self.token)
 		}
 		self.insertSemicolon = true
@@ -77,6 +76,10 @@ func (self *_parser) parseStatement() ast.Statement {
 	case token.FUNCTION:
 		return &ast.FunctionDeclaration{
 			Function: self.parseFunction(true),
+		}
+	case token.CLASS:
+		return &ast.ClassDeclaration{
+			Class: self.parseClass(true),
 		}
 	case token.SWITCH:
 		return self.parseSwitchStatement()
@@ -128,17 +131,11 @@ func (self *_parser) parseTryStatement() ast.Statement {
 	if self.token == token.CATCH {
 		catch := self.idx
 		self.next()
-		var parameter *ast.Identifier
+		var parameter ast.BindingTarget
 		if self.token == token.LEFT_PARENTHESIS {
 			self.next()
-			if self.token != token.IDENTIFIER {
-				self.expect(token.IDENTIFIER)
-				self.nextStatement()
-				return &ast.BadStatement{From: catch, To: self.idx}
-			} else {
-				parameter = self.parseIdentifier()
-				self.expect(token.RIGHT_PARENTHESIS)
-			}
+			parameter = self.parseBindingTarget()
+			self.expect(token.RIGHT_PARENTHESIS)
 		}
 		node.Catch = &ast.CatchStatement{
 			Catch:     catch,
@@ -162,13 +159,15 @@ func (self *_parser) parseTryStatement() ast.Statement {
 
 func (self *_parser) parseFunctionParameterList() *ast.ParameterList {
 	opening := self.expect(token.LEFT_PARENTHESIS)
-	var list []*ast.Identifier
+	var list []*ast.Binding
+	var rest ast.Expression
 	for self.token != token.RIGHT_PARENTHESIS && self.token != token.EOF {
-		if self.token != token.IDENTIFIER {
-			self.expect(token.IDENTIFIER)
-		} else {
-			list = append(list, self.parseIdentifier())
+		if self.token == token.ELLIPSIS {
+			self.next()
+			rest = self.reinterpretAsDestructBindingTarget(self.parseAssignmentExpression())
+			break
 		}
+		self.parseVariableDeclaration(&list)
 		if self.token != token.RIGHT_PARENTHESIS {
 			self.expect(token.COMMA)
 		}
@@ -178,22 +177,9 @@ func (self *_parser) parseFunctionParameterList() *ast.ParameterList {
 	return &ast.ParameterList{
 		Opening: opening,
 		List:    list,
+		Rest:    rest,
 		Closing: closing,
 	}
-}
-
-func (self *_parser) parseParameterList() (list []string) {
-	for self.token != token.EOF {
-		if self.token != token.IDENTIFIER {
-			self.expect(token.IDENTIFIER)
-		}
-		list = append(list, self.literal)
-		self.next()
-		if self.token != token.EOF {
-			self.expect(token.COMMA)
-		}
-	}
-	return
 }
 
 func (self *_parser) parseFunction(declaration bool) *ast.FunctionLiteral {
@@ -202,6 +188,7 @@ func (self *_parser) parseFunction(declaration bool) *ast.FunctionLiteral {
 		Function: self.expect(token.FUNCTION),
 	}
 
+	self.tokenToBindingId()
 	var name *ast.Identifier
 	if self.token == token.IDENTIFIER {
 		name = self.parseIdentifier()
@@ -211,24 +198,168 @@ func (self *_parser) parseFunction(declaration bool) *ast.FunctionLiteral {
 	}
 	node.Name = name
 	node.ParameterList = self.parseFunctionParameterList()
-	self.parseFunctionBlock(node)
+	node.Body, node.DeclarationList = self.parseFunctionBlock()
 	node.Source = self.slice(node.Idx0(), node.Idx1())
 
 	return node
 }
 
-func (self *_parser) parseFunctionBlock(node *ast.FunctionLiteral) {
-	{
-		self.openScope()
-		inFunction := self.scope.inFunction
-		self.scope.inFunction = true
-		defer func() {
-			self.scope.inFunction = inFunction
-			self.closeScope()
-		}()
-		node.Body = self.parseBlockStatement()
-		node.DeclarationList = self.scope.declarationList
+func (self *_parser) parseFunctionBlock() (body *ast.BlockStatement, declarationList []*ast.VariableDeclaration) {
+	self.openScope()
+	inFunction := self.scope.inFunction
+	self.scope.inFunction = true
+	defer func() {
+		self.scope.inFunction = inFunction
+		self.closeScope()
+	}()
+	body = self.parseBlockStatement()
+	declarationList = self.scope.declarationList
+	return
+}
+
+func (self *_parser) parseArrowFunctionBody() (ast.ConciseBody, []*ast.VariableDeclaration) {
+	if self.token == token.LEFT_BRACE {
+		return self.parseFunctionBlock()
 	}
+	return &ast.ExpressionBody{
+		Expression: self.parseAssignmentExpression(),
+	}, nil
+}
+
+func (self *_parser) parseClass(declaration bool) *ast.ClassLiteral {
+	if !self.scope.allowLet && self.token == token.CLASS {
+		self.errorUnexpectedToken(token.CLASS)
+	}
+
+	node := &ast.ClassLiteral{
+		Class: self.expect(token.CLASS),
+	}
+
+	self.tokenToBindingId()
+	var name *ast.Identifier
+	if self.token == token.IDENTIFIER {
+		name = self.parseIdentifier()
+	} else if declaration {
+		// Use expect error handling
+		self.expect(token.IDENTIFIER)
+	}
+
+	node.Name = name
+
+	if self.token != token.LEFT_BRACE {
+		self.expect(token.EXTENDS)
+		node.SuperClass = self.parseLeftHandSideExpressionAllowCall()
+	}
+
+	self.expect(token.LEFT_BRACE)
+
+	for self.token != token.RIGHT_BRACE && self.token != token.EOF {
+		if self.token == token.SEMICOLON {
+			self.next()
+			continue
+		}
+		start := self.idx
+		static := false
+		if self.token == token.STATIC {
+			switch self.peek() {
+			case token.ASSIGN, token.SEMICOLON, token.RIGHT_BRACE, token.LEFT_PARENTHESIS:
+				// treat as identifier
+			default:
+				self.next()
+				if self.token == token.LEFT_BRACE {
+					b := &ast.ClassStaticBlock{
+						Static: start,
+					}
+					b.Block, b.DeclarationList = self.parseFunctionBlock()
+					b.Source = self.slice(b.Block.LeftBrace, b.Block.Idx1())
+					node.Body = append(node.Body, b)
+					continue
+				}
+				static = true
+			}
+		}
+
+		var kind ast.PropertyKind
+		methodBodyStart := self.idx
+		if self.literal == "get" || self.literal == "set" {
+			if self.peek() != token.LEFT_PARENTHESIS {
+				if self.literal == "get" {
+					kind = ast.PropertyKindGet
+				} else {
+					kind = ast.PropertyKindSet
+				}
+				self.next()
+			}
+		}
+
+		_, keyName, value, tkn := self.parseObjectPropertyKey()
+		if value == nil {
+			continue
+		}
+		computed := tkn == token.ILLEGAL
+		_, private := value.(*ast.PrivateIdentifier)
+
+		if static && !private && keyName == "prototype" {
+			self.error(value.Idx0(), "Classes may not have a static property named 'prototype'")
+		}
+
+		if kind == "" && self.token == token.LEFT_PARENTHESIS {
+			kind = ast.PropertyKindMethod
+		}
+
+		if kind != "" {
+			// method
+			if keyName == "constructor" {
+				if !computed && !static && kind != ast.PropertyKindMethod {
+					self.error(value.Idx0(), "Class constructor may not be an accessor")
+				} else if private {
+					self.error(value.Idx0(), "Class constructor may not be a private method")
+				}
+			}
+			md := &ast.MethodDefinition{
+				Idx:      start,
+				Key:      value,
+				Kind:     kind,
+				Body:     self.parseMethodDefinition(methodBodyStart, kind),
+				Static:   static,
+				Computed: computed,
+			}
+			node.Body = append(node.Body, md)
+		} else {
+			// field
+			isCtor := !computed && keyName == "constructor"
+			if !isCtor {
+				if name, ok := value.(*ast.PrivateIdentifier); ok {
+					isCtor = name.Name == "constructor"
+				}
+			}
+			if isCtor {
+				self.error(value.Idx0(), "Classes may not have a field named 'constructor'")
+			}
+			var initializer ast.Expression
+			if self.token == token.ASSIGN {
+				self.next()
+				initializer = self.parseExpression()
+			}
+
+			if !self.implicitSemicolon && self.token != token.SEMICOLON && self.token != token.RIGHT_BRACE {
+				self.errorUnexpectedToken(self.token)
+				break
+			}
+			node.Body = append(node.Body, &ast.FieldDefinition{
+				Idx:         start,
+				Key:         value,
+				Initializer: initializer,
+				Static:      static,
+				Computed:    computed,
+			})
+		}
+	}
+
+	node.RightBrace = self.expect(token.RIGHT_BRACE)
+	node.Source = self.slice(node.Class, node.RightBrace+1)
+
+	return node
 }
 
 func (self *_parser) parseDebuggerStatement() ast.Statement {
@@ -279,6 +410,7 @@ func (self *_parser) parseThrowStatement() ast.Statement {
 	}
 
 	node := &ast.ThrowStatement{
+		Throw:    idx,
 		Argument: self.parseExpression(),
 	}
 
@@ -452,7 +584,7 @@ func (self *_parser) parseForOrForInStatement() ast.Statement {
 		if tok == token.VAR || tok == token.LET || tok == token.CONST {
 			idx := self.idx
 			self.next()
-			var list []*ast.VariableExpression
+			var list []*ast.Binding
 			if tok == token.VAR {
 				list = self.parseVarDeclarationList(idx)
 			} else {
@@ -468,24 +600,22 @@ func (self *_parser) parseForOrForInStatement() ast.Statement {
 				}
 			}
 			if forIn || forOf {
+				if list[0].Initializer != nil {
+					self.error(list[0].Initializer.Idx0(), "for-in loop variable declaration may not have an initializer")
+				}
 				if tok == token.VAR {
 					into = &ast.ForIntoVar{
 						Binding: list[0],
 					}
 				} else {
-					if list[0].Initializer != nil {
-						self.error(list[0].Initializer.Idx0(), "for-in loop variable declaration may not have an initializer")
-					}
 					into = &ast.ForDeclaration{
 						Idx:     idx,
 						IsConst: tok == token.CONST,
-						Binding: &ast.BindingIdentifier{
-							Name: list[0].Name,
-							Idx:  list[0].Idx,
-						},
+						Target:  list[0].Target,
 					}
 				}
 			} else {
+				self.ensurePatternInit(list)
 				if tok == token.VAR {
 					initializer = &ast.ForLoopInitializerVarDeclList{
 						List: list,
@@ -510,9 +640,13 @@ func (self *_parser) parseForOrForInStatement() ast.Statement {
 				forOf = true
 			}
 			if forIn || forOf {
-				switch expr.(type) {
-				case *ast.Identifier, *ast.DotExpression, *ast.BracketExpression, *ast.VariableExpression:
+				switch e := expr.(type) {
+				case *ast.Identifier, *ast.DotExpression, *ast.PrivateDotExpression, *ast.BracketExpression, *ast.Binding:
 					// These are all acceptable
+				case *ast.ObjectLiteral:
+					expr = self.reinterpretAsObjectAssignmentPattern(e)
+				case *ast.ArrayLiteral:
+					expr = self.reinterpretAsArrayAssignmentPattern(e)
 				default:
 					self.error(idx, "Invalid left-hand side in for-in or for-of")
 					self.nextStatement()
@@ -541,11 +675,23 @@ func (self *_parser) parseForOrForInStatement() ast.Statement {
 	return self.parseFor(idx, initializer)
 }
 
+func (self *_parser) ensurePatternInit(list []*ast.Binding) {
+	for _, item := range list {
+		if _, ok := item.Target.(ast.Pattern); ok {
+			if item.Initializer == nil {
+				self.error(item.Idx1(), "Missing initializer in destructuring declaration")
+				break
+			}
+		}
+	}
+}
+
 func (self *_parser) parseVariableStatement() *ast.VariableStatement {
 
 	idx := self.expect(token.VAR)
 
 	list := self.parseVarDeclarationList(idx)
+	self.ensurePatternInit(list)
 	self.semicolon()
 
 	return &ast.VariableStatement{
@@ -561,6 +707,7 @@ func (self *_parser) parseLexicalDeclaration(tok token.Token) *ast.LexicalDeclar
 	}
 
 	list := self.parseVariableDeclarationList()
+	self.ensurePatternInit(list)
 	self.semicolon()
 
 	return &ast.LexicalDeclaration{
@@ -688,26 +835,14 @@ func (self *_parser) parseSourceMap() *sourcemap.Consumer {
 			b64 := urlStr[b64Index+1:]
 			data, err = base64.StdEncoding.DecodeString(b64)
 		} else {
-			var smUrl *url.URL
-			if smUrl, err = url.Parse(urlStr); err == nil {
-				p := smUrl.Path
-				if !path.IsAbs(p) {
-					baseName := self.file.Name()
-					baseUrl, err1 := url.Parse(baseName)
-					if err1 == nil && baseUrl.Scheme != "" {
-						baseUrl.Path = path.Join(path.Dir(baseUrl.Path), p)
-						p = baseUrl.String()
-					} else {
-						p = path.Join(path.Dir(baseName), p)
-					}
-				}
+			if sourceURL := file.ResolveSourcemapURL(self.file.Name(), urlStr); sourceURL != nil {
 				if self.opts.sourceMapLoader != nil {
-					data, err = self.opts.sourceMapLoader(p)
+					data, err = self.opts.sourceMapLoader(sourceURL.String())
 				} else {
-					if smUrl.Scheme == "" || smUrl.Scheme == "file" {
-						data, err = ioutil.ReadFile(p)
+					if sourceURL.Scheme == "" || sourceURL.Scheme == "file" {
+						data, err = ioutil.ReadFile(sourceURL.Path)
 					} else {
-						err = fmt.Errorf("unsupported source map URL scheme: %s", smUrl.Scheme)
+						err = fmt.Errorf("unsupported source map URL scheme: %s", sourceURL.Scheme)
 					}
 				}
 			}
@@ -749,6 +884,7 @@ func (self *_parser) parseBreakStatement() ast.Statement {
 		}
 	}
 
+	self.tokenToBindingId()
 	if self.token == token.IDENTIFIER {
 		identifier := self.parseIdentifier()
 		if !self.scope.hasLabel(identifier.Name) {
@@ -790,6 +926,7 @@ func (self *_parser) parseContinueStatement() ast.Statement {
 		}
 	}
 
+	self.tokenToBindingId()
 	if self.token == token.IDENTIFIER {
 		identifier := self.parseIdentifier()
 		if !self.scope.hasLabel(identifier.Name) {

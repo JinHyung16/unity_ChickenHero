@@ -21,12 +21,12 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/heroiclabs/nakama-common/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
+	"github.com/heroiclabs/nakama-common/runtime"
 )
 
-func NewSocketWsAcceptor(db *runtime.DBManager, logger *zap.Logger, config Config, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry *StatusRegistry, matchmaker Matchmaker, tracker Tracker /*metrics *Metrics,*/, runtime *Runtime, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, pipeline *Pipeline) func(http.ResponseWriter, *http.Request) {
+func NewSocketWsAcceptor(db *runtime.DBManager, logger *zap.Logger, config Config, sessionRegistry SessionRegistry, sessionCache SessionCache, statusRegistry *StatusRegistry, matchmaker Matchmaker, tracker Tracker, /*metrics Metrics,*/ runtime *Runtime, protojsonMarshaler *protojson.MarshalOptions, protojsonUnmarshaler *protojson.UnmarshalOptions, pipeline *Pipeline) func(http.ResponseWriter, *http.Request) {
 	upgrader := &websocket.Upgrader{
 		ReadBufferSize:  config.GetSocket().ReadBufferSizeBytes,
 		WriteBufferSize: config.GetSocket().WriteBufferSizeBytes,
@@ -77,7 +77,7 @@ func NewSocketWsAcceptor(db *runtime.DBManager, logger *zap.Logger, config Confi
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			// http.Error is invoked automatically from within the Upgrade function.
-			logger.Warn("Could not upgrade to WebSocket", zap.Error(err))
+			logger.Debug("Could not upgrade to WebSocket", zap.Error(err))
 			return
 		}
 
@@ -86,10 +86,10 @@ func NewSocketWsAcceptor(db *runtime.DBManager, logger *zap.Logger, config Confi
 		sessionID := uuid.Must(sessionIdGen.NewV1())
 
 		// Mark the start of the session.
-		// metrics.CountWebsocketOpened(1)
+		//metrics.CountWebsocketOpened(1)
 
 		// Wrap the connection for application handling.
-		session := NewSessionWS(db, logger, config, format, sessionID, userID, username, vars, expiry, clientIP, clientPort, lang, protojsonMarshaler, protojsonUnmarshaler, conn, sessionRegistry, statusRegistry, matchmaker, tracker /*metrics,*/, pipeline, runtime)
+		session := NewSessionWS(db, logger, config, format, sessionID, userID, username, vars, expiry, clientIP, clientPort, lang, protojsonMarshaler, protojsonUnmarshaler, conn, sessionRegistry, statusRegistry, matchmaker, tracker, /*metrics,*/ pipeline, runtime)
 
 		// Add to the session registry.
 		sessionRegistry.Add(session)
@@ -113,10 +113,15 @@ func NewSocketWsAcceptor(db *runtime.DBManager, logger *zap.Logger, config Confi
 			tracker.Track(session.Context(), sessionID, PresenceStream{Mode: StreamModeNotifications, Subject: userID}, userID, PresenceMeta{Format: format, Username: username, Hidden: true}, true)
 		}
 
+		if config.GetSession().SingleSocket {
+			// Kick any other sockets for this user.
+			go sessionRegistry.SingleSession(session.Context(), tracker, userID, sessionID)
+		}
+
 		// Allow the server to begin processing incoming messages from this session.
 		session.Consume()
 
 		// Mark the end of the session.
-		// metrics.CountWebsocketClosed(1)
+		//metrics.CountWebsocketClosed(1)
 	}
 }

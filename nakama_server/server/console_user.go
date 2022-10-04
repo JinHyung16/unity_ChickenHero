@@ -19,11 +19,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/jackc/pgconn"
 	"net/http"
 	"regexp"
 	"unicode"
-
-	"github.com/jackc/pgconn"
 
 	"github.com/gofrs/uuid"
 	"github.com/heroiclabs/nakama/v3/console"
@@ -44,9 +43,13 @@ func (s *ConsoleServer) AddUser(ctx context.Context, in *console.AddUserRequest)
 		return nil, status.Error(codes.InvalidArgument, "Username must be 3-20 long sequence of alphanumeric characters _ or . and cannot start and end with _ or .")
 	}
 
+	if in.Username == "admin" || in.Username == s.config.GetConsole().Username {
+		return nil, status.Error(codes.InvalidArgument, "Username cannot be the console configured username")
+	}
+
 	if in.Email == "" {
 		return nil, status.Error(codes.InvalidArgument, "Email is required")
-	} else if len(in.Email) < 3 || len(in.Email) > 254 || !emailRegex.MatchString(in.Email) {
+	} else if len(in.Email) < 3 || len(in.Email) > 254 || !emailRegex.MatchString(in.Email) || invalidCharsRegex.MatchString(in.Email) {
 		return nil, status.Error(codes.InvalidArgument, "Not a valid email address")
 	}
 
@@ -100,7 +103,6 @@ func (s *ConsoleServer) dbInsertConsoleUser(ctx context.Context, in *console.Add
 	if err != nil {
 		return false, err
 	}
-
 	query := "INSERT INTO console_user (id, username, email, password, role) VALUES ($1, $2, $3, $4, $5)"
 	_, err = s.db.Hugh_db.ExecContext(ctx, query, id.String(), in.Username, in.Email, hashedPassword, in.Role)
 	if err != nil {
@@ -138,7 +140,6 @@ func (s *ConsoleServer) ListUsers(ctx context.Context, in *emptypb.Empty) (*cons
 
 func (s *ConsoleServer) dbListConsoleUsers(ctx context.Context) ([]*console.UserList_User, error) {
 	result := make([]*console.UserList_User, 0, 10)
-
 	rows, err := s.db.Hugh_db.QueryContext(ctx, "SELECT username, email, role FROM console_user")
 	if err != nil {
 		return nil, err
@@ -154,7 +155,6 @@ func (s *ConsoleServer) dbListConsoleUsers(ctx context.Context) ([]*console.User
 }
 
 func (s *ConsoleServer) dbDeleteConsoleUser(ctx context.Context, username string) (bool, error) {
-
 	res, err := s.db.Hugh_db.ExecContext(ctx, "DELETE FROM console_user WHERE username = $1", username)
 	if err != nil {
 		return false, err

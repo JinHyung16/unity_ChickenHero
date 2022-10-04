@@ -1,6 +1,7 @@
 package goja
 
 import (
+	"fmt"
 	"hash/maphash"
 	"math"
 	"reflect"
@@ -49,10 +50,26 @@ var (
 	reflectTypeMap    = reflect.TypeOf(map[string]interface{}{})
 	reflectTypeArray  = reflect.TypeOf([]interface{}{})
 	reflectTypeString = reflect.TypeOf("")
+	reflectTypeFunc   = reflect.TypeOf((func(FunctionCall) Value)(nil))
 )
 
 var intCache [256]Value
 
+// Value represents an ECMAScript value.
+//
+// Export returns a "plain" Go value which type depends on the type of the Value.
+//
+// For integer numbers it's int64.
+//
+// For any other numbers (including Infinities, NaN and negative zero) it's float64.
+//
+// For string it's a string. Note that unicode strings are converted into UTF-8 with invalid code points replaced with utf8.RuneError.
+//
+// For boolean it's bool.
+//
+// For null and undefined it's nil.
+//
+// For Object it depends on the Object type, see Object.Export() for more details.
 type Value interface {
 	ToInteger() int64
 	toString() valueString
@@ -81,6 +98,7 @@ type valueContainer interface {
 type typeError string
 type rangeError string
 type referenceError string
+type syntaxError string
 
 type valueInt int64
 type valueFloat float64
@@ -731,8 +749,28 @@ func (o *Object) baseObject(*Runtime) *Object {
 	return o
 }
 
-// Export the Object to a plain Go type. The returned value will be map[string]interface{} unless
-// the Object is a wrapped Go value (created using ToValue()).
+// Export the Object to a plain Go type.
+// If the Object is a wrapped Go value (created using ToValue()) returns the original value.
+//
+// If the Object is a function, returns func(FunctionCall) Value. Note that exceptions thrown inside the function
+// result in panics, which can also leave the Runtime in an unusable state. Therefore, these values should only
+// be used inside another ES function implemented in Go. For calling a function from Go, use AssertFunction() or
+// Runtime.ExportTo() as described in the README.
+//
+// For a Map, returns the list of entries as [][2]interface{}.
+//
+// For a Set, returns the list of elements as []interface{}.
+//
+// For a Proxy, returns Proxy.
+//
+// For a Promise, returns Promise.
+//
+// For a DynamicObject or a DynamicArray, returns the underlying handler.
+//
+// For an array, returns its items as []interface{}.
+//
+// In all other cases returns own enumerable non-symbol properties as map[string]interface{}.
+//
 // This method will panic with an *Exception if a JavaScript exception is thrown in the process.
 func (o *Object) Export() (ret interface{}) {
 	o.runtime.tryPanic(func() {
@@ -742,6 +780,7 @@ func (o *Object) Export() (ret interface{}) {
 	return
 }
 
+// ExportType returns the type of the value that is returned by Export().
 func (o *Object) ExportType() reflect.Type {
 	return o.self.exportType()
 }
@@ -767,7 +806,8 @@ func (o *Object) GetSymbol(sym *Symbol) Value {
 // This method will panic with an *Exception if a JavaScript exception is thrown in the process.
 func (o *Object) Keys() (keys []string) {
 	iter := &enumerableIter{
-		wrapped: o.self.enumerateOwnKeys(),
+		o:       o,
+		wrapped: o.self.iterateStringKeys(),
 	}
 	for item, next := iter.next(); next != nil; item, next = next() {
 		keys = append(keys, item.name.String())
@@ -779,7 +819,7 @@ func (o *Object) Keys() (keys []string) {
 // Symbols returns a list of Object's enumerable symbol properties.
 // This method will panic with an *Exception if a JavaScript exception is thrown in the process.
 func (o *Object) Symbols() []*Symbol {
-	symbols := o.self.ownSymbols(false, nil)
+	symbols := o.self.symbols(false, nil)
 	ret := make([]*Symbol, len(symbols))
 	for i, sym := range symbols {
 		ret[i], _ = sym.(*Symbol)
@@ -996,11 +1036,17 @@ func (s *Symbol) ToString() Value {
 }
 
 func (s *Symbol) String() string {
-	return s.desc.String()
+	if s.desc != nil {
+		return s.desc.String()
+	}
+	return ""
 }
 
 func (s *Symbol) string() unistring.String {
-	return s.desc.string()
+	if s.desc != nil {
+		return s.desc.string()
+	}
+	return ""
 }
 
 func (s *Symbol) ToFloat() float64 {
@@ -1078,10 +1124,42 @@ func NewSymbol(s string) *Symbol {
 }
 
 func (s *Symbol) descriptiveString() valueString {
-	if s.desc == nil {
-		return stringEmpty
+	desc := s.desc
+	if desc == nil {
+		desc = stringEmpty
 	}
-	return asciiString("Symbol(").concat(s.desc).concat(asciiString(")"))
+	return asciiString("Symbol(").concat(desc).concat(asciiString(")"))
+}
+
+func funcName(prefix string, n Value) valueString {
+	var b valueStringBuilder
+	b.WriteString(asciiString(prefix))
+	if sym, ok := n.(*Symbol); ok {
+		if sym.desc != nil {
+			b.WriteRune('[')
+			b.WriteString(sym.desc)
+			b.WriteRune(']')
+		}
+	} else {
+		b.WriteString(n.toString())
+	}
+	return b.String()
+}
+
+func newTypeError(args ...interface{}) typeError {
+	msg := ""
+	if len(args) > 0 {
+		f, _ := args[0].(string)
+		msg = fmt.Sprintf(f, args[1:]...)
+	}
+	return typeError(msg)
+}
+
+func typeErrorResult(throw bool, args ...interface{}) {
+	if throw {
+		panic(newTypeError(args...))
+	}
+
 }
 
 func init() {

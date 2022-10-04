@@ -31,18 +31,18 @@ type LocalStatusHandler struct {
 	sessionRegistry SessionRegistry
 	matchRegistry   MatchRegistry
 	tracker         Tracker
-	//metrics         *Metrics
-	node string
+	metrics         Metrics
+	node            string
 }
 
-func NewLocalStatusHandler(logger *zap.Logger, sessionRegistry SessionRegistry, matchRegistry MatchRegistry, tracker Tracker /*metrics *Metrics,*/, node string) StatusHandler {
+func NewLocalStatusHandler(logger *zap.Logger, sessionRegistry SessionRegistry, matchRegistry MatchRegistry, tracker Tracker, metrics Metrics, node string) StatusHandler {
 	return &LocalStatusHandler{
 		logger:          logger,
 		sessionRegistry: sessionRegistry,
 		matchRegistry:   matchRegistry,
 		tracker:         tracker,
-		//metrics:         metrics,
-		node: node,
+		metrics:         metrics,
+		node:            node,
 	}
 }
 
@@ -50,15 +50,15 @@ func (s *LocalStatusHandler) GetStatus(ctx context.Context) ([]*console.StatusLi
 	return []*console.StatusList_Status{
 		{
 			Name:           s.node,
-			Health:         0,
+			Health:         console.StatusHealth_STATUS_HEALTH_OK,
 			SessionCount:   int32(s.sessionRegistry.Count()),
 			PresenceCount:  int32(s.tracker.Count()),
 			MatchCount:     int32(s.matchRegistry.Count()),
 			GoroutineCount: int32(runtime.NumGoroutine()),
-			// AvgLatencyMs:   s.metrics.SnapshotLatencyMs.Load(),
-			// AvgRateSec:     s.metrics.SnapshotRateSec.Load(),
-			// AvgInputKbs:    s.metrics.SnapshotRecvKbSec.Load(),
-			// AvgOutputKbs:   s.metrics.SnapshotSentKbSec.Load(),
+			AvgLatencyMs:   s.metrics.SnapshotLatencyMs(),
+			AvgRateSec:     s.metrics.SnapshotRateSec(),
+			AvgInputKbs:    s.metrics.SnapshotRecvKbSec(),
+			AvgOutputKbs:   s.metrics.SnapshotSentKbSec(),
 		},
 	}, nil
 }

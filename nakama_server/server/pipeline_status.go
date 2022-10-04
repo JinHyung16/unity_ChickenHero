@@ -15,208 +15,225 @@
 package server
 
 import (
+	//"strconv"
+	//"strings"
+
 	"github.com/gofrs/uuid"
 	"github.com/heroiclabs/nakama-common/rtapi"
 	"go.uber.org/zap"
+	//"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-func (p *Pipeline) statusFollow(logger *zap.Logger, session Session, envelope *rtapi.Envelope) {
-	// incoming := envelope.GetStatusFollow()
+func (p *Pipeline) statusFollow(logger *zap.Logger, session Session, envelope *rtapi.Envelope) (bool, *rtapi.Envelope) {
+	/*
+	incoming := envelope.GetStatusFollow()
 
-	// if len(incoming.UserIds) == 0 && len(incoming.Usernames) == 0 {
-	// 	session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Status{Status: &rtapi.Status{
-	// 		Presences: make([]*rtapi.UserPresence, 0),
-	// 	}}}, true)
-	// 	return
-	// }
+	if len(incoming.UserIds) == 0 && len(incoming.Usernames) == 0 {
+		out := &rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Status{Status: &rtapi.Status{
+			Presences: make([]*rtapi.UserPresence, 0),
+		}}}
+		session.Send(out, true)
 
-	// // Deduplicate user IDs.
-	// uniqueUserIDs := make(map[uuid.UUID]struct{}, len(incoming.UserIds))
-	// for _, uid := range incoming.UserIds {
-	// 	userID, err := uuid.FromString(uid)
-	// 	if err != nil {
-	// 		session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Error{Error: &rtapi.Error{
-	// 			Code:    int32(rtapi.Error_BAD_INPUT),
-	// 			Message: "Invalid user identifier",
-	// 		}}}, true)
-	// 		return
-	// 	}
-	// 	if userID == session.UserID() {
-	// 		// The user cannot follow themselves.
-	// 		continue
-	// 	}
+		return true, nil
+	}
 
-	// 	uniqueUserIDs[userID] = struct{}{}
-	// }
+	// Deduplicate user IDs.
+	uniqueUserIDs := make(map[uuid.UUID]struct{}, len(incoming.UserIds))
+	for _, uid := range incoming.UserIds {
+		userID, err := uuid.FromString(uid)
+		if err != nil {
+			session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Error{Error: &rtapi.Error{
+				Code:    int32(rtapi.Error_BAD_INPUT),
+				Message: "Invalid user identifier",
+			}}}, true)
+			return false, nil
+		}
+		if userID == session.UserID() {
+			// The user cannot follow themselves.
+			continue
+		}
 
-	// // Deduplicate usernames.
-	// // Note: we do not yet know if these usernames and the previous user IDs may point to the same user account.
-	// uniqueUsernames := make(map[string]struct{}, len(incoming.Usernames))
-	// for _, username := range incoming.Usernames {
-	// 	if username == "" {
-	// 		session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Error{Error: &rtapi.Error{
-	// 			Code:    int32(rtapi.Error_BAD_INPUT),
-	// 			Message: "Invalid username",
-	// 		}}}, true)
-	// 		return
-	// 	}
-	// 	if username == session.Username() {
-	// 		// The user cannot follow themselves.
-	// 		continue
-	// 	}
+		uniqueUserIDs[userID] = struct{}{}
+	}
 
-	// 	uniqueUsernames[username] = struct{}{}
-	// }
+	// Deduplicate usernames.
+	// Note: we do not yet know if these usernames and the previous user IDs may point to the same user account.
+	uniqueUsernames := make(map[string]struct{}, len(incoming.Usernames))
+	for _, username := range incoming.Usernames {
+		if username == "" {
+			session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Error{Error: &rtapi.Error{
+				Code:    int32(rtapi.Error_BAD_INPUT),
+				Message: "Invalid username",
+			}}}, true)
+			return false, nil
+		}
+		if username == session.Username() {
+			// The user cannot follow themselves.
+			continue
+		}
 
-	// if len(uniqueUserIDs) == 0 && len(uniqueUsernames) == 0 {
-	// 	session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Status{Status: &rtapi.Status{
-	// 		Presences: make([]*rtapi.UserPresence, 0),
-	// 	}}}, true)
-	// 	return
-	// }
+		uniqueUsernames[username] = struct{}{}
+	}
 
-	// followUserIDs := make(map[uuid.UUID]struct{}, len(uniqueUserIDs)+len(uniqueUsernames))
-	// foundUsernames := make(map[string]struct{}, len(uniqueUsernames))
-	// if len(uniqueUsernames) == 0 {
-	// 	params := make([]interface{}, 0, len(uniqueUserIDs))
-	// 	statements := make([]string, 0, len(uniqueUserIDs))
-	// 	for userID := range uniqueUserIDs {
-	// 		params = append(params, userID)
-	// 		statements = append(statements, "$"+strconv.Itoa(len(params))+"::UUID")
-	// 	}
+	if len(uniqueUserIDs) == 0 && len(uniqueUsernames) == 0 {
+		out := &rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Status{Status: &rtapi.Status{
+			Presences: make([]*rtapi.UserPresence, 0),
+		}}}
+		session.Send(out, true)
 
-	// 	// See if all the users exist.
-	// 	query := "SELECT id FROM users WHERE id IN (" + strings.Join(statements, ", ") + ")"
-	// 	rows, err := p.db.QueryContext(session.Context(), query, params...)
-	// 	if err != nil {
-	// 		logger.Error("Error checking users in status follow", zap.Error(err))
-	// 		session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Error{Error: &rtapi.Error{
-	// 			Code:    int32(rtapi.Error_RUNTIME_EXCEPTION),
-	// 			Message: "Could not check users",
-	// 		}}}, true)
-	// 		return
-	// 	}
-	// 	for rows.Next() {
-	// 		var id string
-	// 		if err = rows.Scan(&id); err != nil {
-	// 			_ = rows.Close()
-	// 			logger.Error("Error scanning users in status follow", zap.Error(err))
-	// 			break
-	// 		}
-	// 		userID := uuid.FromStringOrNil(id)
-	// 		if userID == uuid.Nil {
-	// 			// Cannot follow the system user.
-	// 			continue
-	// 		}
-	// 		followUserIDs[userID] = struct{}{}
-	// 	}
-	// 	_ = rows.Close()
-	// } else {
-	// 	query := "SELECT id, username FROM users WHERE "
+		return true, out
+	}
 
-	// 	params := make([]interface{}, 0, len(uniqueUserIDs))
-	// 	statements := make([]string, 0, len(uniqueUserIDs))
-	// 	for userID := range uniqueUserIDs {
-	// 		params = append(params, userID)
-	// 		statements = append(statements, "$"+strconv.Itoa(len(params))+"::UUID")
-	// 	}
-	// 	if len(statements) != 0 {
-	// 		query += "id IN (" + strings.Join(statements, ", ") + ")"
-	// 		statements = make([]string, 0, len(uniqueUsernames))
-	// 	}
+	followUserIDs := make(map[uuid.UUID]struct{}, len(uniqueUserIDs)+len(uniqueUsernames))
+	foundUsernames := make(map[string]struct{}, len(uniqueUsernames))
+	if len(uniqueUsernames) == 0 {
+		params := make([]interface{}, 0, len(uniqueUserIDs))
+		statements := make([]string, 0, len(uniqueUserIDs))
+		for userID := range uniqueUserIDs {
+			params = append(params, userID)
+			statements = append(statements, "$"+strconv.Itoa(len(params))+"::UUID")
+		}
 
-	// 	for username := range uniqueUsernames {
-	// 		params = append(params, username)
-	// 		statements = append(statements, "$"+strconv.Itoa(len(params)))
-	// 	}
-	// 	if len(uniqueUserIDs) != 0 {
-	// 		query += " OR "
-	// 	}
-	// 	query += "username IN (" + strings.Join(statements, ", ") + ")"
+		// See if all the users exist.
+		query := "SELECT id FROM users WHERE id IN (" + strings.Join(statements, ", ") + ")"
+		rows, err := p.db.QueryContext(session.Context(), query, params...)
+		if err != nil {
+			logger.Error("Error checking users in status follow", zap.Error(err))
+			session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Error{Error: &rtapi.Error{
+				Code:    int32(rtapi.Error_RUNTIME_EXCEPTION),
+				Message: "Could not check users",
+			}}}, true)
+			return false, nil
+		}
+		for rows.Next() {
+			var id string
+			if err = rows.Scan(&id); err != nil {
+				_ = rows.Close()
+				logger.Error("Error scanning users in status follow", zap.Error(err))
+				break
+			}
+			userID := uuid.FromStringOrNil(id)
+			if userID == uuid.Nil {
+				// Cannot follow the system user.
+				continue
+			}
+			followUserIDs[userID] = struct{}{}
+		}
+		_ = rows.Close()
+	} else {
+		query := "SELECT id, username FROM users WHERE "
 
-	// 	// See if all the users exist.
-	// 	rows, err := p.db.QueryContext(session.Context(), query, params...)
-	// 	if err != nil {
-	// 		logger.Error("Error checking users in status follow", zap.Error(err))
-	// 		session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Error{Error: &rtapi.Error{
-	// 			Code:    int32(rtapi.Error_RUNTIME_EXCEPTION),
-	// 			Message: "Could not check users",
-	// 		}}}, true)
-	// 		return
-	// 	}
-	// 	for rows.Next() {
-	// 		var id string
-	// 		var username string
-	// 		if err := rows.Scan(&id, &username); err != nil {
-	// 			_ = rows.Close()
-	// 			logger.Error("Error scanning users in status follow", zap.Error(err))
-	// 			session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Error{Error: &rtapi.Error{
-	// 				Code:    int32(rtapi.Error_RUNTIME_EXCEPTION),
-	// 				Message: "Could not check users",
-	// 			}}}, true)
-	// 			return
-	// 		}
+		params := make([]interface{}, 0, len(uniqueUserIDs))
+		statements := make([]string, 0, len(uniqueUserIDs))
+		for userID := range uniqueUserIDs {
+			params = append(params, userID)
+			statements = append(statements, "$"+strconv.Itoa(len(params))+"::UUID")
+		}
+		if len(statements) != 0 {
+			query += "id IN (" + strings.Join(statements, ", ") + ")"
+			statements = make([]string, 0, len(uniqueUsernames))
+		}
 
-	// 		// Mark the username as found.
-	// 		foundUsernames[username] = struct{}{}
+		for username := range uniqueUsernames {
+			params = append(params, username)
+			statements = append(statements, "$"+strconv.Itoa(len(params)))
+		}
+		if len(uniqueUserIDs) != 0 {
+			query += " OR "
+		}
+		query += "username IN (" + strings.Join(statements, ", ") + ")"
 
-	// 		userID := uuid.FromStringOrNil(id)
-	// 		if userID == session.UserID() || userID == uuid.Nil {
-	// 			// The user cannot follow themselves or the system user.
-	// 			continue
-	// 		}
+		// See if all the users exist.
+		rows, err := p.db.QueryContext(session.Context(), query, params...)
+		if err != nil {
+			logger.Error("Error checking users in status follow", zap.Error(err))
+			session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Error{Error: &rtapi.Error{
+				Code:    int32(rtapi.Error_RUNTIME_EXCEPTION),
+				Message: "Could not check users",
+			}}}, true)
+			return false, nil
+		}
+		for rows.Next() {
+			var id string
+			var username string
+			if err := rows.Scan(&id, &username); err != nil {
+				_ = rows.Close()
+				logger.Error("Error scanning users in status follow", zap.Error(err))
+				session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Error{Error: &rtapi.Error{
+					Code:    int32(rtapi.Error_RUNTIME_EXCEPTION),
+					Message: "Could not check users",
+				}}}, true)
+				return false, nil
+			}
 
-	// 		followUserIDs[userID] = struct{}{}
-	// 	}
-	// 	_ = rows.Close()
-	// }
+			// Mark the username as found.
+			foundUsernames[username] = struct{}{}
 
-	// if l := len(uniqueUserIDs) + len(uniqueUsernames); len(followUserIDs) != l {
-	// 	// There's a mismatch in what the user wanted to follow and what is actually possible to follow.
-	// 	missingUserIDs := make([]string, 0, l)
-	// 	missingUsernames := make([]string, 0, l)
-	// 	for userID := range uniqueUserIDs {
-	// 		if _, found := followUserIDs[userID]; !found {
-	// 			missingUserIDs = append(missingUserIDs, userID.String())
-	// 		}
-	// 	}
-	// 	for username := range uniqueUsernames {
-	// 		if _, found := foundUsernames[username]; !found {
-	// 			missingUsernames = append(missingUsernames, username)
-	// 		}
-	// 	}
-	// 	if len(missingUserIDs) != 0 || len(missingUsernames) != 0 {
-	// 		logger.Warn("Could not follow users, no user found", zap.Strings("user_ids", missingUserIDs), zap.Strings("usernames", missingUsernames))
-	// 	}
-	// }
+			userID := uuid.FromStringOrNil(id)
+			if userID == session.UserID() || userID == uuid.Nil {
+				// The user cannot follow themselves or the system user.
+				continue
+			}
 
-	// // Follow all of the validated user IDs, and prepare a list of current presences to return.
-	// p.statusRegistry.Follow(session.ID(), followUserIDs)
+			followUserIDs[userID] = struct{}{}
+		}
+		_ = rows.Close()
+	}
 
-	// presences := make([]*rtapi.UserPresence, 0, len(followUserIDs))
-	// for userID := range followUserIDs {
-	// 	ps := p.tracker.ListByStream(PresenceStream{Mode: StreamModeStatus, Subject: userID}, false, true)
-	// 	for _, p := range ps {
-	// 		presences = append(presences, &rtapi.UserPresence{
-	// 			UserId:    p.UserID.String(),
-	// 			SessionId: p.ID.SessionID.String(),
-	// 			Username:  p.Meta.Username,
-	// 			Status:    &wrapperspb.StringValue{Value: p.Meta.Status},
-	// 		})
-	// 	}
-	// }
+	if l := len(uniqueUserIDs) + len(uniqueUsernames); len(followUserIDs) != l {
+		// There's a mismatch in what the user wanted to follow and what is actually possible to follow.
+		missingUserIDs := make([]string, 0, l)
+		missingUsernames := make([]string, 0, l)
+		for userID := range uniqueUserIDs {
+			if _, found := followUserIDs[userID]; !found {
+				missingUserIDs = append(missingUserIDs, userID.String())
+			}
+		}
+		for username := range uniqueUsernames {
+			if _, found := foundUsernames[username]; !found {
+				missingUsernames = append(missingUsernames, username)
+			}
+		}
+		if len(missingUserIDs) != 0 || len(missingUsernames) != 0 {
+			logger.Debug("Could not follow users, no user found", zap.Strings("user_ids", missingUserIDs), zap.Strings("usernames", missingUsernames))
+		}
+	}
 
-	// session.Send(&rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Status{Status: &rtapi.Status{
-	// 	Presences: presences,
-	// }}}, true)
+	// Follow all validated user IDs, and prepare a list of current presences to return.
+	p.statusRegistry.Follow(session.ID(), followUserIDs)
+
+	presences := make([]*rtapi.UserPresence, 0, len(followUserIDs))
+	for userID := range followUserIDs {
+		ps := p.tracker.ListByStream(PresenceStream{Mode: StreamModeStatus, Subject: userID}, false, true)
+		for _, p := range ps {
+			presences = append(presences, &rtapi.UserPresence{
+				UserId:    p.UserID.String(),
+				SessionId: p.ID.SessionID.String(),
+				Username:  p.Meta.Username,
+				Status:    &wrapperspb.StringValue{Value: p.Meta.Status},
+			})
+		}
+	}
+
+	out := &rtapi.Envelope{Cid: envelope.Cid, Message: &rtapi.Envelope_Status{Status: &rtapi.Status{
+		Presences: presences,
+	}}}
+	session.Send(out, true)
+
+	return true, out
+	*/
+
+	return true, nil
 }
 
-func (p *Pipeline) statusUnfollow(logger *zap.Logger, session Session, envelope *rtapi.Envelope) {
+func (p *Pipeline) statusUnfollow(logger *zap.Logger, session Session, envelope *rtapi.Envelope) (bool, *rtapi.Envelope) {
 	incoming := envelope.GetStatusUnfollow()
 
 	if len(incoming.UserIds) == 0 {
-		session.Send(&rtapi.Envelope{Cid: envelope.Cid}, true)
-		return
+		out := &rtapi.Envelope{Cid: envelope.Cid}
+		session.Send(out, true)
+
+		return true, out
 	}
 
 	userIDs := make([]uuid.UUID, 0, len(incoming.UserIds))
@@ -227,7 +244,7 @@ func (p *Pipeline) statusUnfollow(logger *zap.Logger, session Session, envelope 
 				Code:    int32(rtapi.Error_BAD_INPUT),
 				Message: "Invalid user identifier",
 			}}}, true)
-			return
+			return false, nil
 		}
 		if userID == session.UserID() {
 			// The user cannot unfollow themselves.
@@ -238,17 +255,22 @@ func (p *Pipeline) statusUnfollow(logger *zap.Logger, session Session, envelope 
 
 	p.statusRegistry.Unfollow(session.ID(), userIDs)
 
-	session.Send(&rtapi.Envelope{Cid: envelope.Cid}, true)
+	out := &rtapi.Envelope{Cid: envelope.Cid}
+	session.Send(out, true)
+
+	return true, out
 }
 
-func (p *Pipeline) statusUpdate(logger *zap.Logger, session Session, envelope *rtapi.Envelope) {
+func (p *Pipeline) statusUpdate(logger *zap.Logger, session Session, envelope *rtapi.Envelope) (bool, *rtapi.Envelope) {
 	incoming := envelope.GetStatusUpdate()
 
 	if incoming.Status == nil {
 		p.tracker.Untrack(session.ID(), PresenceStream{Mode: StreamModeStatus, Subject: session.UserID()}, session.UserID())
 
-		session.Send(&rtapi.Envelope{Cid: envelope.Cid}, true)
-		return
+		out := &rtapi.Envelope{Cid: envelope.Cid}
+		session.Send(out, true)
+
+		return true, out
 	}
 
 	if len(incoming.Status.Value) > 2048 {
@@ -256,7 +278,7 @@ func (p *Pipeline) statusUpdate(logger *zap.Logger, session Session, envelope *r
 			Code:    int32(rtapi.Error_BAD_INPUT),
 			Message: "Status must be 2048 characters or less",
 		}}}, true)
-		return
+		return false, nil
 	}
 
 	success := p.tracker.Update(session.Context(), session.ID(), PresenceStream{Mode: StreamModeStatus, Subject: session.UserID()}, session.UserID(), PresenceMeta{
@@ -270,8 +292,11 @@ func (p *Pipeline) statusUpdate(logger *zap.Logger, session Session, envelope *r
 			Code:    int32(rtapi.Error_RUNTIME_EXCEPTION),
 			Message: "Error tracking status update",
 		}}}, true)
-		return
+		return false, nil
 	}
 
-	session.Send(&rtapi.Envelope{Cid: envelope.Cid}, true)
+	out := &rtapi.Envelope{Cid: envelope.Cid}
+	session.Send(out, true)
+
+	return true, out
 }

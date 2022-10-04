@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"database/sql"
+	"fmt"
 
 	"HughCommon/Go/src/TableData"
 
@@ -15,6 +16,7 @@ func RegisterUserRPC(logger runtime.Logger, initializer runtime.Initializer) err
 	initializer.RegisterRpc("get_user_goods", GetUserRetainGoods)
 	initializer.RegisterRpc("get_user_goods_test", GetUserRetainGoodsTest)
 	
+	fmt.Println("[RegisterUserRPC] : SUCCESS")
 	return nil
 }
 
@@ -34,7 +36,7 @@ func SetUserRetainGoods(ctx context.Context, logger runtime.Logger, db *runtime.
 
 	insertContext := `user_id, user_name, user_level, user_gold`
 	insertValues := `VALUES(?, ?, ?, ?)`
-	insertQuery := `INSERT INTO user` + ` ( ` + insertContext + ` ) ` + insertValues
+	insertQuery := `INSERT INTO user_history` + ` ( ` + insertContext + ` ) ` + insertValues
 	_, insertErr := db.Hugh_db.QueryContext(ctx, insertQuery,
 		reqData.UserId,
 		reqData.UserName,
@@ -69,7 +71,7 @@ func GetUserRetainGoods(ctx context.Context, logger runtime.Logger, db *runtime.
 		println("----------------------------------------")
 	}
 
-	selectQuery := `SELECT * FROM user where user_id=?`
+	selectQuery := `SELECT * FROM user_history where user_id=?`
 	selectDB, selectErr := db.Hugh_db.QueryContext(ctx, selectQuery, reqData.UserId)
 	if selectErr != nil {
 		println("----------------------------------------")
@@ -107,7 +109,7 @@ func GetUserRetainGoodsTest(ctx context.Context, logger runtime.Logger, db *runt
 		println("----------------------------------------")
 	}
 
-	selectQuery := `SELECT * FROM user`
+	selectQuery := `SELECT * FROM user_history`
 
 	selectDB, selectErr := hugh_db.QueryContext(ctx, selectQuery)
 	if selectErr != nil {

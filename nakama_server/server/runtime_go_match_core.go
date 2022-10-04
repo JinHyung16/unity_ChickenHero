@@ -16,13 +16,14 @@ package server
 
 import (
 	"context"
+	//"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/heroiclabs/nakama-common/rtapi"
+	"github.com/heroiclabs/nakama-common/runtime"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )
@@ -50,16 +51,17 @@ type RuntimeGoMatchCore struct {
 	label      *atomic.String
 
 	runtimeLogger runtime.Logger
-	//db            map[int]*sql.DB
-	db  *runtime.DBManager
-	nk  runtime.NakamaModule
-	ctx context.Context
+	//db            *sql.DB
+	db            *runtime.DBManager
+	nk            runtime.NakamaModule
+	ctx           context.Context
 
 	ctxCancelFn context.CancelFunc
 }
 
 func NewRuntimeGoMatchCore(logger *zap.Logger, module string, matchRegistry MatchRegistry, router MessageRouter, id uuid.UUID, node string, stopped *atomic.Bool, db *runtime.DBManager, env map[string]string, nk runtime.NakamaModule, match runtime.Match) (RuntimeMatchCore, error) {
 	ctx, ctxCancelFn := context.WithCancel(context.Background())
+	//ctx = NewRuntimeGoContext(ctx, node, env, RuntimeExecutionModeMatch, nil, nil, 0, "", "", nil, "", "", "", "")
 	ctx = NewRuntimeGoContext(ctx, node, env, RuntimeExecutionModeMatch, nil, 0, "", "", nil, "", "", "", "")
 	ctx = context.WithValue(ctx, runtime.RUNTIME_CTX_MATCH_ID, fmt.Sprintf("%v.%v", id.String(), node))
 	ctx = context.WithValue(ctx, runtime.RUNTIME_CTX_MATCH_NODE, node)
@@ -107,6 +109,9 @@ func (r *RuntimeGoMatchCore) MatchInit(presenceList *MatchPresenceList, deferMes
 		return nil, 0, errors.New("MatchInit returned invalid tick rate, must be between 1 and 60")
 	}
 	r.tickRate = tickRate
+	if state == nil {
+		return nil, 0, ErrMatchInitStateNil
+	}
 
 	if err := r.matchRegistry.UpdateMatchLabel(r.id, r.tickRate, r.module, label, r.createTime); err != nil {
 		return nil, 0, err
@@ -187,6 +192,11 @@ func (r *RuntimeGoMatchCore) MatchTerminate(tick int64, state interface{}, grace
 	return newState, nil
 }
 
+func (r *RuntimeGoMatchCore) MatchSignal(tick int64, state interface{}, data string) (interface{}, string, error) {
+	newState, responseData := r.match.MatchSignal(r.ctx, r.runtimeLogger, r.db, r.nk, r, tick, state, data)
+	return newState, responseData, nil
+}
+
 func (r *RuntimeGoMatchCore) GetState(state interface{}) (string, error) {
 	return fmt.Sprintf("%+v", state), nil
 }
@@ -210,6 +220,8 @@ func (r *RuntimeGoMatchCore) CreateTime() int64 {
 func (r *RuntimeGoMatchCore) Cancel() {
 	r.ctxCancelFn()
 }
+
+func (r *RuntimeGoMatchCore) Cleanup() {}
 
 func (r *RuntimeGoMatchCore) BroadcastMessage(opCode int64, data []byte, presences []runtime.Presence, sender runtime.Presence, reliable bool) error {
 	if r.stopped.Load() {

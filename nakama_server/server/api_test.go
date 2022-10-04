@@ -25,13 +25,14 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/heroiclabs/nakama-common/api"
-	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/heroiclabs/nakama-common/rtapi"
+	"github.com/heroiclabs/nakama-common/runtime"
 	"github.com/heroiclabs/nakama/v3/apigrpc"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
+	//"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -46,7 +47,7 @@ var (
 	protojsonUnmarshaler = &protojson.UnmarshalOptions{
 		DiscardUnknown: false,
 	}
-	metrics = NewMetrics(logger, logger, nil, cfg)
+	metrics = NewLocalMetrics(logger, logger, nil, cfg)
 	_       = CheckConfig(logger, cfg)
 )
 
@@ -112,7 +113,8 @@ func (d *DummySession) SendBytes(payload []byte, reliable bool) error {
 	return nil
 }
 
-func (d *DummySession) Close(msg string, reason runtime.PresenceReason) {}
+func (d *DummySession) Close(msg string, reason runtime.PresenceReason, envelopes ...*rtapi.Envelope) {
+}
 
 type loggerEnabler struct{}
 
@@ -167,53 +169,58 @@ ON CONFLICT(id) DO NOTHING`, uid, uid.String()); err != nil {
 }
 
 func NewAPIServer(t *testing.T, runtime *Runtime) (*ApiServer, *Pipeline) {
-	// 	db := NewDB(t)
-	// 	router := &DummyMessageRouter{}
-	// 	tracker := &LocalTracker{}
-	// 	pipeline := NewPipeline(logger, cfg, db, protojsonMarshaler, protojsonUnmarshaler, nil, nil, nil, nil, nil, tracker, router, runtime)
-	// 	apiServer := StartApiServer(logger, logger, db, protojsonMarshaler, protojsonUnmarshaler, cfg, nil, nil, nil, nil, nil, nil, nil, nil, tracker, router, metrics, pipeline, runtime)
-	// 	return apiServer, pipeline
-	// }
+	/*
+	db := NewDB(t)
+	router := &DummyMessageRouter{}
+	tracker := &LocalTracker{}
+	pipeline := NewPipeline(logger, cfg, db, protojsonMarshaler, protojsonUnmarshaler, nil, nil, nil, nil, nil, tracker, router, runtime)
+	apiServer := StartApiServer(logger, logger, db, protojsonMarshaler, protojsonUnmarshaler, cfg, nil, nil, nil, nil, nil, nil, nil, nil, tracker, router, nil, metrics, pipeline, runtime)
+	return apiServer, pipeline
+}
 
-	// func NewSession(t *testing.T, customID string) (*grpc.ClientConn, apigrpc.NakamaClient, *api.Session, context.Context) {
-	// 	ctx := context.Background()
-	// 	outgoingCtx := metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{
-	// 		"authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte("defaultkey:")),
-	// 	}))
-	// 	conn, err := grpc.DialContext(outgoingCtx, "localhost:7349", grpc.WithInsecure())
-	// 	if err != nil {
-	// 		t.Fatal(err)
-	// 	}
+func NewSession(t *testing.T, customID string) (*grpc.ClientConn, apigrpc.NakamaClient, *api.Session, context.Context) {
+	ctx := context.Background()
+	outgoingCtx := metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{
+		"authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte("defaultkey:")),
+	}))
+	conn, err := grpc.DialContext(outgoingCtx, "localhost:7349", grpc.WithInsecure())
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// 	client := apigrpc.NewNakamaClient(conn)
-	// 	session, err := client.AuthenticateCustom(outgoingCtx, &api.AuthenticateCustomRequest{
-	// 		Account: &api.AccountCustom{
-	// 			Id: customID,
-	// 		},
-	// 		Username: GenerateString(),
-	// 	})
-	// 	if err != nil {
-	// 		t.Fatal(err)
-	// 	}
+	client := apigrpc.NewNakamaClient(conn)
+	session, err := client.AuthenticateCustom(outgoingCtx, &api.AuthenticateCustomRequest{
+		Account: &api.AccountCustom{
+			Id: customID,
+		},
+		Username: GenerateString(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return conn, client, session, outgoingCtx
+	*/
 	return nil, nil
-	// return conn, client, session, outgoingCtx
 }
 
 func NewAuthenticatedAPIClient(t *testing.T, customID string) (*grpc.ClientConn, apigrpc.NakamaClient, *api.Session, context.Context) {
-	// conn, _, session, _ := NewSession(t, customID)
-	// conn.Close()
+	/*
+	conn, _, session, _ := NewSession(t, customID)
+	conn.Close()
 
-	// ctx := context.Background()
-	// outgoingCtx := metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{
-	// 	"authorization": "Bearer " + session.Token,
-	// }))
-	// conn, err := grpc.DialContext(outgoingCtx, "localhost:7349", grpc.WithInsecure())
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	ctx := context.Background()
+	outgoingCtx := metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{
+		"authorization": "Bearer " + session.Token,
+	}))
+	conn, err := grpc.DialContext(outgoingCtx, "localhost:7349", grpc.WithInsecure())
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// client := apigrpc.NewNakamaClient(conn)
-	// return conn, client, session, outgoingCtx
+	client := apigrpc.NewNakamaClient(conn)
+	return conn, client, session, outgoingCtx
+	*/
 	return nil, nil, nil, nil
 }
 

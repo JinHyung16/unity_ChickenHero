@@ -136,7 +136,7 @@ GameObject:
   - component: {fileID: 937432406}
   - component: {fileID: 937432405}
   m_Layer: 5
-  m_Name: Login Test Button
+  m_Name: Login Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -401,7 +401,7 @@ GameObject:
   - component: {fileID: 1173854248}
   - component: {fileID: 1173854247}
   m_Layer: 5
-  m_Name: Login Test Panel
+  m_Name: Login Panel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -682,7 +682,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a78dc442aa96c5b47b8438c830167b50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  loginTestButton: {fileID: 937432405}
+  logginButton: {fileID: 937432405}
 --- !u!114 &1977531703
 MonoBehaviour:
   m_ObjectHideFlags: 0

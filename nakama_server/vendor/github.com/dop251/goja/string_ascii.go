@@ -49,7 +49,7 @@ func (s asciiString) utf16Runes() []rune {
 }
 
 // ss must be trimmed
-func strToInt(ss string) (int64, error) {
+func stringToInt(ss string) (int64, error) {
 	if ss == "" {
 		return 0, nil
 	}
@@ -70,7 +70,7 @@ func strToInt(ss string) (int64, error) {
 }
 
 func (s asciiString) _toInt() (int64, error) {
-	return strToInt(strings.TrimSpace(string(s)))
+	return stringToInt(strings.TrimSpace(string(s)))
 }
 
 func isRangeErr(err error) bool {
@@ -247,10 +247,7 @@ func (s asciiString) length() int {
 func (s asciiString) concat(other valueString) valueString {
 	switch other := other.(type) {
 	case asciiString:
-		b := make([]byte, len(s)+len(other))
-		copy(b, s)
-		copy(b[len(s):], other)
-		return asciiString(b)
+		return asciiString(s + other)
 	case unicodeString:
 		b := make([]uint16, len(s)+len(other))
 		b[0] = unistring.BOM

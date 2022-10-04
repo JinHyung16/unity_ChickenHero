@@ -1,6 +1,7 @@
 package goja
 
 import (
+	"fmt"
 	"math"
 	"math/bits"
 	"reflect"
@@ -20,6 +21,9 @@ func (ai *arrayIterObject) next() Value {
 	if ai.obj == nil {
 		return ai.val.runtime.createIterResultObject(_undefined, true)
 	}
+	if ta, ok := ai.obj.self.(*typedArrayObject); ok {
+		ta.viewedArrayBuf.ensureNotDetached(true)
+	}
 	l := toLength(ai.obj.self.getStr("length", nil))
 	index := ai.nextIdx
 	if index >= l {
@@ -31,7 +35,7 @@ func (ai *arrayIterObject) next() Value {
 	if ai.kind == iterationKindKey {
 		return ai.val.runtime.createIterResultObject(idxVal, false)
 	}
-	elementValue := ai.obj.self.getIdx(idxVal, nil)
+	elementValue := nilSafe(ai.obj.self.getIdx(idxVal, nil))
 	var result Value
 	if ai.kind == iterationKindValue {
 		result = elementValue
@@ -74,49 +78,45 @@ func (a *arrayObject) init() {
 	a._put("length", &a.lengthProp)
 }
 
-func (a *arrayObject) _setLengthInt(l int64, throw bool) bool {
-	if l >= 0 && l <= math.MaxUint32 {
-		l := uint32(l)
-		ret := true
-		if l <= a.length {
-			if a.propValueCount > 0 {
-				// Slow path
-				for i := len(a.values) - 1; i >= int(l); i-- {
-					if prop, ok := a.values[i].(*valueProperty); ok {
-						if !prop.configurable {
-							l = uint32(i) + 1
-							ret = false
-							break
-						}
-						a.propValueCount--
+func (a *arrayObject) _setLengthInt(l uint32, throw bool) bool {
+	ret := true
+	if l <= a.length {
+		if a.propValueCount > 0 {
+			// Slow path
+			for i := len(a.values) - 1; i >= int(l); i-- {
+				if prop, ok := a.values[i].(*valueProperty); ok {
+					if !prop.configurable {
+						l = uint32(i) + 1
+						ret = false
+						break
 					}
+					a.propValueCount--
 				}
 			}
 		}
-		if l <= uint32(len(a.values)) {
-			if l >= 16 && l < uint32(cap(a.values))>>2 {
-				ar := make([]Value, l)
-				copy(ar, a.values)
-				a.values = ar
-			} else {
-				ar := a.values[l:len(a.values)]
-				for i := range ar {
-					ar[i] = nil
-				}
-				a.values = a.values[:l]
-			}
-		}
-		a.length = l
-		if !ret {
-			a.val.runtime.typeErrorResult(throw, "Cannot redefine property: length")
-		}
-		return ret
 	}
-	panic(a.val.runtime.newError(a.val.runtime.global.RangeError, "Invalid array length"))
+	if l <= uint32(len(a.values)) {
+		if l >= 16 && l < uint32(cap(a.values))>>2 {
+			ar := make([]Value, l)
+			copy(ar, a.values)
+			a.values = ar
+		} else {
+			ar := a.values[l:len(a.values)]
+			for i := range ar {
+				ar[i] = nil
+			}
+			a.values = a.values[:l]
+		}
+	}
+	a.length = l
+	if !ret {
+		a.val.runtime.typeErrorResult(throw, "Cannot redefine property: length")
+	}
+	return ret
 }
 
-func (a *arrayObject) setLengthInt(l int64, throw bool) bool {
-	if l == int64(a.length) {
+func (a *arrayObject) setLengthInt(l uint32, throw bool) bool {
+	if l == a.length {
 		return true
 	}
 	if !a.lengthProp.writable {
@@ -126,19 +126,12 @@ func (a *arrayObject) setLengthInt(l int64, throw bool) bool {
 	return a._setLengthInt(l, throw)
 }
 
-func (a *arrayObject) setLength(v Value, throw bool) bool {
-	l, ok := toIntIgnoreNegZero(v)
-	if ok && l == int64(a.length) {
-		return true
-	}
+func (a *arrayObject) setLength(v uint32, throw bool) bool {
 	if !a.lengthProp.writable {
 		a.val.runtime.typeErrorResult(throw, "length is not writable")
 		return false
 	}
-	if ok {
-		return a._setLengthInt(l, throw)
-	}
-	panic(a.val.runtime.newError(a.val.runtime.global.RangeError, "Invalid array length"))
+	return a._setLengthInt(v, throw)
 }
 
 func (a *arrayObject) getIdx(idx valueInt, receiver Value) Value {
@@ -162,7 +155,7 @@ func (a *arrayObject) getIdx(idx valueInt, receiver Value) Value {
 
 func (a *arrayObject) getOwnPropStr(name unistring.String) Value {
 	if len(a.values) > 0 {
-		if i := strToIdx(name); i != math.MaxUint32 {
+		if i := strToArrayIdx(name); i != math.MaxUint32 {
 			if i < uint32(len(a.values)) {
 				return a.values[i]
 			}
@@ -185,11 +178,11 @@ func (a *arrayObject) getOwnPropIdx(idx valueInt) Value {
 	return a.baseObject.getOwnPropStr(idx.string())
 }
 
-func (a *arrayObject) sortLen() int64 {
-	return int64(len(a.values))
+func (a *arrayObject) sortLen() int {
+	return len(a.values)
 }
 
-func (a *arrayObject) sortGet(i int64) Value {
+func (a *arrayObject) sortGet(i int) Value {
 	v := a.values[i]
 	if p, ok := v.(*valueProperty); ok {
 		v = p.get(a.val)
@@ -197,7 +190,7 @@ func (a *arrayObject) sortGet(i int64) Value {
 	return v
 }
 
-func (a *arrayObject) swap(i, j int64) {
+func (a *arrayObject) swap(i int, j int) {
 	a.values[i], a.values[j] = a.values[j], a.values[i]
 }
 
@@ -205,7 +198,7 @@ func (a *arrayObject) getStr(name unistring.String, receiver Value) Value {
 	return a.getStrWithOwnProp(a.getOwnPropStr(name), name, receiver)
 }
 
-func (a *arrayObject) getLengthProp() Value {
+func (a *arrayObject) getLengthProp() *valueProperty {
 	a.lengthProp.value = intToValue(int64(a.length))
 	return &a.lengthProp
 }
@@ -237,7 +230,7 @@ func (a *arrayObject) _setOwnIdx(idx uint32, val Value, throw bool) bool {
 			return false
 		} else {
 			if idx >= a.length {
-				if !a.setLengthInt(int64(idx)+1, throw) {
+				if !a.setLengthInt(idx+1, throw) {
 					return false
 				}
 			}
@@ -264,11 +257,11 @@ func (a *arrayObject) _setOwnIdx(idx uint32, val Value, throw bool) bool {
 }
 
 func (a *arrayObject) setOwnStr(name unistring.String, val Value, throw bool) bool {
-	if idx := strToIdx(name); idx != math.MaxUint32 {
+	if idx := strToArrayIdx(name); idx != math.MaxUint32 {
 		return a._setOwnIdx(idx, val, throw)
 	} else {
 		if name == "length" {
-			return a.setLength(val, throw)
+			return a.setLength(a.val.runtime.toLengthUint32(val), throw)
 		} else {
 			return a.baseObject.setOwnStr(name, val, throw)
 		}
@@ -291,7 +284,7 @@ type arrayPropIter struct {
 
 func (i *arrayPropIter) next() (propIterItem, iterNextFunc) {
 	for i.idx < len(i.a.values) && i.idx < i.limit {
-		name := unistring.String(strconv.Itoa(i.idx))
+		name := asciiString(strconv.Itoa(i.idx))
 		prop := i.a.values[i.idx]
 		i.idx++
 		if prop != nil {
@@ -299,17 +292,17 @@ func (i *arrayPropIter) next() (propIterItem, iterNextFunc) {
 		}
 	}
 
-	return i.a.baseObject.enumerateOwnKeys()()
+	return i.a.baseObject.iterateStringKeys()()
 }
 
-func (a *arrayObject) enumerateOwnKeys() iterNextFunc {
+func (a *arrayObject) iterateStringKeys() iterNextFunc {
 	return (&arrayPropIter{
 		a:     a,
 		limit: len(a.values),
 	}).next
 }
 
-func (a *arrayObject) ownKeys(all bool, accum []Value) []Value {
+func (a *arrayObject) stringKeys(all bool, accum []Value) []Value {
 	for i, prop := range a.values {
 		name := strconv.Itoa(i)
 		if prop != nil {
@@ -321,11 +314,11 @@ func (a *arrayObject) ownKeys(all bool, accum []Value) []Value {
 			accum = append(accum, asciiString(name))
 		}
 	}
-	return a.baseObject.ownKeys(all, accum)
+	return a.baseObject.stringKeys(all, accum)
 }
 
 func (a *arrayObject) hasOwnPropertyStr(name unistring.String) bool {
-	if idx := strToIdx(name); idx != math.MaxUint32 {
+	if idx := strToArrayIdx(name); idx != math.MaxUint32 {
 		return idx < uint32(len(a.values)) && a.values[idx] != nil
 	} else {
 		return a.baseObject.hasOwnPropertyStr(name)
@@ -373,16 +366,23 @@ func (a *arrayObject) expand(idx uint32) bool {
 	return true
 }
 
-func (r *Runtime) defineArrayLength(prop *valueProperty, descr PropertyDescriptor, setter func(Value, bool) bool, throw bool) bool {
+func (r *Runtime) defineArrayLength(prop *valueProperty, descr PropertyDescriptor, setter func(uint32, bool) bool, throw bool) bool {
+	var newLen uint32
 	ret := true
+	if descr.Value != nil {
+		newLen = r.toLengthUint32(descr.Value)
+	}
 
 	if descr.Configurable == FLAG_TRUE || descr.Enumerable == FLAG_TRUE || descr.Getter != nil || descr.Setter != nil {
 		ret = false
 		goto Reject
 	}
 
-	if newLen := descr.Value; newLen != nil {
-		ret = setter(newLen, false)
+	if descr.Value != nil {
+		oldLen := uint32(prop.value.ToInteger())
+		if oldLen != newLen {
+			ret = setter(newLen, false)
+		}
 	} else {
 		ret = true
 	}
@@ -415,7 +415,7 @@ func (a *arrayObject) _defineIdxProperty(idx uint32, desc PropertyDescriptor, th
 	prop, ok := a.baseObject._defineOwnProperty(unistring.String(strconv.FormatUint(uint64(idx), 10)), existing, desc, throw)
 	if ok {
 		if idx >= a.length {
-			if !a.setLengthInt(int64(idx)+1, throw) {
+			if !a.setLengthInt(idx+1, throw) {
 				return false
 			}
 		}
@@ -426,18 +426,18 @@ func (a *arrayObject) _defineIdxProperty(idx uint32, desc PropertyDescriptor, th
 				a.propValueCount++
 			}
 		} else {
-			a.val.self.(*sparseArrayObject).add(uint32(idx), prop)
+			a.val.self.(*sparseArrayObject).add(idx, prop)
 		}
 	}
 	return ok
 }
 
 func (a *arrayObject) defineOwnPropertyStr(name unistring.String, descr PropertyDescriptor, throw bool) bool {
-	if idx := strToIdx(name); idx != math.MaxUint32 {
+	if idx := strToArrayIdx(name); idx != math.MaxUint32 {
 		return a._defineIdxProperty(idx, descr, throw)
 	}
 	if name == "length" {
-		return a.val.runtime.defineArrayLength(&a.lengthProp, descr, a.setLength, throw)
+		return a.val.runtime.defineArrayLength(a.getLengthProp(), descr, a.setLength, throw)
 	}
 	return a.baseObject.defineOwnPropertyStr(name, descr, throw)
 }
@@ -467,7 +467,7 @@ func (a *arrayObject) _deleteIdxProp(idx uint32, throw bool) bool {
 }
 
 func (a *arrayObject) deleteStr(name unistring.String, throw bool) bool {
-	if idx := strToIdx(name); idx != math.MaxUint32 {
+	if idx := strToArrayIdx(name); idx != math.MaxUint32 {
 		return a._deleteIdxProp(idx, throw)
 	}
 	return a.baseObject.deleteStr(name, throw)
@@ -481,11 +481,11 @@ func (a *arrayObject) deleteIdx(idx valueInt, throw bool) bool {
 }
 
 func (a *arrayObject) export(ctx *objectExportCtx) interface{} {
-	if v, exists := ctx.get(a); exists {
+	if v, exists := ctx.get(a.val); exists {
 		return v
 	}
 	arr := make([]interface{}, a.length)
-	ctx.put(a, arr)
+	ctx.put(a.val, arr)
 	if a.propValueCount == 0 && a.length == uint32(len(a.values)) && uint32(a.objCount) == a.length {
 		for i, v := range a.values {
 			if v != nil {
@@ -507,6 +507,36 @@ func (a *arrayObject) exportType() reflect.Type {
 	return reflectTypeArray
 }
 
+func (a *arrayObject) exportToArrayOrSlice(dst reflect.Value, typ reflect.Type, ctx *objectExportCtx) error {
+	r := a.val.runtime
+	if iter := a.getSym(SymIterator, nil); iter == r.global.arrayValues || iter == nil {
+		l := toIntStrict(int64(a.length))
+		if typ.Kind() == reflect.Array {
+			if dst.Len() != l {
+				return fmt.Errorf("cannot convert an Array into an array, lengths mismatch (have %d, need %d)", l, dst.Len())
+			}
+		} else {
+			dst.Set(reflect.MakeSlice(typ, l, l))
+		}
+		ctx.putTyped(a.val, typ, dst.Interface())
+		for i := 0; i < l; i++ {
+			if i >= len(a.values) {
+				break
+			}
+			val := a.values[i]
+			if p, ok := val.(*valueProperty); ok {
+				val = p.get(a.val)
+			}
+			err := r.toReflectValue(val, dst.Index(i), ctx)
+			if err != nil {
+				return fmt.Errorf("could not convert array element %v to %v at %d: %w", val, typ, i, err)
+			}
+		}
+		return nil
+	}
+	return a.baseObject.exportToArrayOrSlice(dst, typ, ctx)
+}
+
 func (a *arrayObject) setValuesFromSparse(items []sparseArrayItem, newMaxIdx int) {
 	a.values = make([]Value, newMaxIdx+1)
 	for _, item := range items {
@@ -520,114 +550,4 @@ func toIdx(v valueInt) uint32 {
 		return uint32(v)
 	}
 	return math.MaxUint32
-}
-
-func strToIdx64(s unistring.String) int64 {
-	if s == "" {
-		return -1
-	}
-	l := len(s)
-	if s[0] == '0' {
-		if l == 1 {
-			return 0
-		}
-		return -1
-	}
-	var n int64
-	if l < 19 {
-		// guaranteed not to overflow
-		for i := 0; i < len(s); i++ {
-			c := s[i]
-			if c < '0' || c > '9' {
-				return -1
-			}
-			n = n*10 + int64(c-'0')
-		}
-		return n
-	}
-	if l > 19 {
-		// guaranteed to overflow
-		return -1
-	}
-	c18 := s[18]
-	if c18 < '0' || c18 > '9' {
-		return -1
-	}
-	for i := 0; i < 18; i++ {
-		c := s[i]
-		if c < '0' || c > '9' {
-			return -1
-		}
-		n = n*10 + int64(c-'0')
-	}
-	if n >= math.MaxInt64/10+1 {
-		return -1
-	}
-	n *= 10
-	n1 := n + int64(c18-'0')
-	if n1 < n {
-		return -1
-	}
-	return n1
-}
-
-func strToIdx(s unistring.String) uint32 {
-	if s == "" {
-		return math.MaxUint32
-	}
-	l := len(s)
-	if s[0] == '0' {
-		if l == 1 {
-			return 0
-		}
-		return math.MaxUint32
-	}
-	var n uint32
-	if l < 10 {
-		// guaranteed not to overflow
-		for i := 0; i < len(s); i++ {
-			c := s[i]
-			if c < '0' || c > '9' {
-				return math.MaxUint32
-			}
-			n = n*10 + uint32(c-'0')
-		}
-		return n
-	}
-	if l > 10 {
-		// guaranteed to overflow
-		return math.MaxUint32
-	}
-	c9 := s[9]
-	if c9 < '0' || c9 > '9' {
-		return math.MaxUint32
-	}
-	for i := 0; i < 9; i++ {
-		c := s[i]
-		if c < '0' || c > '9' {
-			return math.MaxUint32
-		}
-		n = n*10 + uint32(c-'0')
-	}
-	if n >= math.MaxUint32/10+1 {
-		return math.MaxUint32
-	}
-	n *= 10
-	n1 := n + uint32(c9-'0')
-	if n1 < n {
-		return math.MaxUint32
-	}
-
-	return n1
-}
-
-func strToGoIdx(s unistring.String) int {
-	if bits.UintSize == 64 {
-		return int(strToIdx64(s))
-	}
-	i := strToIdx(s)
-	if i >= math.MaxInt32 {
-		return -1
-	}
-	return int(i)
 }

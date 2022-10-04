@@ -45,7 +45,7 @@ func (s *ApiServer) ValidatePurchaseApple(ctx context.Context, in *api.ValidateP
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -56,10 +56,15 @@ func (s *ApiServer) ValidatePurchaseApple(ctx context.Context, in *api.ValidateP
 	}
 
 	if len(in.Receipt) < 1 {
-		return nil, status.Error(codes.InvalidArgument, "Receipt cannot be emptypb.")
+		return nil, status.Error(codes.InvalidArgument, "Receipt cannot be empty.")
 	}
 
-	validation, err := ValidatePurchasesApple(ctx, s.logger, s.db.Hugh_db, userID, s.config.GetIAP().Apple.SharedPassword, in.Receipt)
+	persist := true
+	if in.Persist != nil {
+		persist = in.Persist.GetValue()
+	}
+
+	validation, err := ValidatePurchasesApple(ctx, s.logger, s.db.Hugh_db, userID, s.config.GetIAP().Apple.SharedPassword, in.Receipt, persist)
 	if err != nil {
 		if err == runtime.ErrPurchaseReceiptAlreadySeen {
 			return nil, status.Error(codes.AlreadyExists, err.Error())
@@ -74,7 +79,7 @@ func (s *ApiServer) ValidatePurchaseApple(ctx context.Context, in *api.ValidateP
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return validation, err
@@ -100,7 +105,7 @@ func (s *ApiServer) ValidatePurchaseGoogle(ctx context.Context, in *api.Validate
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -111,14 +116,16 @@ func (s *ApiServer) ValidatePurchaseGoogle(ctx context.Context, in *api.Validate
 	}
 
 	if len(in.Purchase) < 1 {
-		return nil, status.Error(codes.InvalidArgument, "Purchase cannot be emptypb.")
+		return nil, status.Error(codes.InvalidArgument, "Purchase cannot be empty.")
 	}
 
-	validation, err := ValidatePurchaseGoogle(ctx, s.logger, s.db.Hugh_db, userID, s.config.GetIAP().Google, in.Purchase)
+	persist := true
+	if in.Persist != nil {
+		persist = in.Persist.GetValue()
+	}
+
+	validation, err := ValidatePurchaseGoogle(ctx, s.logger, s.db.Hugh_db, userID, s.config.GetIAP().Google, in.Purchase, persist)
 	if err != nil {
-		if err == runtime.ErrPurchaseReceiptAlreadySeen {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		}
 		return nil, err
 	}
 
@@ -129,7 +136,7 @@ func (s *ApiServer) ValidatePurchaseGoogle(ctx context.Context, in *api.Validate
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return validation, err
@@ -155,7 +162,7 @@ func (s *ApiServer) ValidatePurchaseHuawei(ctx context.Context, in *api.Validate
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -168,18 +175,20 @@ func (s *ApiServer) ValidatePurchaseHuawei(ctx context.Context, in *api.Validate
 	}
 
 	if len(in.Purchase) < 1 {
-		return nil, status.Error(codes.InvalidArgument, "Purchase cannot be emptypb.")
+		return nil, status.Error(codes.InvalidArgument, "Purchase cannot be empty.")
 	}
 
 	if len(in.Signature) < 1 {
-		return nil, status.Error(codes.InvalidArgument, "Signature cannot be emptypb.")
+		return nil, status.Error(codes.InvalidArgument, "Signature cannot be empty.")
 	}
 
-	validation, err := ValidatePurchaseHuawei(ctx, s.logger, s.db.Hugh_db, userID, s.config.GetIAP().Huawei, in.Purchase, in.Signature)
+	persist := true
+	if in.Persist != nil {
+		persist = in.Persist.GetValue()
+	}
+
+	validation, err := ValidatePurchaseHuawei(ctx, s.logger, s.db.Hugh_db, userID, s.config.GetIAP().Huawei, in.Purchase, in.Signature, persist)
 	if err != nil {
-		if err == runtime.ErrPurchaseReceiptAlreadySeen {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		}
 		return nil, err
 	}
 
@@ -190,7 +199,7 @@ func (s *ApiServer) ValidatePurchaseHuawei(ctx context.Context, in *api.Validate
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return validation, err

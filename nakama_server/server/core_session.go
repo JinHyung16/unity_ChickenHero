@@ -16,14 +16,14 @@ package server
 
 import (
 	"context"
-	//"database/sql"
+	"database/sql"
 	"errors"
 
 	"github.com/gofrs/uuid"
+	"github.com/jackc/pgtype"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"github.com/heroiclabs/nakama-common/runtime"
 )
 
 var (
@@ -31,7 +31,7 @@ var (
 	ErrRefreshTokenInvalid = errors.New("refresh token invalid")
 )
 
-func SessionRefresh(ctx context.Context, logger *zap.Logger, db *runtime.DBManager, config Config, sessionCache SessionCache, token string) (uuid.UUID, string, map[string]string, error) {
+func SessionRefresh(ctx context.Context, logger *zap.Logger, db *sql.DB, config Config, sessionCache SessionCache, token string) (uuid.UUID, string, map[string]string, error) {
 	userID, _, vars, exp, _, ok := parseToken([]byte(config.GetSession().RefreshEncryptionKey), token)
 	if !ok {
 		return uuid.Nil, "", nil, status.Error(codes.Unauthenticated, "Refresh token invalid or expired.")
@@ -40,28 +40,33 @@ func SessionRefresh(ctx context.Context, logger *zap.Logger, db *runtime.DBManag
 		return uuid.Nil, "", nil, status.Error(codes.Unauthenticated, "Refresh token invalid or expired.")
 	}
 
+	// seession 넘길 때 key/value 에서 key 값이 없는 현상 생김. 따라서 이 부분 해결 보기
+	
 	// Look for an existing account.
-	// query := "SELECT username, disable_time FROM users WHERE id = $1 LIMIT 1"
-	// var dbUsername string
-	// var dbDisableTime pgtype.Timestamptz
-	// err := db.QueryRowContext(ctx, query, userID).Scan(&dbUsername, &dbDisableTime)
-	// if err != nil {
-	// 	if err == sql.ErrNoRows {
-	// 		// Account not found and creation is never allowed for this type.
-	// 		return uuid.Nil, "", nil, status.Error(codes.NotFound, "User account not found.")
-	// 	}
-	// 	logger.Error("Error looking up user by ID.", zap.Error(err), zap.String("id", userID.String()))
-	// 	return uuid.Nil, "", nil, status.Error(codes.Internal, "Error finding user account.")
-	// }
+	//query := "SELECT username, disable_time FROM users WHERE id = $1 LIMIT 1"
+	query := "SELECT username, disable_time FROM users WHERE id = ? LIMIT 1"
+	var dbUsername string
+	var dbDisableTime pgtype.Timestamptz
+	err := db.QueryRowContext(ctx, query, userID).Scan(&dbUsername, &dbDisableTime)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Account not found and creation is never allowed for this type.
+			return uuid.Nil, "", nil, status.Error(codes.NotFound, "User account not found.")
+		}
+		logger.Error("Error looking up user by ID.", zap.Error(err), zap.String("id", userID.String()))
+		return uuid.Nil, "", nil, status.Error(codes.Internal, "Error finding user account.")
+	}
 
-	// // Check if it's disabled.
-	// if dbDisableTime.Status == pgtype.Present && dbDisableTime.Time.Unix() != 0 {
-	// 	logger.Info("User account is disabled.", zap.String("id", userID.String()))
-	// 	return uuid.Nil, "", nil, status.Error(codes.PermissionDenied, "User account banned.")
-	// }
+	// Check if it's disabled.
+	if dbDisableTime.Status == pgtype.Present && dbDisableTime.Time.Unix() != 0 {
+		logger.Info("User account is disabled.", zap.String("id", userID.String()))
+		return uuid.Nil, "", nil, status.Error(codes.PermissionDenied, "User account banned.")
+	}
 
-	// return userID, dbUsername, vars, nil
-	return userID, "", vars, nil
+	return userID, dbUsername, vars, nil
+	
+	
+	//return userID, "", vars, nil
 }
 
 func SessionLogout(config Config, sessionCache SessionCache, userID uuid.UUID, token, refreshToken string) error {

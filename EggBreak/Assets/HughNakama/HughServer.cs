@@ -6,14 +6,13 @@ using Nakama;
 public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
 {
     protected string Scheme = "http";
-    //protected string Host = "35.197.17.99"; // @GCP VM: hugh-server 외부 ip
-    protected string Host = "localhost";
+   // protected string Host = "localhost";
+    protected string Host = "35.197.17.99"; // @GCP VM 외부 ip
 
     protected int Port = 7350;
     protected string ServerKey = "defaultkey";
 
     protected string sessionPrefName;
-
 
     protected IClient Client;
     protected ISession Session;
@@ -22,12 +21,12 @@ public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
     protected UnityMainThreadDispatcher mainThread;
     protected virtual void ConnectToServer(string host, int port)
     {
-        Client = new Nakama.Client(this.Scheme, host, port, this.ServerKey);
+        Client = new Client(this.Scheme, host, port, this.ServerKey);
     }
 
     protected async Task SocketConnect()
     {
-        Socket = Client.NewSocket(false);        
+        Socket = Client.NewSocket();        
         await Socket.ConnectAsync(Session, true);
 
         BindSocketEvents();
