@@ -8,11 +8,14 @@
 - Unity version: 3.30f1 (use 3.9f1 or later)  
 
 ## Setting
+- nakama_plugin folder: grpc 작성한 플러그인  
+- nakama_server folder: nakama github에서 제공중인 api를 다운받아 redis를 추가하고 커스텀한 서버  
+- nakama_server_login folder: nakama github에서 제공중인 api를 다운받아 migrate 수정하여 사용 
 
 ## Notice
-[nakama_plugin folder]
-- 최신 버전 사용 원하면 nakama-common, Go version만 바꾼후 go mod vendor  
-- vendor/github.com/runtime/runtime.go 부분 nakama_server폴더 참고해서 DB Manager추가하고 일부 수정하기  
+- [GCP] 이름의 폴더는 GCP에서 운용중인 서버 환경 설정을 적어놨습니다.  
 
 ### Reference
-nakama server - 공식 github(https://github.com/heroiclabs/nakama)  
+nakama server: github(https://github.com/heroiclabs/nakama)  
+[GCP]hugh-login-server의 Dockerfile 작성: github(https://github.com/heroiclabs/nakama/blob/master/build/Dockerfile)  
+nakama_login_server의 sql-migrate 참고: github(https://github.com/rubenv/sql-migrate/tree/v1.1.1)   

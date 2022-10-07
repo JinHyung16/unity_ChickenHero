@@ -17,6 +17,7 @@ package server
 import (
 	"context"
 	//"strconv"
+	"fmt"
 
 	"github.com/gofrs/uuid"
 	"github.com/heroiclabs/nakama-common/api"
@@ -54,7 +55,14 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 		return nil, status.Error(codes.InvalidArgument, "Refresh token is required.")
 	}
 
+	/*
 	userID, username, vars, err := SessionRefresh(ctx, s.logger, s.db.Hugh_db, s.config, s.sessionCache, in.Token)
+	if err != nil {
+		return nil, err
+	}
+	*/
+
+	userID, _, vars, err := SessionRefresh(ctx, s.logger, nil, s.config, s.sessionCache, in.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -65,6 +73,18 @@ func (s *ApiServer) SessionRefresh(ctx context.Context, in *api.SessionRefreshRe
 		useVars = vars
 	}
 	userIDStr := userID.String()
+
+	fmt.Println("api_session.go refresh 진입")
+	key, sessionCache := GetSessionCache(userIDStr)
+
+	if sessionCache == nil {
+		//로그인서버에서 인증되지 않은 경우
+		//지금은 game_server에서 인증되지 않은 경우
+		return nil, status.Error(codes.InvalidArgument, "SessionRefresh, 인증정보가 존재하지않습니다 : "+ key)
+	}
+
+	//targetdbId, _ := strconv.Atoi(sessionCache["targetdbId"])
+	username := sessionCache["username"]
 
 	token, exp := generateToken(s.config, userIDStr, username, useVars)
 	s.sessionCache.Add(userID, exp, token, 0, "")

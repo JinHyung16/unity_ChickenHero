@@ -42,7 +42,7 @@ const (
 	defaultLimit                = -1
 )
 
-//go:embed sql/*
+// go:embed sql/*
 var sqlMigrateFS embed.FS
 
 type statusRow struct {

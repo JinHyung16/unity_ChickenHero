@@ -17,9 +17,11 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
 	//"time"
 
 	"github.com/gofrs/uuid"
@@ -86,13 +88,13 @@ func (s *ApiServer) RpcFuncHttp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// After this point the RPC will be captured in metrics.
 	/*
 	start := time.Now()
 	var success bool
 	var recvBytes, sentBytes int
 	var id string
 
-	// After this point the RPC will be captured in metrics.
 	defer func() {
 		s.metrics.ApiRpc(id, time.Since(start), int64(recvBytes), int64(sentBytes), !success)
 	}()
@@ -281,9 +283,11 @@ func (s *ApiServer) RpcFunc(ctx context.Context, in *api.Rpc) (*api.Rpc, error) 
 
 	uid := ""
 	username := ""
+	var userId uuid.UUID
 	var vars map[string]string
 	expiry := int64(0)
 	if u := ctx.Value(ctxUserIDKey{}); u != nil {
+		userId = u.(uuid.UUID)
 		uid = u.(uuid.UUID).String()
 	}
 	if u := ctx.Value(ctxUsernameKey{}); u != nil {
@@ -297,7 +301,8 @@ func (s *ApiServer) RpcFunc(ctx context.Context, in *api.Rpc) (*api.Rpc, error) 
 	}
 
 	clientIP, clientPort := extractClientAddressFromContext(s.logger, ctx)
-
+	fmt.Println("api_rpc.go : userID", userId)
+	
 	result, fnErr, code := fn(ctx, headers, queryParams, uid, username, vars, expiry, "", clientIP, clientPort, "", in.Payload)
 	if fnErr != nil {
 		return nil, status.Error(code, fnErr.Error())

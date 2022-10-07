@@ -24,7 +24,7 @@ public class TestRPC : MonoBehaviour
     {
         ReqSetUserPacket reqSetUserPacket = new ReqSetUserPacket
         {
-            userId = GameServer.GetInstance.userid,
+            userId = LoginServer.GetInstance.userid,
             userName = "Hugh",
             userLevel = 1,
             userGold = 1000

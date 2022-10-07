@@ -5,7 +5,9 @@ using Newtonsoft.Json;
 
 public partial class GameServer
 {
-    // 서버에 등록한 RPC 사용을 위해 관리하는 클래스
+    /// <summary>
+    /// Game Server RPC 관리하는 곳
+    /// </summary>
 
     #region User
     public async Task<UserData> SetUserRetainGoods(ReqSetUserPacket req)

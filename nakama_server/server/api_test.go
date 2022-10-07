@@ -176,9 +176,13 @@ func NewAPIServer(t *testing.T, runtime *Runtime) (*ApiServer, *Pipeline) {
 	pipeline := NewPipeline(logger, cfg, db, protojsonMarshaler, protojsonUnmarshaler, nil, nil, nil, nil, nil, tracker, router, runtime)
 	apiServer := StartApiServer(logger, logger, db, protojsonMarshaler, protojsonUnmarshaler, cfg, nil, nil, nil, nil, nil, nil, nil, nil, tracker, router, nil, metrics, pipeline, runtime)
 	return apiServer, pipeline
+	*/
+
+	return nil, nil
 }
 
 func NewSession(t *testing.T, customID string) (*grpc.ClientConn, apigrpc.NakamaClient, *api.Session, context.Context) {
+	/*
 	ctx := context.Background()
 	outgoingCtx := metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{
 		"authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte("defaultkey:")),
@@ -201,7 +205,7 @@ func NewSession(t *testing.T, customID string) (*grpc.ClientConn, apigrpc.Nakama
 
 	return conn, client, session, outgoingCtx
 	*/
-	return nil, nil
+	return nil, nil, nil, nil
 }
 
 func NewAuthenticatedAPIClient(t *testing.T, customID string) (*grpc.ClientConn, apigrpc.NakamaClient, *api.Session, context.Context) {

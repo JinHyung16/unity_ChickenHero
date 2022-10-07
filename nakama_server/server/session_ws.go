@@ -87,6 +87,11 @@ func NewSessionWS(db *runtime.DBManager, logger *zap.Logger, config Config, form
 		wsMessageType = websocket.BinaryMessage
 	}
 
+	_, sessionCache := GetSessionCache(userID.String())
+	//targetdbId, _ := strconv.Atoi(sessionCache["targetdbId"])
+	//fmt.Println("NewSessionWS : ", userID.String(), "Target_DB_ID : ", targetdbId)
+	fmt.Println("NewSessionWS : ", userID.String(), "sessionCache : ", sessionCache)
+
 	return &sessionWS{
 		logger:     sessionLogger,
 		config:     config,

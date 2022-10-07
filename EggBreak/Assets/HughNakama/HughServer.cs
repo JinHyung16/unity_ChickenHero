@@ -6,10 +6,9 @@ using Nakama;
 public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
 {
     protected string Scheme = "http";
-   // protected string Host = "localhost";
-    protected string Host = "35.197.17.99"; // @GCP VM 외부 ip
-
+    protected string Host = "35.197.17.99"; // @GCP hugh-server VM 외부 ip
     protected int Port = 7350;
+
     protected string ServerKey = "defaultkey";
 
     protected string sessionPrefName;

@@ -1,0 +1,32 @@
+version: '3'
+services:
+  hugh-login:  
+    build: .
+    image: hugh-login    
+    entrypoint:
+      - "/bin/sh"
+      - "-ecx"
+      - >      
+        ./nakama migrate up --database.address 'root:jinhyung@tcp(172.17.0.1:3306)/' &&        
+        exec ./nakama --name Hugh-login --database.address 'root:jinhyung@tcp(172.17.0.1:3306)/' --logger.level DEBUG --session.token_expiry_sec 7200
+        
+        # 1. 1개의 로컬머신에서 mysql도 docker로 컨테이너로 운영하고 nakama도 docker로 컨테이너로 운영을 하려는 경우
+        # => 컨테이너간 통신을 테스트 하려면 172.17.0.1(docker 컨테이너들의 게이트웨이IP)로 지정해야함
+        # => 172.17.0.1이 안먹힌다면 gateway.docker.internal 이걸로 지정
+        
+        # 2. 원격 VM간 운영하려는 경우
+        # => 원하는 IP와 포트지정
+        
+    restart: "no"
+    
+    expose:
+      - "7349"
+      - "7350"
+      - "7351"      
+    ports:
+      - "7349:7349"
+      - "7350:7350"
+      - "7351:7351"  
+    volumes: 
+      - ../data:/hugh-login/data
+

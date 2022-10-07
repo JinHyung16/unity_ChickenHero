@@ -20,7 +20,7 @@ import (
 	"errors"
 
 	"github.com/gofrs/uuid"
-	"github.com/jackc/pgtype"
+	//"github.com/jackc/pgtype"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -42,6 +42,7 @@ func SessionRefresh(ctx context.Context, logger *zap.Logger, db *sql.DB, config 
 
 	// seession 넘길 때 key/value 에서 key 값이 없는 현상 생김. 따라서 이 부분 해결 보기
 	
+	/*
 	// Look for an existing account.
 	//query := "SELECT username, disable_time FROM users WHERE id = $1 LIMIT 1"
 	query := "SELECT username, disable_time FROM users WHERE id = ? LIMIT 1"
@@ -64,9 +65,9 @@ func SessionRefresh(ctx context.Context, logger *zap.Logger, db *sql.DB, config 
 	}
 
 	return userID, dbUsername, vars, nil
+	*/
 	
-	
-	//return userID, "", vars, nil
+	return userID, "", vars, nil
 }
 
 func SessionLogout(config Config, sessionCache SessionCache, userID uuid.UUID, token, refreshToken string) error {

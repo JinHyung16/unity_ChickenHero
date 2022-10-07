@@ -20,7 +20,8 @@ import (
 	"math/rand"
 	"regexp"
 	"time"
-	//"fmt"
+	"fmt"
+	//"strconv"
 
 	"github.com/gofrs/uuid"
 	jwt "github.com/golang-jwt/jwt/v4"
@@ -156,7 +157,7 @@ func (s *ApiServer) AuthenticateCustom(ctx context.Context, in *api.Authenticate
 		return nil, status.Error(codes.InvalidArgument, "Custom ID invalid, must be 6-128 bytes.")
 	}
 
-	
+	/*
 	username := in.Username
 	if username == "" {
 		username = generateUsername()
@@ -165,35 +166,72 @@ func (s *ApiServer) AuthenticateCustom(ctx context.Context, in *api.Authenticate
 	} else if len(username) > 128 {
 		return nil, status.Error(codes.InvalidArgument, "Username invalid, must be 1-128 bytes.")
 	}
+	*/
 
+	//create := in.Create == nil || in.Create.Value
 
-	create := in.Create == nil || in.Create.Value
+	//TODO : 로그인서버에서 인증여부 확인 후 게임서버 연결진행
+	userId := in.Account.Id
+	fmt.Println("ap_authenticate.go : 게임서버 연결중: ", userId)
+
+	key, sessionCache := GetSessionCache(userId)
+
+	if sessionCache == nil {
+		return nil, status.Error(codes.InvalidArgument, "인증정보가 존재하지않습니다 : "+key)
+	}
+
+	//targetdbId, _ := strconv.Atoi(sessionCache["targetdbId"])
+	username := sessionCache["username"]
+	// dbUserID, dbUsername, created, err := AuthenticateCustom(ctx, s.logger, s.db[targetdbId], in.Account.Id, username, create)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	fmt.Println("api_authenticate.go : username : ", username)
+
+	token, exp := generateToken(s.config, userId, username, in.Account.Vars)
+	refreshToken, refreshExp := generateRefreshToken(s.config, userId, username, in.Account.Vars)
+	s.sessionCache.Add(uuid.FromStringOrNil(userId), exp, token, refreshExp, refreshToken)
+	session := &api.Session{Created: false, Token: token, RefreshToken: refreshToken}
+	// After hook.
+	if fn := s.runtime.AfterAuthenticateCustom(); fn != nil {
+		afterFn := func(clientIP, clientPort string) error {
+			return fn(ctx, s.logger, userId, username, in.Account.Vars, exp, clientIP, clientPort, session, in)
+		}
+
+		// Execute the after function lambda wrapped in a trace for stats measurement.
+		traceApiAfter(ctx, s.logger /*s.metrics,*/, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	}
+
 	
+	/*
 	dbUserID, dbUsername, created, err := AuthenticateCustom(ctx, s.logger, s.db.Hugh_db, in.Account.Id, username, create)
 	if err != nil {
 		return nil, err
 	}
-
-
+	*/
+	
+	/*
 	token, exp := generateToken(s.config, dbUserID, dbUsername, in.Account.Vars)
 	refreshToken, refreshExp := generateRefreshToken(s.config, dbUserID, dbUsername, in.Account.Vars)
 	s.sessionCache.Add(uuid.FromStringOrNil(dbUserID), exp, token, refreshExp, refreshToken)
 	session := &api.Session{Created: created, Token: token, RefreshToken: refreshToken}
+	*/
 
-	// After hook.
-	if fn := s.runtime.AfterAuthenticateCustom(); fn != nil {
-		afterFn := func(clientIP, clientPort string) error {
-			return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
-		}
+	// After hook.	
+	//if fn := s.runtime.AfterAuthenticateCustom(); fn != nil {
+		//afterFn := func(clientIP, clientPort string) error {
+		//	return fn(ctx, s.logger, dbUserID, dbUsername, in.Account.Vars, exp, clientIP, clientPort, session, in)
+		//}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
-	}
-
+		//traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+	//}
+	
 	return session, nil
 }
 
 func (s *ApiServer) AuthenticateDevice(ctx context.Context, in *api.AuthenticateDeviceRequest) (*api.Session, error) {
+	/*
 	// Before hook.
 	if fn := s.runtime.BeforeAuthenticateDevice(); fn != nil {
 		beforeFn := func(clientIP, clientPort string) error {
@@ -211,7 +249,7 @@ func (s *ApiServer) AuthenticateDevice(ctx context.Context, in *api.Authenticate
 		}
 
 		// Execute the before function lambda wrapped in a trace for stats measurement.
-		err := traceApiBefore(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
+		err := traceApiBefore(ctx, s.logger, ctx.Value(ctxFullMethodKey{}).(string), beforeFn)
 		if err != nil {
 			return nil, err
 		}
@@ -253,10 +291,13 @@ func (s *ApiServer) AuthenticateDevice(ctx context.Context, in *api.Authenticate
 		}
 
 		// Execute the after function lambda wrapped in a trace for stats measurement.
-		traceApiAfter(ctx, s.logger, /*s.metrics,*/ ctx.Value(ctxFullMethodKey{}).(string), afterFn)
+		traceApiAfter(ctx, s.logger, ctx.Value(ctxFullMethodKey{}).(string), afterFn)
 	}
 
 	return session, nil
+	*/
+
+	return &api.Session{}, nil
 }
 
 func (s *ApiServer) AuthenticateEmail(ctx context.Context, in *api.AuthenticateEmailRequest) (*api.Session, error) {
