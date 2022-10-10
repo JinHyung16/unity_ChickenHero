@@ -16,6 +16,6 @@
 - [GCP] 이름의 폴더는 GCP에서 운용중인 서버 환경 설정을 적어놨습니다.  
 
 ### Reference
-nakama server: github(https://github.com/heroiclabs/nakama)  
-[GCP]hugh-login-server의 Dockerfile 작성: github(https://github.com/heroiclabs/nakama/blob/master/build/Dockerfile)  
-nakama_login_server의 sql-migrate 참고: github(https://github.com/rubenv/sql-migrate/tree/v1.1.1)   
+- nakama server: github(https://github.com/heroiclabs/nakama)  
+- [GCP]hugh-login-server의 Dockerfile 작성: github(https://github.com/heroiclabs/nakama/blob/master/build/Dockerfile)  
+- nakama_login_server의 sql-migrate 참고: github(https://github.com/rubenv/sql-migrate/tree/v1.1.1)   

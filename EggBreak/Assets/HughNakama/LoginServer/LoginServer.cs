@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 public partial class LoginServer : HughServer<LoginServer>
 {
-    protected new string Host = "35.247.19.228"; // @GCP hugh-login-server VM 외부 ip
-    protected new string sessionPrefName = "nakama.session";
+    protected new string Host = "35.197.17.99"; // @GCP hugh-login-server VM 외부 ip
+    protected new int Port = 7350;
+    protected new string sessionPrefName = "loginserver.session";
 
     public string userid;
     public string userNickName;
@@ -64,7 +65,7 @@ public partial class LoginServer : HughServer<LoginServer>
                 userNickName = Session.Username;
 
 #if UNITY_EDITOR
-                Debug.LogFormat("<color=orange><b>[Login-Server]</b> userid : {0} </color>", userid);
+                Debug.LogFormat("<color=green><b>[Login-Server]</b> userid : {0} </color>", userid);
                 Debug.LogFormat("session.AuthToken : {0}", Session.AuthToken);
                 Debug.LogFormat("session.CreateTime : {0}", Session.CreateTime);
                 Debug.LogFormat("session.ExpireTime : {0}", Session.ExpireTime);
