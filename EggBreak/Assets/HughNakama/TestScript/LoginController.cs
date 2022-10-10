@@ -39,17 +39,8 @@ public class LoginController : MonoBehaviour
             startBt.gameObject.SetActive(true);
         }
     }
-
-    private async void StartToGame()
+    private void StartToGame()
     {
-        LoginServer loginServer = LoginServer.GetInstance;
-        string host = "34.82.70.174";
-        int port = 7450;
-
-        await GameServer.GetInstance.Disconnect();
-        Debug.LogFormat("<color=red><b>[GameServer-Server]</b> Login : Disconnect </color>");
-
-        await GameServer.GetInstance.ConnectToGameServer(loginServer.userid, host, port);
-        Debug.LogFormat("<color=red><b>[Game-Server]</b> Login : Connect </color>");
+        Debug.Log("Game Start");
     }
 }

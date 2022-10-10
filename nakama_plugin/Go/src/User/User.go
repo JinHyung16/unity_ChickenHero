@@ -2,8 +2,8 @@ package User
 
 import (
 	"context"
-	"encoding/json"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	"HughCommon/Go/src/TableData"
@@ -14,13 +14,12 @@ import (
 func RegisterUserRPC(logger runtime.Logger, initializer runtime.Initializer) error {
 	initializer.RegisterRpc("set_user_goods", SetUserRetainGoods)
 	initializer.RegisterRpc("get_user_goods", GetUserRetainGoods)
-	initializer.RegisterRpc("get_user_goods_test", GetUserRetainGoodsTest)
-	
+
 	fmt.Println("[RegisterUserRPC] : SUCCESS")
 	return nil
 }
 
-func SetUserRetainGoods(ctx context.Context, logger runtime.Logger, db *runtime.DBManager, nk runtime.NakamaModule, payload string) (string, error) {
+func SetUserRetainGoods(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
 	println("----------------------------------------")
 	println("[User] 진입 :: SetUserRetainGoods")
 	println("----------------------------------------")
@@ -34,10 +33,18 @@ func SetUserRetainGoods(ctx context.Context, logger runtime.Logger, db *runtime.
 		return string(jsonData), nil
 	}
 
+	hugh_db_rul := "root:jinhyung@tcp(35.247.19.228:3307)/"
+	hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
+	if hugh_db_err != nil {
+		println("----------------------------------------")
+		println("[User] Error :: GetUserRetainGoodsTest\n", hugh_db_rul, "\n", hugh_db_err.Error())
+		println("----------------------------------------")
+	}
+
 	insertContext := `user_id, user_name, user_level, user_gold`
 	insertValues := `VALUES(?, ?, ?, ?)`
 	insertQuery := `INSERT INTO user_history` + ` ( ` + insertContext + ` ) ` + insertValues
-	_, insertErr := db.Hugh_db.QueryContext(ctx, insertQuery,
+	_, insertErr := hugh_db.QueryContext(ctx, insertQuery,
 		reqData.UserId,
 		reqData.UserName,
 		reqData.UserLevel,
@@ -59,7 +66,7 @@ func SetUserRetainGoods(ctx context.Context, logger runtime.Logger, db *runtime.
 	return string(jsonData), nil
 }
 
-func GetUserRetainGoods(ctx context.Context, logger runtime.Logger, db *runtime.DBManager, nk runtime.NakamaModule, payload string) (string, error) {
+func GetUserRetainGoods(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
 	println("----------------------------------------")
 	println("[User] 진입 :: GetUserRetainGoods")
 	println("----------------------------------------")
@@ -71,8 +78,16 @@ func GetUserRetainGoods(ctx context.Context, logger runtime.Logger, db *runtime.
 		println("----------------------------------------")
 	}
 
+	hugh_db_rul := "root:jinhyung@tcp(35.247.19.228:3306)/"
+	hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
+	if hugh_db_err != nil {
+		println("----------------------------------------")
+		println("[User] Error :: GetUserRetainGoodsTest\n", hugh_db_rul, "\n", hugh_db_err.Error())
+		println("----------------------------------------")
+	}
+
 	selectQuery := `SELECT * FROM user_history where user_id=?`
-	selectDB, selectErr := db.Hugh_db.QueryContext(ctx, selectQuery, reqData.UserId)
+	selectDB, selectErr := hugh_db.QueryContext(ctx, selectQuery, reqData.UserId)
 	if selectErr != nil {
 		println("----------------------------------------")
 		println("[User] Error :: SetUserRetainGoods - select DB\n", selectErr.Error())
@@ -92,45 +107,6 @@ func GetUserRetainGoods(ctx context.Context, logger runtime.Logger, db *runtime.
 
 	println("----------------------------------------")
 	println("[User] 탈출 :: GetUserRetainGoods")
-	println("========================================")
-	return string(jsonData), nil
-}
-
-func GetUserRetainGoodsTest(ctx context.Context, logger runtime.Logger, db *runtime.DBManager, nk runtime.NakamaModule, payload string) (string, error) {
-	println("----------------------------------------")
-	println("[User] 진입 :: GetUserRetainGoodsTest")
-	println("----------------------------------------")
-
-	hugh_db_rul := "root:jinhyung@tcp(34.82.70.174:3306)/"
-	hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
-	if hugh_db_err != nil {
-		println("----------------------------------------")
-		println("[User] Error :: GetUserRetainGoodsTest\n", hugh_db_rul, "\n", hugh_db_err.Error())
-		println("----------------------------------------")
-	}
-
-	selectQuery := `SELECT * FROM user_history`
-
-	selectDB, selectErr := hugh_db.QueryContext(ctx, selectQuery)
-	if selectErr != nil {
-		println("----------------------------------------")
-		println("[User] Error :: GetUserRetainGoodsTest - select DB\n", selectErr.Error())
-		println("----------------------------------------")
-	}
-
-	resData := TableData.UserData{}
-	for selectDB.Next() {
-		selectDB.Scan(
-			&resData.UserID, &resData.UserName,
-			&resData.UserLevel, &resData.UserGold)
-	}
-
-	resData.Message = "Success Select DB"
-	resData.MessageCode = TableData.Success
-	jsonData, _ := json.Marshal(resData)
-
-	println("----------------------------------------")
-	println("[User] 탈출 :: GetUserRetainGoodsTest")
 	println("========================================")
 	return string(jsonData), nil
 }

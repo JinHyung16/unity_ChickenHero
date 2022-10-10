@@ -14,6 +14,8 @@
 
 ## Notice
 - [GCP] 이름의 폴더는 GCP에서 운용중인 서버 환경 설정을 적어놨습니다.  
+- [Before]renewal_server_version folder의 경우 unity 실행 시 없어도 되는 폴더로 지워도 됩니다.  
+
 
 ### Reference
 - nakama server: github(https://github.com/heroiclabs/nakama)  

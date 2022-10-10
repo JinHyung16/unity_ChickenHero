@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	user "HughCommon/Go/src/User"
@@ -9,7 +10,7 @@ import (
 	"github.com/heroiclabs/nakama-common/runtime"
 )
 
-func InitModule(ctx context.Context, logger runtime.Logger, db *runtime.DBManager, nk runtime.NakamaModule, initializer runtime.Initializer) error {
+func InitModule(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, initializer runtime.Initializer) error {
 
 	user.RegisterUserRPC(logger, initializer)
 

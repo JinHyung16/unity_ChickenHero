@@ -1,0 +1,6 @@
+logger:
+  level: "info"
+  file: "/nakama-hugh/data/logfile.log"
+
+socket:
+  server_key: "defaultkey"

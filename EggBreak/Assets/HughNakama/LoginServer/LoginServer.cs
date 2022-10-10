@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 public partial class LoginServer : HughServer<LoginServer>
 {
-    protected new string Host = "35.197.17.99"; // @GCP hugh-login-server VM 외부 ip
+    protected new string Host = "34.82.70.174"; // @GCP hugh-server VM 외부 ip
     protected new int Port = 7350;
-    protected new string sessionPrefName = "loginserver.session";
+    protected new string sessionPrefName = "gameserver.session";
 
     public string userid;
     public string userNickName;
