@@ -7,43 +7,122 @@ using System.Threading.Tasks;
 
 public partial class GameServer : HughServer<GameServer>
 {
-    protected new string sessionPrefName = "gameserver.session";
+    protected new string Host = "34.82.70.174"; // @GCP hugh-server VM 외부 ip
+    protected new int Port = 7350;
+    protected new string sessionPrefName = "nakama.session";
 
-    //protected new string Host = "35.197.17.99"; // @GCP hugh-server VM 외부 ip
-    //protected new int Port = 7450;
+    public string userid;
+    public string userNickName;
 
-    public async Task ConnectToGameServer(string userid, string host, int port = 7350)
+    protected const string deviceIdentifierPrefName = "nakama.deviceUniqueIdentifier";
+    public async Task<ApiResponseException> DeviceLogin()
     {
-        this.Host = host;
-        this.Port = port;
-
 #if UNITY_EDITOR
-        Debug.LogFormat("<color=orange><b>[Game-Server]</b> Connect To Server : Host : {0}, Port : {1} </color>", this.Host, this.Port);
+        Debug.LogFormat("<color=orange><b>[Game-Server]</b> DeviceLogin : Host : {0}, Port : {1} </color>", this.Host, this.Port);
 #endif
+        ConnectToServer(this.Host, this.Port);
 
-        if(Session == null)
+        var authToken = PlayerPrefs.GetString(sessionPrefName);
+        if (!string.IsNullOrEmpty(authToken))
         {
-            Session = await Client.AuthenticateCustomAsync(userid, null, false, null);
-            PlayerPrefs.SetString(sessionPrefName, Session.AuthToken);
+            var session = Nakama.Session.Restore(authToken);
+            if (!session.IsExpired)
+            {
+                Session = session;
+            }
         }
 
-        await SocketConnect();
-    }
+        // If we weren't able to restore an existing session, authenticate to create a new user session.
+        if (Session == null)
+        {
+            try
+            {
+                string deviceId;
 
+                // If we've already stored a device identifier in PlayerPrefs then use that.
+                if (PlayerPrefs.HasKey(deviceIdentifierPrefName))
+                {
+                    deviceId = PlayerPrefs.GetString(deviceIdentifierPrefName);
+                }
+                else
+                {
+                    // If we've reach this point, get the device's unique identifier or generate a unique one.
+                    deviceId = SystemInfo.deviceUniqueIdentifier;
+                    if (deviceId == SystemInfo.unsupportedIdentifier)
+                    {
+                        deviceId = System.Guid.NewGuid().ToString();
+                    }
+
+                    // Store the device identifier to ensure we use the same one each time from now on.
+                    PlayerPrefs.SetString(deviceIdentifierPrefName, deviceId);
+                }
+#if UNITY_EDITOR
+                Debug.LogFormat("<color=orange><b>[Game-Server]</b> deviceId : {0} </color>", deviceId);
+#endif
+
+                // Use Nakama Device authentication to create a new session using the device identifier.
+                Session = await Client.AuthenticateDeviceAsync(deviceId, null, true);
+                userid = Session.UserId;
+                userNickName = Session.Username;
+
+#if UNITY_EDITOR
+                Debug.LogFormat("<color=green><b>[Game-Server]</b> userid : {0} </color>", userid);
+                Debug.LogFormat("session.AuthToken : {0}", Session.AuthToken);
+                Debug.LogFormat("session.CreateTime : {0}", Session.CreateTime);
+                Debug.LogFormat("session.ExpireTime : {0}", Session.ExpireTime);
+                Debug.LogFormat("session.RefreshToken : {0}", Session.RefreshToken);
+                Debug.LogFormat("session.RefreshExpireTime : {0}", Session.RefreshExpireTime);
+#endif
+
+                // Store the auth token that comes back so that we can restore the session later if necessary.
+                PlayerPrefs.SetString(sessionPrefName, Session.AuthToken);
+            }
+            catch (ApiResponseException e)
+            {
+                Debug.Log(e);
+                return e;
+            }
+        }
+
+        // Open a new Socket for realtime communication.
+        await SocketConnect();
+#if UNITY_EDITOR
+        Debug.Log("<color=orange><b>[Game-Server]</b> Socekt Connect : {0} </color>");
+#endif
+        return null;
+    }
     public override Task Disconnect()
     {
 #if UNITY_EDITOR
-        Debug.LogFormat("<color=orange><b>[Game-Server]</b> Disconnect : Host : {0}, Port : {1} </color>", this.Host, this.Port);
+        Debug.LogFormat("<color=orange><b>[Login-Server]</b> Disconnect : Host : {0}, Port : {1} </color>", this.Host, this.Port);
 #endif
         return base.Disconnect();
     }
 
-    protected override void BindSocketEvents()
+    public async Task GetAccoount()
     {
-        base.BindSocketEvents();
+        var response = await Client.GetAccountAsync(Session);
+        userNickName = response.User.Username;
+        Debug.LogFormat("username : {0}", response.User.Username);
+        Debug.LogFormat("userid : {0}", response.User.Id);
+    }
 
-        Socket.Connected += Socket_Connected;
-        Socket.Closed += Socket_Closed;
-        Socket.ReceivedError += Socket_ReceivedError;
+    public async Task<ApiResponseException> UpdateAccount(string username)
+    {
+        try
+        {
+            await Client.UpdateAccountAsync(Session, username);
+            userNickName = username;
+            Debug.LogFormat("username : {0}", Session.Username);
+            Debug.LogFormat("userid : {0}", Session.UserId);
+            return null;
+        }
+        catch (ApiResponseException e)
+        {
+#if UNITY_EDITOR
+            Debug.Log(e);
+#endif
+            return e;
+        }
     }
 }

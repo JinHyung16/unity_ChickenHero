@@ -1,13 +1,15 @@
 using System;
+using UnityEngine;
 using System.Threading.Tasks;
 using HughLibrary.Generics;
 using Nakama;
+
 
 public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
 {
     protected string Scheme = "http";
     protected string Host = "localhost";
-    protected int Port = 8350;
+    protected int Port = 7350;
 
     protected string ServerKey = "defaultkey";
 
@@ -27,8 +29,10 @@ public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
     {
         Socket = Client.NewSocket(false);        
         await Socket.ConnectAsync(Session, true);
-
         BindSocketEvents();
+#if UNITY_EDITOR
+        Debug.Log("<color=green><b>[Hugh-Server]</b> Socekt Connect : {0} </color>");
+#endif
     }
 
     protected virtual void BindSocketEvents()

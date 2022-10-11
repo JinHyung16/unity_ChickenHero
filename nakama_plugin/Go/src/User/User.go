@@ -11,6 +11,18 @@ import (
 	"github.com/heroiclabs/nakama-common/runtime"
 )
 
+// Usages
+// GCP hugh-db VM에서 운용중인 mysql 서버 접속하는 방법
+/*
+hugh_db_rul := "root:mysql비번@tcp(GCP vm 외부 ip:mysql tcp port)/"
+hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
+if hugh_db_err != nil {
+	println("----------------------------------------")
+	println("[User] Error :: GetUserRetainGoodsTest\n", hugh_db_rul, "\n", hugh_db_err.Error())
+	println("----------------------------------------")
+}
+*/
+
 func RegisterUserRPC(logger runtime.Logger, initializer runtime.Initializer) error {
 	initializer.RegisterRpc("set_user_goods", SetUserRetainGoods)
 	initializer.RegisterRpc("get_user_goods", GetUserRetainGoods)
@@ -23,6 +35,15 @@ func SetUserRetainGoods(ctx context.Context, logger runtime.Logger, db *sql.DB, 
 	println("----------------------------------------")
 	println("[User] 진입 :: SetUserRetainGoods")
 	println("----------------------------------------")
+
+	hugh_db_rul := "root:jinhyung@tcp(35.247.19.228:3307)/"
+	hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
+	if hugh_db_err != nil {
+		println("----------------------------------------")
+		println("[User] Error :: GetUserRetainGoodsTest\n", hugh_db_rul, "\n", hugh_db_err.Error())
+		println("----------------------------------------")
+	}
+
 	reqData := TableData.ReqSetUserPacket{}
 	reqErr := json.Unmarshal([]byte(payload), &reqData)
 	if reqErr != nil {
@@ -31,14 +52,6 @@ func SetUserRetainGoods(ctx context.Context, logger runtime.Logger, db *sql.DB, 
 		println("[User] Error :: SetUserRetainGoods - request data\n", reqErr.Error())
 		println("----------------------------------------")
 		return string(jsonData), nil
-	}
-
-	hugh_db_rul := "root:jinhyung@tcp(35.247.19.228:3307)/"
-	hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
-	if hugh_db_err != nil {
-		println("----------------------------------------")
-		println("[User] Error :: GetUserRetainGoodsTest\n", hugh_db_rul, "\n", hugh_db_err.Error())
-		println("----------------------------------------")
 	}
 
 	insertContext := `user_id, user_name, user_level, user_gold`
@@ -70,19 +83,20 @@ func GetUserRetainGoods(ctx context.Context, logger runtime.Logger, db *sql.DB, 
 	println("----------------------------------------")
 	println("[User] 진입 :: GetUserRetainGoods")
 	println("----------------------------------------")
+	
+	hugh_db_rul := "root:jinhyung@tcp(35.247.19.228:3307)/"
+	hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
+	if hugh_db_err != nil {
+		println("----------------------------------------")
+		println("[User] Error :: GetUserRetainGoodsTest\n", hugh_db_rul, "\n", hugh_db_err.Error())
+		println("----------------------------------------")
+	}
+
 	reqData := TableData.ReqUserInfoPacket{}
 	reqErr := json.Unmarshal([]byte(payload), &reqData)
 	if reqErr != nil {
 		println("----------------------------------------")
 		println("[User] Error :: SetUserRetainGoods - request data\n", reqErr.Error())
-		println("----------------------------------------")
-	}
-
-	hugh_db_rul := "root:jinhyung@tcp(35.247.19.228:3306)/"
-	hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
-	if hugh_db_err != nil {
-		println("----------------------------------------")
-		println("[User] Error :: GetUserRetainGoodsTest\n", hugh_db_rul, "\n", hugh_db_err.Error())
 		println("----------------------------------------")
 	}
 

@@ -24,7 +24,7 @@ public class TestRPC : MonoBehaviour
     {
         ReqSetUserPacket reqSetUserPacket = new ReqSetUserPacket
         {
-            userId = LoginServer.GetInstance.userid,
+            userId = GameServer.GetInstance.userid,
             userName = "Hugh",
             userLevel = 1,
             userGold = 1000
@@ -48,7 +48,12 @@ public class TestRPC : MonoBehaviour
 
     public async void GetUserGoods()
     {
-        var res = await GameServer.GetInstance.GetUserRetainGoodsTest();
+        ReqUserInfoPacket req = new ReqUserInfoPacket
+        {
+            userId = GameServer.GetInstance.userid
+        };
+
+        var res = await GameServer.GetInstance.GetUserRetainGoods(req);
 
         Debug.Log(res.userId); 
         Debug.Log(res.userName);

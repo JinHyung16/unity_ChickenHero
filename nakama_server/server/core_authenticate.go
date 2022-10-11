@@ -122,7 +122,7 @@ func AuthenticateCustom(ctx context.Context, logger *zap.Logger, db *sql.DB, cus
 	found := true
 
 	// Look for an existing account.
-	query := "SELECT id, username, disable_time FROM users WHERE custom_id = $1"
+	query := "SELECT id, username, disable_time FROM users WHERE custom_id = ?"
 	var dbUserID string
 	var dbUsername string
 	var dbDisableTime pgtype.Timestamptz
@@ -154,7 +154,7 @@ func AuthenticateCustom(ctx context.Context, logger *zap.Logger, db *sql.DB, cus
 
 	// Create a new account.
 	userID := uuid.Must(uuid.NewV4()).String()
-	query = "INSERT INTO users (id, username, custom_id, create_time, update_time) VALUES ($1, $2, $3, now(), now())"
+	query = "INSERT INTO users (id, username, custom_id, create_time, update_time) VALUES (?, ?, ?, now(), now())"
 	result, err := db.ExecContext(ctx, query, userID, username, customID)
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -184,7 +184,7 @@ func AuthenticateDevice(ctx context.Context, logger *zap.Logger, db *sql.DB, dev
 	found := true
 
 	// Look for an existing account.
-	query := "SELECT user_id FROM user_device WHERE id = $1"
+	query := "SELECT user_id FROM user_device WHERE id = ?"
 	var dbUserID string
 	err := db.QueryRowContext(ctx, query, deviceID).Scan(&dbUserID)
 	if err != nil {
@@ -199,7 +199,7 @@ func AuthenticateDevice(ctx context.Context, logger *zap.Logger, db *sql.DB, dev
 	// Existing account found.
 	if found {
 		// Load its details.
-		query = "SELECT username, disable_time FROM users WHERE id = $1"
+		query = "SELECT username, disable_time FROM users WHERE id = ?"
 		var dbUsername string
 		var dbDisableTime pgtype.Timestamptz
 		err = db.QueryRowContext(ctx, query, dbUserID).Scan(&dbUsername, &dbDisableTime)
@@ -234,14 +234,14 @@ func AuthenticateDevice(ctx context.Context, logger *zap.Logger, db *sql.DB, dev
 	err = ExecuteInTx(ctx, tx, func() error {
 		query := `
 INSERT INTO users (id, username, create_time, update_time)
-SELECT $1 AS id,
-		 $2 AS username,
+SELECT ? AS id,
+		 ? AS username,
 		 now(),
 		 now()
 WHERE NOT EXISTS
   (SELECT id
    FROM user_device
-   WHERE id = $3::VARCHAR)`
+   WHERE id = ?)`
 
 		result, err := tx.ExecContext(ctx, query, userID, username, deviceID)
 		if err != nil {
@@ -263,7 +263,7 @@ WHERE NOT EXISTS
 			return StatusError(codes.Internal, "Error finding or creating user account.", ErrRowsAffectedCount)
 		}
 
-		query = "INSERT INTO user_device (id, user_id) VALUES ($1, $2)"
+		query = "INSERT INTO user_device (id, user_id) VALUES (?, ?)"
 		result, err = tx.ExecContext(ctx, query, deviceID, userID)
 		if err != nil {
 			logger.Debug("Cannot add device ID.", zap.Error(err), zap.String("deviceID", deviceID), zap.String("username", username), zap.Bool("create", create))

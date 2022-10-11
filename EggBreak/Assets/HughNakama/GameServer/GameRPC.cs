@@ -29,14 +29,5 @@ public partial class GameServer
 #endif 
         return JsonConvert.DeserializeObject<UserData>(res.Payload);
     }
-
-    public async Task<UserData> GetUserRetainGoodsTest()
-    {
-        var res = await Client.RpcAsync(Session, "get_user_goods_test");
-#if UNITY_EDITOR
-        UnityEngine.Debug.Log(res.Payload);
-#endif 
-        return JsonConvert.DeserializeObject<UserData>(res.Payload);
-    }
     #endregion
 }

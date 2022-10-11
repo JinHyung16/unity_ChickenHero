@@ -10,7 +10,7 @@ public class LoginController : MonoBehaviour
 
     private void Awake()
     {
-        //PlayerPrefs.DeleteAll();
+        PlayerPrefs.DeleteAll();
         loginBt.onClick.AddListener(LoginToGameServer);
         startBt.onClick.AddListener(StartToGame);
     }
@@ -30,7 +30,7 @@ public class LoginController : MonoBehaviour
     }
     private async void LoginToGameServer()
     {
-        var result = await LoginServer.GetInstance.DeviceLogin();
+        var result = await GameServer.GetInstance.DeviceLogin();
 
         if (result == null)
         {

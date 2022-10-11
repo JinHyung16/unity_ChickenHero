@@ -4,4 +4,4 @@ create table user_history (
     user_name varchar(24) NOT NULL,
     user_level int NOT NULL DEFAULT 0,
     user_gold int NOT NULL DEFAULT 0,
-);
+)
