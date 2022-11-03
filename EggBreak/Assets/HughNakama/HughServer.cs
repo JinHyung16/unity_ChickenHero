@@ -65,19 +65,4 @@ public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
             Session = null;
         }
     }
-
-
-    protected async Task<IApiRpc> GetRPC(string rpcId)
-    {
-        if (Session == null) return null;
-
-        return await Client.RpcAsync(Session, rpcId, "");
-    }
-
-    protected async Task<IApiRpc> PutRPC(string rpcId, string param)
-    {
-        if (Session == null) return null;
-
-        return await Client.RpcAsync(Session, rpcId, param);
-    }
 }

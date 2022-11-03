@@ -14,7 +14,6 @@
 
 ## Notice
 - [GCP] 이름의 폴더는 GCP에서 운용중인 서버 환경 설정을 적어놨습니다.  
-- [Before]renewal_server_version folder의 경우 unity 실행 시 없어도 되는 폴더로 지워도 됩니다.  
 - nakama github에서 다운받아 사용한 nakama서버는 그대로 사용한 것이 아닌, 필요에 맞게 커스텀한 것입니다.  
 - nakama github에서 nakama_master 다운받아 사용하면, nakama-common 버전이 달라 오류가 생길 수 있으니, 꼭 필요한 버전에 맞춰 tag에서 찾아 다운받아 커스텀하는거 추천  
 
