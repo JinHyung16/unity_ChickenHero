@@ -4,8 +4,8 @@ using UnityEngine;
 using Nakama;
 using System.Threading.Tasks;
 using UnityEngine.UI;
-using HughLibrary.Generics;
+using HughLibrary;
 
-public class GameManager : LazySingleton<GameManager>
+public class GameManager : SingleTon<GameManager>
 {
 }

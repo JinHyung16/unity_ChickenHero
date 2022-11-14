@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace HughLibrary.Generics
+namespace HughLibrary
 {
     public class SingleTon<T> : MonoBehaviour where T : MonoBehaviour
     {
@@ -11,23 +11,18 @@ namespace HughLibrary.Generics
             {
                 if (instance == null)
                 {
-                    GameObject tObj = GameObject.Find(typeof(T).Name);
-                    if (tObj == null)
-                    {
-                        tObj = new GameObject(typeof(T).Name);
-                        instance = tObj.AddComponent<T>();
-                    }
-                    else
-                    {
-                        instance = tObj.AddComponent<T>();
-                    }
+                    return null;
                 }
                 return instance;
             }
         }
         private void Awake()
         {
-            DontDestroyOnLoad(gameObject);
+            if (instance == null)
+            {
+                instance = this as T;
+                DontDestroyOnLoad(this.gameObject as T);
+            }
         }
     }
 }
