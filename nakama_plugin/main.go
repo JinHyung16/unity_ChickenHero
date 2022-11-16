@@ -13,7 +13,7 @@ import (
 
 func InitModule(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, initializer runtime.Initializer) error {
 	user.RegisterUserRPC(logger, initializer)
-	match.RegisterMatch(logger, initializer)
+	match.RegisterMatchMaking(logger, initializer)
 	
 	fmt.Println("[Init Runtime Module] : nakama_plugin SUCCESS")
 	return nil
