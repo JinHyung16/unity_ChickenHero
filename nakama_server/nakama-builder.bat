@@ -1,1 +1,1 @@
-powershell.exe -Command docker run --rm -w "/builder" -v "${PWD}:/builder" heroiclabs/nakama-pluginbuilder:3.13.1 build --mod=vendor -trimpath
+powershell.exe -Command docker run --rm -w "/builder" -v "${PWD}:/builder" heroiclabs/nakama-pluginbuilder:3.14.0 build --mod=vendor -trimpath
