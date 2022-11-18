@@ -15,11 +15,11 @@
 package server
 
 import (
-	"bytes"
+	//"bytes"
 	"context"
 	"database/sql"
-	"encoding/base64"
-	"encoding/gob"
+	//"encoding/base64"
+	//"encoding/gob"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,7 +32,7 @@ import (
 	"github.com/heroiclabs/nakama-common/api"
 	"github.com/heroiclabs/nakama-common/rtapi"
 	"github.com/heroiclabs/nakama-common/runtime"
-	"github.com/heroiclabs/nakama/v3/internal/cronexpr"
+	//"github.com/heroiclabs/nakama/v3/internal/cronexpr"
 	"github.com/heroiclabs/nakama/v3/social"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -47,9 +47,9 @@ type RuntimeGoNakamaModule struct {
 	protojsonMarshaler   *protojson.MarshalOptions
 	config               Config
 	socialClient         *social.Client
-	leaderboardCache     LeaderboardCache
-	leaderboardRankCache LeaderboardRankCache
-	leaderboardScheduler LeaderboardScheduler
+	//leaderboardCache     LeaderboardCache
+	//leaderboardRankCache LeaderboardRankCache
+	//leaderboardScheduler LeaderboardScheduler
 	sessionRegistry      SessionRegistry
 	sessionCache         SessionCache
 	statusRegistry       *StatusRegistry
@@ -1728,6 +1728,7 @@ func (n *RuntimeGoNakamaModule) NotificationsDelete(ctx context.Context, notific
 	return nil
 }
 
+/*
 // @group wallets
 // @summary Update a user's wallet with the given changeset.
 // @param ctx(type=context.Context) The context object represents information about the server and requester.
@@ -3526,6 +3527,7 @@ func (n *RuntimeGoNakamaModule) UserGroupsList(ctx context.Context, userID strin
 
 	return groups.UserGroups, groups.Cursor, nil
 }
+*/
 
 // @group events
 // @summary Generate an event.

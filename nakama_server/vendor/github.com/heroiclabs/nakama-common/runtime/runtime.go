@@ -1027,61 +1027,61 @@ type NakamaModule interface {
 	NotificationSendAll(ctx context.Context, subject string, content map[string]interface{}, code int, persistent bool) error
 	NotificationsDelete(ctx context.Context, notifications []*NotificationDelete) error
 
-	WalletUpdate(ctx context.Context, userID string, changeset map[string]int64, metadata map[string]interface{}, updateLedger bool) (updated map[string]int64, previous map[string]int64, err error)
-	WalletsUpdate(ctx context.Context, updates []*WalletUpdate, updateLedger bool) ([]*WalletUpdateResult, error)
-	WalletLedgerUpdate(ctx context.Context, itemID string, metadata map[string]interface{}) (WalletLedgerItem, error)
-	WalletLedgerList(ctx context.Context, userID string, limit int, cursor string) ([]WalletLedgerItem, string, error)
+	//WalletUpdate(ctx context.Context, userID string, changeset map[string]int64, metadata map[string]interface{}, updateLedger bool) (updated map[string]int64, previous map[string]int64, err error)
+	//WalletsUpdate(ctx context.Context, updates []*WalletUpdate, updateLedger bool) ([]*WalletUpdateResult, error)
+	///WalletLedgerUpdate(ctx context.Context, itemID string, metadata map[string]interface{}) (WalletLedgerItem, error)
+	//WalletLedgerList(ctx context.Context, userID string, limit int, cursor string) ([]WalletLedgerItem, string, error)
 
-	StorageList(ctx context.Context, userID, collection string, limit int, cursor string) ([]*api.StorageObject, string, error)
-	StorageRead(ctx context.Context, reads []*StorageRead) ([]*api.StorageObject, error)
-	StorageWrite(ctx context.Context, writes []*StorageWrite) ([]*api.StorageObjectAck, error)
-	StorageDelete(ctx context.Context, deletes []*StorageDelete) error
+	//StorageList(ctx context.Context, userID, collection string, limit int, cursor string) ([]*api.StorageObject, string, error)
+	//StorageRead(ctx context.Context, reads []*StorageRead) ([]*api.StorageObject, error)
+	//StorageWrite(ctx context.Context, writes []*StorageWrite) ([]*api.StorageObjectAck, error)
+	//StorageDelete(ctx context.Context, deletes []*StorageDelete) error
 
-	MultiUpdate(ctx context.Context, accountUpdates []*AccountUpdate, storageWrites []*StorageWrite, walletUpdates []*WalletUpdate, updateLedger bool) ([]*api.StorageObjectAck, []*WalletUpdateResult, error)
+	//MultiUpdate(ctx context.Context, accountUpdates []*AccountUpdate, storageWrites []*StorageWrite, walletUpdates []*WalletUpdate, updateLedger bool) ([]*api.StorageObjectAck, []*WalletUpdateResult, error)
 
-	LeaderboardCreate(ctx context.Context, id string, authoritative bool, sortOrder, operator, resetSchedule string, metadata map[string]interface{}) error
-	LeaderboardDelete(ctx context.Context, id string) error
-	LeaderboardList(categoryStart, categoryEnd, limit int, cursor string) (*api.LeaderboardList, error)
-	LeaderboardRecordsList(ctx context.Context, id string, ownerIDs []string, limit int, cursor string, expiry int64) (records []*api.LeaderboardRecord, ownerRecords []*api.LeaderboardRecord, nextCursor string, prevCursor string, err error)
-	LeaderboardRecordWrite(ctx context.Context, id, ownerID, username string, score, subscore int64, metadata map[string]interface{}, overrideOperator *int) (*api.LeaderboardRecord, error)
-	LeaderboardRecordDelete(ctx context.Context, id, ownerID string) error
-	LeaderboardsGetId(ctx context.Context, ids []string) ([]*api.Leaderboard, error)
-	LeaderboardRecordsHaystack(ctx context.Context, id, ownerID string, limit int, cursor string, expiry int64) (*api.LeaderboardRecordList, error)
+	//LeaderboardCreate(ctx context.Context, id string, authoritative bool, sortOrder, operator, resetSchedule string, metadata map[string]interface{}) error
+	//LeaderboardDelete(ctx context.Context, id string) error
+	//LeaderboardList(categoryStart, categoryEnd, limit int, cursor string) (*api.LeaderboardList, error)
+	//LeaderboardRecordsList(ctx context.Context, id string, ownerIDs []string, limit int, cursor string, expiry int64) (records []*api.LeaderboardRecord, ownerRecords []*api.LeaderboardRecord, nextCursor string, prevCursor string, err error)
+	//LeaderboardRecordWrite(ctx context.Context, id, ownerID, username string, score, subscore int64, metadata map[string]interface{}, overrideOperator *int) (*api.LeaderboardRecord, error)
+	//LeaderboardRecordDelete(ctx context.Context, id, ownerID string) error
+	//LeaderboardsGetId(ctx context.Context, ids []string) ([]*api.Leaderboard, error)
+	//LeaderboardRecordsHaystack(ctx context.Context, id, ownerID string, limit int, cursor string, expiry int64) (*api.LeaderboardRecordList, error)
 
-	PurchaseValidateApple(ctx context.Context, userID, receipt string, persist bool, passwordOverride ...string) (*api.ValidatePurchaseResponse, error)
-	PurchaseValidateGoogle(ctx context.Context, userID, receipt string, persist bool, overrides ...struct {
-		ClientEmail string
-		PrivateKey  string
-	}) (*api.ValidatePurchaseResponse, error)
-	PurchaseValidateHuawei(ctx context.Context, userID, signature, inAppPurchaseData string, persist bool) (*api.ValidatePurchaseResponse, error)
-	PurchasesList(ctx context.Context, userID string, limit int, cursor string) (*api.PurchaseList, error)
-	PurchaseGetByTransactionId(ctx context.Context, transactionID string) (string, *api.ValidatedPurchase, error)
+	//PurchaseValidateApple(ctx context.Context, userID, receipt string, persist bool, passwordOverride ...string) (*api.ValidatePurchaseResponse, error)
+	//PurchaseValidateGoogle(ctx context.Context, userID, receipt string, persist bool, overrides ...struct {
+	//	ClientEmail string
+	//	PrivateKey  string
+	//}) (*api.ValidatePurchaseResponse, error)
+	//PurchaseValidateHuawei(ctx context.Context, userID, signature, inAppPurchaseData string, persist bool) (*api.ValidatePurchaseResponse, error)
+	//PurchasesList(ctx context.Context, userID string, limit int, cursor string) (*api.PurchaseList, error)
+	//PurchaseGetByTransactionId(ctx context.Context, transactionID string) (string, *api.ValidatedPurchase, error)
 
-	TournamentCreate(ctx context.Context, id string, authoritative bool, sortOrder, operator, resetSchedule string, metadata map[string]interface{}, title, description string, category, startTime, endTime, duration, maxSize, maxNumScore int, joinRequired bool) error
-	TournamentDelete(ctx context.Context, id string) error
-	TournamentAddAttempt(ctx context.Context, id, ownerID string, count int) error
-	TournamentJoin(ctx context.Context, id, ownerID, username string) error
-	TournamentsGetId(ctx context.Context, tournamentIDs []string) ([]*api.Tournament, error)
-	TournamentList(ctx context.Context, categoryStart, categoryEnd, startTime, endTime, limit int, cursor string) (*api.TournamentList, error)
-	TournamentRecordsList(ctx context.Context, tournamentId string, ownerIDs []string, limit int, cursor string, overrideExpiry int64) (records []*api.LeaderboardRecord, ownerRecords []*api.LeaderboardRecord, prevCursor string, nextCursor string, err error)
-	TournamentRecordWrite(ctx context.Context, id, ownerID, username string, score, subscore int64, metadata map[string]interface{}, operatorOverride *int) (*api.LeaderboardRecord, error)
-	TournamentRecordsHaystack(ctx context.Context, id, ownerID string, limit int, cursor string, expiry int64) (*api.TournamentRecordList, error)
+	//TournamentCreate(ctx context.Context, id string, authoritative bool, sortOrder, operator, resetSchedule string, metadata map[string]interface{}, title, description string, category, startTime, endTime, duration, maxSize, maxNumScore int, joinRequired bool) error
+	//TournamentDelete(ctx context.Context, id string) error
+	//TournamentAddAttempt(ctx context.Context, id, ownerID string, count int) error
+	//TournamentJoin(ctx context.Context, id, ownerID, username string) error
+	//TournamentsGetId(ctx context.Context, tournamentIDs []string) ([]*api.Tournament, error)
+	//TournamentList(ctx context.Context, categoryStart, categoryEnd, startTime, endTime, limit int, cursor string) (*api.TournamentList, error)
+	//TournamentRecordsList(ctx context.Context, tournamentId string, ownerIDs []string, limit int, cursor string, overrideExpiry int64) (records []*api.LeaderboardRecord, ownerRecords []*api.LeaderboardRecord, prevCursor string, nextCursor string, err error)
+	//TournamentRecordWrite(ctx context.Context, id, ownerID, username string, score, subscore int64, metadata map[string]interface{}, operatorOverride *int) (*api.LeaderboardRecord, error)
+	//TournamentRecordsHaystack(ctx context.Context, id, ownerID string, limit int, cursor string, expiry int64) (*api.TournamentRecordList, error)
 
-	GroupsGetId(ctx context.Context, groupIDs []string) ([]*api.Group, error)
-	GroupCreate(ctx context.Context, userID, name, creatorID, langTag, description, avatarUrl string, open bool, metadata map[string]interface{}, maxCount int) (*api.Group, error)
-	GroupUpdate(ctx context.Context, id, name, creatorID, langTag, description, avatarUrl string, open bool, metadata map[string]interface{}, maxCount int) error
-	GroupDelete(ctx context.Context, id string) error
-	GroupUserJoin(ctx context.Context, groupID, userID, username string) error
-	GroupUserLeave(ctx context.Context, groupID, userID, username string) error
-	GroupUsersAdd(ctx context.Context, callerID, groupID string, userIDs []string) error
-	GroupUsersBan(ctx context.Context, callerID, groupID string, userIDs []string) error
-	GroupUsersKick(ctx context.Context, callerID, groupID string, userIDs []string) error
-	GroupUsersPromote(ctx context.Context, callerID, groupID string, userIDs []string) error
-	GroupUsersDemote(ctx context.Context, callerID, groupID string, userIDs []string) error
-	GroupUsersList(ctx context.Context, id string, limit int, state *int, cursor string) ([]*api.GroupUserList_GroupUser, string, error)
-	GroupsList(ctx context.Context, name, langTag string, members *int, open *bool, limit int, cursor string) ([]*api.Group, string, error)
-	GroupsGetRandom(ctx context.Context, count int) ([]*api.Group, error)
-	UserGroupsList(ctx context.Context, userID string, limit int, state *int, cursor string) ([]*api.UserGroupList_UserGroup, string, error)
+	//GroupsGetId(ctx context.Context, groupIDs []string) ([]*api.Group, error)
+	//GroupCreate(ctx context.Context, userID, name, creatorID, langTag, description, avatarUrl string, open bool, metadata map[string]interface{}, maxCount int) (*api.Group, error)
+	//GroupUpdate(ctx context.Context, id, name, creatorID, langTag, description, avatarUrl string, open bool, metadata map[string]interface{}, maxCount int) error
+	//GroupDelete(ctx context.Context, id string) error
+	//GroupUserJoin(ctx context.Context, groupID, userID, username string) error
+	//GroupUserLeave(ctx context.Context, groupID, userID, username string) error
+	//GroupUsersAdd(ctx context.Context, callerID, groupID string, userIDs []string) error
+	//GroupUsersBan(ctx context.Context, callerID, groupID string, userIDs []string) error
+	//GroupUsersKick(ctx context.Context, callerID, groupID string, userIDs []string) error
+	//GroupUsersPromote(ctx context.Context, callerID, groupID string, userIDs []string) error
+	//GroupUsersDemote(ctx context.Context, callerID, groupID string, userIDs []string) error
+	//GroupUsersList(ctx context.Context, id string, limit int, state *int, cursor string) ([]*api.GroupUserList_GroupUser, string, error)
+	//GroupsList(ctx context.Context, name, langTag string, members *int, open *bool, limit int, cursor string) ([]*api.Group, string, error)
+	//GroupsGetRandom(ctx context.Context, count int) ([]*api.Group, error)
+	//UserGroupsList(ctx context.Context, userID string, limit int, state *int, cursor string) ([]*api.UserGroupList_UserGroup, string, error)
 
 	FriendsList(ctx context.Context, userID string, limit int, state *int, cursor string) ([]*api.Friend, string, error)
 	FriendsAdd(ctx context.Context, userID string, username string, ids []string, usernames []string) error
@@ -1099,3 +1099,5 @@ type NakamaModule interface {
 	ChannelMessageUpdate(ctx context.Context, channelID, messageID string, content map[string]interface{}, senderId, senderUsername string, persist bool) (*rtapi.ChannelMessageAck, error)
 	ChannelMessagesList(ctx context.Context, channelId string, limit int, forward bool, cursor string) (messages []*api.ChannelMessage, nextCursor string, prevCursor string, err error)
 }
+
+var ErrPurchaseReceiptAlreadySeen = errors.New("receipt purchase already seen before")
