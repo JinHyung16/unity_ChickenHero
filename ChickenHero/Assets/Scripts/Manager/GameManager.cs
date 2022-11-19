@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 using UnityEngine.UI;
 using HughLibrary;
 using Nakama.TinyJson;
-using System.Reflection.Emit;
-using System.Text.RegularExpressions;
 
 public class GameManager : Singleton<GameManager>
 {
@@ -18,18 +16,21 @@ public class GameManager : Singleton<GameManager>
     private GameObject localPlayer;
     private IDictionary<string, GameObject> playerDictionary;
 
+
     private void Start()
     {
         if (GameServer.GetInstance.IsLogin)
         {
             //about nakama match
             playerDictionary = new Dictionary<string, GameObject>();
+
             var mainThread = new UnityMainThreadDispatcher();
             GameServer.GetInstance.Socket.ReceivedMatchmakerMatched += m => mainThread.Enqueue(() => OnRecivedMatchMakerMatched(m));
             GameServer.GetInstance.Socket.ReceivedMatchPresence += m => mainThread.Enqueue(() => OnReceivedMatchPresence(m));
             GameServer.GetInstance.Socket.ReceivedMatchState += m => mainThread.Enqueue(async () => await OnReceivedMatchState(m));
         }
     }
+
     public async void MatchStart(int minPlayer = 2)
     {
         var matchMakingTicket = await GameServer.GetInstance.Socket.AddMatchmakerAsync("*", minPlayer, 8);

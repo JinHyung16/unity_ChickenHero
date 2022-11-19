@@ -6,12 +6,14 @@ namespace HughLibrary
     public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         private static T instance;
+        private const string path = "/Manager";
         public static T GetInstance
         {
             get
             {
                 if (instance == null)
                 {
+                    instance = Resources.Load<T>(typeof(T).Name + path);
                     return null;
                 }
                 return instance;
@@ -22,7 +24,7 @@ namespace HughLibrary
             if (instance == null)
             {
                 instance = this as T;
-                DontDestroyOnLoad(this.gameObject as T);
+                DontDestroyOnLoad(gameObject);
             }
         }
     }

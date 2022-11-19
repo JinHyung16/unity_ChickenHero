@@ -4,10 +4,10 @@ using HughLibrary;
 
 public class PoolManager : Singleton<PoolManager>
 {
-    public GameObject eggPrefab;
-    public int eggCount = 0;
+    [SerializeField] private GameObject eggPrefab;
+    [HideInInspector] public int eggCount = 0;
 
-    private Dictionary<string, GameObject> EggDictionary;
+    private List<GameObject> EggStack;
 
     private void Awake()
     {
@@ -16,13 +16,16 @@ public class PoolManager : Singleton<PoolManager>
         Pooling();
     }
 
-    private void Start()
+    private void InitPrefab()
     {
+        if (eggPrefab == null)
+        {
+            eggPrefab = Resources.Load<GameObject>("Egg/Egg");
+        }
     }
-
     private void InitDictionary()
     {
-        EggDictionary = new Dictionary<string, GameObject>();
+        EggStack = new List<GameObject>();
     }
 
     private void InitPrefabCount() 
@@ -34,23 +37,20 @@ public class PoolManager : Singleton<PoolManager>
     {
         for (int i = 0; i < eggCount; i++)
         {
-            var egg = Instantiate(eggPrefab);
+            GameObject egg = Instantiate(eggPrefab);
             egg.SetActive(false);
-            egg.tag = "egg";
-            EggDictionary.Add("egg", egg);
+            egg.tag = "Egg";
+            DontDestroyOnLoad(egg);
         }
     }
 
-    public GameObject GetObject(string name)
+    public GameObject GetPrefab(string name)
     {
-        GameObject obj = null;
         switch (name)
         {
             case "egg":
-                EggDictionary.TryGetValue("egg", out obj);
                 break;
         }
-
-        return obj;
+        return null;
     }
 }

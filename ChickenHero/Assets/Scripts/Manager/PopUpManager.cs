@@ -2,52 +2,49 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace HughPopUp
+public class PopUpManager : MonoBehaviour
 {
-    public class PopUpManager : MonoBehaviour
+    /// <summary>
+    /// 
+    /// </summary>
+
+    [HideInInspector]
+    public bool isActive = false;
+
+    public void ShowPanel()
     {
-        /// <summary>
-        /// 
-        /// </summary>
+        this.gameObject.SetActive(true);
+        isActive = true;
+    }
 
-        [HideInInspector]
-        public bool isActive = false;
+    public void HidePanel()
+    {
+        this.gameObject.SetActive(false);
+        isActive = false;
 
-        public void ShowPanel()
+    }
+
+    public void TogglePanel()
+    {
+        if (isActive)
         {
-            this.gameObject.SetActive(true);
-            isActive = true;
+            this.HidePanel();
         }
-
-        public void HidePanel()
+        else
         {
-            this.gameObject.SetActive(false);
-            isActive = false;
-
+            this.ShowPanel();
         }
+    }
 
-        public void TogglePanel()
+    public void ToggleInGamePanel()
+    {
+        if (isActive)
         {
-            if (isActive)
-            {
-                this.HidePanel();
-            }
-            else
-            {
-                this.ShowPanel();
-            }
+            this.HidePanel();
         }
-
-        public void ToggleInGamePanel()
+        else
         {
-            if (isActive)
-            {
-                this.HidePanel();
-            }
-            else
-            {
-                this.ShowPanel();
-            }
+            this.ShowPanel();
         }
     }
 }
