@@ -15,7 +15,7 @@ public partial class GameServer : HughServer<GameServer>
     public string userNickName;
 
     protected const string deviceIdentifierPrefName = "nakama.deviceUniqueIdentifier";
-    public async Task<ApiResponseException> DeviceLogin()
+    public async Task<ApiResponseException> LoginToDevice()
     {
 #if UNITY_EDITOR
         Debug.LogFormat("<color=orange><b>[Game-Server]</b> DeviceLogin : Host : {0}, Port : {1} </color>", this.Host, this.Port);

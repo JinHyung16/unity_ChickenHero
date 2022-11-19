@@ -20,7 +20,7 @@ public class LoginSceneManager : MonoBehaviour
 
     private async void GameStart()
     {
-        await GameServer.GetInstance.DeviceLogin();
+        await GameServer.GetInstance.LoginToDevice();
         SceneController.GetInstance.GoToScene("Lobby");
     }
     

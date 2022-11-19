@@ -8,4 +8,12 @@ using HughLibrary;
 
 public class GameManager : Singleton<GameManager>
 {
+    private void Start()
+    {
+        var main = new UnityMainThreadDispatcher();
+    }
+
+    private async void MatchStart()
+    {
+    }
 }

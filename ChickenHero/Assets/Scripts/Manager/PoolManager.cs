@@ -34,7 +34,23 @@ public class PoolManager : Singleton<PoolManager>
     {
         for (int i = 0; i < eggCount; i++)
         {
-            EggDictionary.Add("egg", Instantiate(eggPrefab));
+            var egg = Instantiate(eggPrefab);
+            egg.SetActive(false);
+            egg.tag = "egg";
+            EggDictionary.Add("egg", egg);
         }
+    }
+
+    public GameObject GetObject(string name)
+    {
+        GameObject obj = null;
+        switch (name)
+        {
+            case "egg":
+                EggDictionary.TryGetValue("egg", out obj);
+                break;
+        }
+
+        return obj;
     }
 }
