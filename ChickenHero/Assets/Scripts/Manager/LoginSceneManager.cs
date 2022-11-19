@@ -7,7 +7,8 @@ public class LoginSceneManager : MonoBehaviour
 {
     public GameObject LoginCanvas;
 
-    public Button loginButton;
+    public Button loginBtn;
+    public Button offlineBtn;
 
     private void Start()
     {
@@ -15,7 +16,8 @@ public class LoginSceneManager : MonoBehaviour
         {
             LoginCanvas = Resources.Load("Canvas/Login Canvas") as GameObject;
         }
-        loginButton.onClick.AddListener(GameStart);
+        loginBtn.onClick.AddListener(GameStart);
+        offlineBtn.onClick.AddListener(OffLineStart);
     }
 
     private async void GameStart()
@@ -23,6 +25,12 @@ public class LoginSceneManager : MonoBehaviour
         await GameServer.GetInstance.LoginToDevice();
         SceneController.GetInstance.GoToScene("Lobby");
     }
-    
+
+    private void OffLineStart()
+    {
+        SceneController.GetInstance.GoToScene("SinglePlay");
+    }
+
+
 
 }

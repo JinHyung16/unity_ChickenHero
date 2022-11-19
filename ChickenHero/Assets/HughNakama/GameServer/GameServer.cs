@@ -4,23 +4,35 @@ using UnityEngine;
 using Nakama;
 using System.Net.Http;
 using System.Threading.Tasks;
+using HughLibrary;
+using UnityEditor.Experimental.GraphView;
 
-public partial class GameServer : HughServer<GameServer>
+public partial class GameServer : LazySingleton<GameServer>
 {
-    protected new string Host = "34.82.70.174"; // @GCP hugh-server VM 외부 ip
-    protected new int Port = 7350;
-    protected new string sessionPrefName = "nakama.session";
+    protected string Scheme = "http";
+    protected string Host = "34.82.70.174"; // @GCP hugh-server VM 외부 ip
+    protected int Port = 7350;
+    protected string ServerKey = "defaultkey";
+
+    protected string sessionPrefName = "nakama.session";
+    protected const string deviceIdentifierPrefName = "nakama.deviceUniqueIdentifier";
+
+    protected IClient Client;
+    protected ISession Session;
+    public ISocket Socket; //socket의 경우 GameManager에서 Match관련 코드 작성중이라 필요해서 public으로 열어야함
+
+    protected UnityMainThreadDispatcher mainThread;
 
     public string userid;
     public string userNickName;
+    public bool IsLogin = false;
 
-    protected const string deviceIdentifierPrefName = "nakama.deviceUniqueIdentifier";
     public async Task<ApiResponseException> LoginToDevice()
     {
 #if UNITY_EDITOR
-        Debug.LogFormat("<color=orange><b>[Game-Server]</b> DeviceLogin : Host : {0}, Port : {1} </color>", this.Host, this.Port);
+        Debug.LogFormat("<color=orange><b>[Game-Server]</b> DeviceLogin : Host : {0}, Port : {1} </color>", Host, Port);
 #endif
-        ConnectToServer(this.Host, this.Port);
+        Client = new Nakama.Client(Scheme, Host, Port, ServerKey);
 
         var authToken = PlayerPrefs.GetString(sessionPrefName);
         if (!string.IsNullOrEmpty(authToken))
@@ -35,68 +47,91 @@ public partial class GameServer : HughServer<GameServer>
         // If we weren't able to restore an existing session, authenticate to create a new user session.
         if (Session == null)
         {
-            try
+            string deviceId;
+
+            // If we've already stored a device identifier in PlayerPrefs then use that.
+            if (PlayerPrefs.HasKey(deviceIdentifierPrefName))
             {
-                string deviceId;
-
-                // If we've already stored a device identifier in PlayerPrefs then use that.
-                if (PlayerPrefs.HasKey(deviceIdentifierPrefName))
+                deviceId = PlayerPrefs.GetString(deviceIdentifierPrefName);
+            }
+            else
+            {
+                // If we've reach this point, get the device's unique identifier or generate a unique one.
+                deviceId = SystemInfo.deviceUniqueIdentifier;
+                if (deviceId == SystemInfo.unsupportedIdentifier)
                 {
-                    deviceId = PlayerPrefs.GetString(deviceIdentifierPrefName);
+                    deviceId = System.Guid.NewGuid().ToString();
                 }
-                else
-                {
-                    // If we've reach this point, get the device's unique identifier or generate a unique one.
-                    deviceId = SystemInfo.deviceUniqueIdentifier;
-                    if (deviceId == SystemInfo.unsupportedIdentifier)
-                    {
-                        deviceId = System.Guid.NewGuid().ToString();
-                    }
 
-                    // Store the device identifier to ensure we use the same one each time from now on.
-                    PlayerPrefs.SetString(deviceIdentifierPrefName, deviceId);
-                }
+                // Store the device identifier to ensure we use the same one each time from now on.
+                PlayerPrefs.SetString(deviceIdentifierPrefName, deviceId);
+            }
 #if UNITY_EDITOR
-                Debug.LogFormat("<color=orange><b>[Game-Server]</b> deviceId : {0} </color>", deviceId);
+            Debug.LogFormat("<color=orange><b>[Game-Server]</b> deviceId : {0} </color>", deviceId);
 #endif
 
-                // Use Nakama Device authentication to create a new session using the device identifier.
-                Session = await Client.AuthenticateDeviceAsync(deviceId, null, true);
-                userid = Session.UserId;
-                userNickName = Session.Username;
+            // Use Nakama Device authentication to create a new session using the device identifier.
+            Session = await Client.AuthenticateDeviceAsync(deviceId, null, true);
+            userid = Session.UserId;
+            userNickName = Session.Username;
 
 #if UNITY_EDITOR
-                Debug.LogFormat("<color=green><b>[Game-Server]</b> userid : {0} </color>", userid);
-                Debug.LogFormat("session.AuthToken : {0}", Session.AuthToken);
-                Debug.LogFormat("session.CreateTime : {0}", Session.CreateTime);
-                Debug.LogFormat("session.ExpireTime : {0}", Session.ExpireTime);
-                Debug.LogFormat("session.RefreshToken : {0}", Session.RefreshToken);
-                Debug.LogFormat("session.RefreshExpireTime : {0}", Session.RefreshExpireTime);
+            Debug.LogFormat("<color=green><b>[Game-Server]</b> userid : {0} </color>", userid);
+            Debug.LogFormat("session.AuthToken : {0}", Session.AuthToken);
 #endif
 
-                // Store the auth token that comes back so that we can restore the session later if necessary.
-                PlayerPrefs.SetString(sessionPrefName, Session.AuthToken);
-            }
-            catch (ApiResponseException e)
-            {
-                Debug.Log(e);
-                return e;
-            }
+            // Store the auth token that comes back so that we can restore the session later if necessary.
+            PlayerPrefs.SetString(sessionPrefName, Session.AuthToken);
         }
 
         // Open a new Socket for realtime communication.
-        await SocketConnect();
+        //await SocketConnect();
+        Socket = Client.NewSocket(false);
+        await Socket.ConnectAsync(Session, true);
+
 #if UNITY_EDITOR
         Debug.Log("<color=orange><b>[Game-Server]</b> Socekt Connect : {0} </color>");
 #endif
+        IsLogin = true;
         return null;
     }
-    public override Task Disconnect()
+
+    /*
+    protected async Task SocketConnect()
     {
+        Socket = Client.NewSocket(false);
+        await Socket.ConnectAsync(Session, true);
+        BindSocketEvents();
+#if UNITY_EDITOR
+        Debug.Log("<color=green><b>[Hugh-Server]</b> Socekt Connect : {0} </color>");
+#endif
+    }
+
+    protected void BindSocketEvents()
+    {
+        if (mainThread == null)
+        {
+            mainThread = UnityMainThreadDispatcher.Instance();
+        }
+    }
+    */
+
+    public async Task Disconnect()
+    {
+        if (Socket != null)
+        {
+            await Socket.CloseAsync();
+            Socket = null;
+        }
+
+        if (Session != null)
+        {
+            await Client.SessionLogoutAsync(Session);
+            Session = null;
+        }
 #if UNITY_EDITOR
         Debug.LogFormat("<color=orange><b>[Login-Server]</b> Disconnect : Host : {0}, Port : {1} </color>", this.Host, this.Port);
 #endif
-        return base.Disconnect();
     }
 
     public async Task GetAccoount()
@@ -125,4 +160,5 @@ public partial class GameServer : HughServer<GameServer>
             return e;
         }
     }
+
 }

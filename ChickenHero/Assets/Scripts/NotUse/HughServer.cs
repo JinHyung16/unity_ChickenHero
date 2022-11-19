@@ -6,6 +6,7 @@ using Nakama;
 
 public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
 {
+    /*
     protected string Scheme = "http";
     protected string Host = "localhost";
     protected int Port = 7350;
@@ -64,4 +65,5 @@ public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>
             Session = null;
         }
     }
+    */
 }
