@@ -1,5 +1,5 @@
 using UnityEngine.SceneManagement;
-using HughLibrary;
+using HughGeneric;
 
 public class SceneController : LazySingleton<SceneController>
 {

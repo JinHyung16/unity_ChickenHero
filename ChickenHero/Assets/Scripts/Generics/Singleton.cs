@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace HughLibrary
+namespace HughGeneric
 {
     public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {

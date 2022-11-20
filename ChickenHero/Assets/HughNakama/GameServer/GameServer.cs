@@ -4,13 +4,13 @@ using UnityEngine;
 using Nakama;
 using System.Net.Http;
 using System.Threading.Tasks;
-using HughLibrary;
+using HughGeneric;
 using UnityEditor.Experimental.GraphView;
 
 public partial class GameServer : LazySingleton<GameServer>
 {
     protected string Scheme = "http";
-    protected string Host = "34.82.70.174"; // @GCP hugh-server VM 외부 ip
+    protected string Host = "34.168.4.247"; // @GCP hugh-server VM 외부 ip
     protected int Port = 7350;
     protected string ServerKey = "defaultkey";
 

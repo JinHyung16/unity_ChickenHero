@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using HughLibrary;
+using HughGeneric;
 
 public class PoolManager : Singleton<PoolManager>
 {

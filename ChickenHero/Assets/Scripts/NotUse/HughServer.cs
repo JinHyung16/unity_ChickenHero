@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using System.Threading.Tasks;
-using HughLibrary;
+using HughGeneric;
 using Nakama;
 
 public abstract class HughServer<T> : LazySingleton<T> where T : HughServer<T>

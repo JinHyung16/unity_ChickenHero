@@ -1,0 +1,78 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using TMPro;
+
+public class LoginCanvas : MonoBehaviour
+{
+    [SerializeField] private TMP_InputField NameInputField;
+    private string nickName = string.Empty;
+
+
+    public async void OnLineStart()
+    {
+        if (CheckInputName)
+        {
+            UserInfoSetting();
+
+            GameManager.GetInstance.SaveUserInfo(LocalData.GetInstance.Level, nickName, LocalData.GetInstance.Gold);
+            await GameServer.GetInstance.LoginToDevice();
+            SceneController.GetInstance.GoToScene("Lobby");
+        }
+    }
+
+    public void OffLineStart()
+    {
+        if (CheckInputName)
+        {
+            UserInfoSetting();
+            SceneController.GetInstance.GoToScene("SinglePlay");
+        }
+    }
+
+    /// <summary>
+    /// InputField에서 입력한 유저 이름을 받는다.
+    /// </summary>
+    public void NickNameInput()
+    {
+        nickName = NameInputField.text;
+    }
+
+    /// <summary>
+    /// 유저가 NickName을 입력했는지 확인한다.
+    /// </summary>
+    /// <returns>이름 입력하지 않았으면 입력하라고 알린 뒤 false 리턴, 입력했으면 true 리턴</returns>
+    private bool CheckInputName
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(nickName))
+            {
+                NameInputField.GetComponent<TMP_InputField>().placeholder.GetComponent<TMP_Text>().text = "Please Input NickName";
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Server 연결이 안되어 있을 경우를 가정하여 만든 함수
+    /// Login성공시, OffLine Play시 PlayerPrefs에 데이터를 저장할지 판별해서 저장한다.
+    /// </summary>
+    private void UserInfoSetting()
+    {
+        if (LocalData.GetInstance.CheckForUserInfo(nickName))
+        {
+            return;
+        }
+        else
+        {
+            LocalData.GetInstance.Level = 1;
+            LocalData.GetInstance.Name = nickName;
+            LocalData.GetInstance.Gold = 0;
+        }
+    }
+}

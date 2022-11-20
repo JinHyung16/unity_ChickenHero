@@ -4,8 +4,9 @@ using UnityEngine;
 using Nakama;
 using System.Threading.Tasks;
 using UnityEngine.UI;
-using HughLibrary;
+using HughGeneric;
 using Nakama.TinyJson;
+using Packet.GameServer;
 
 public class GameManager : Singleton<GameManager>
 {
@@ -29,6 +30,25 @@ public class GameManager : Singleton<GameManager>
             GameServer.GetInstance.Socket.ReceivedMatchPresence += m => mainThread.Enqueue(() => OnReceivedMatchPresence(m));
             GameServer.GetInstance.Socket.ReceivedMatchState += m => mainThread.Enqueue(async () => await OnReceivedMatchState(m));
         }
+    }
+
+    /// <summary>
+    /// 서버의 연결되어 있는 경우, DB 서버에 User의 정보를 전달한다.
+    /// </summary>
+    /// <param name="level">유저의 레벨 전달</param>
+    /// <param name="name">유저의 닉네임 전달</param>
+    /// <param name="gold">유저의 재화량 전달</param>
+    public async void SaveUserInfo(int level, string name, int gold)
+    {
+        ReqSetUserPacket reqData = new ReqSetUserPacket
+        {
+            userId = GameServer.GetInstance.userid,
+            userLevel = level,
+            userName = name,
+            userGold = gold,
+        };
+
+        await GameServer.GetInstance.SetUserInfo(reqData);
     }
 
     public async void MatchStart(int minPlayer = 2)
