@@ -43,7 +43,7 @@ public class Test : MonoBehaviour
 
     private void PoolTest()
     {
-        GameObject testEgg = PoolManager.GetInstance.GetPrefab("egg");
+        GameObject testEgg = null;
         testEgg.transform.position = new Vector2(0, 5);
         testEgg.SetActive(true);
     }

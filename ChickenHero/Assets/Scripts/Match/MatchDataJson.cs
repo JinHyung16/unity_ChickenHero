@@ -20,6 +20,7 @@ public class MatchDataJson
         return values.ToJson();
     }
 
+    /*
     /// <summary>
     /// 매칭시 두 플레이어를 스폰해줄 함수
     /// </summary>
@@ -34,6 +35,7 @@ public class MatchDataJson
 
         return values.ToJson();
     }
+    */
 
     /// <summary>
     /// 매칭시 플레이 시간이 다 되어서 게임 종료를 알리는 데이터
