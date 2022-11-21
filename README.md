@@ -5,7 +5,7 @@
 - Nakama Common version : v1.25.0  
 - Nakama-Unity version : v3.5.0  
 - Go version: 1.18 (all available within 1.18 version)  
-- Unity version: 3.30f1  
+- Unity version: 21.3.14f1  
 
 ## Setting
 - [GCP]hugh-db folder: mysql DB 서버용, grpc에서 읽고 쓸 DB서버  
