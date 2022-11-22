@@ -8,8 +8,11 @@ public class PlayerNetworkRemoteSync : MonoBehaviour
 {
     [HideInInspector] public RemotePlayerNetworkData networkData;
 
+    private Player player;
+
     private void Start()
     {
+        player = GetComponentInChildren<Player>();
         GameServer.GetInstance.Socket.ReceivedMatchState += EnqueueOnReceivedMatchState;
     }
 
@@ -30,21 +33,19 @@ public class PlayerNetworkRemoteSync : MonoBehaviour
         // Decide what to do based on the Operation Code of the incoming state data as defined in OpCodes.
         switch (matchState.OpCode)
         {
-            case OpCodes.Point:
-                UpdatePoint(matchState.State);
+            case OpCodes.TimeDone:
+                player.PlayerDieAnimation();
                 break;
             default:
                 break;
         }
     }
 
+    /*
     private IDictionary<string, string> GetStateAsDictionary(byte[] state)
     {
         return Encoding.UTF8.GetString(state).FromJson<Dictionary<string, string>>();
     }
-
-    private void UpdatePoint(byte[] state)
-    {
-    }
+    */
 
 }

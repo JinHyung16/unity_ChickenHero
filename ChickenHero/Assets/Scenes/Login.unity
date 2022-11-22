@@ -549,7 +549,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45a465d5d269f4e4389d24ef931c1750, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  LocalPlayer: {fileID: 1087430154396225430, guid: 37548a7c99c075e40899aba4717722fc, type: 3}
+  LocalPlayer: {fileID: 2086069329814629313, guid: 195a661d2aa894a42b99a1dadebeb8f3, type: 3}
+  RemotePlayer: {fileID: 2086069329814629313, guid: 261c9427deaf25d4c8f9197ee34040e2, type: 3}
   SpawnPoint: {fileID: 1208380661}
 --- !u!4 &1764905643
 Transform:

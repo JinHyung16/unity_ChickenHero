@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using HughGeneric;
 using Nakama.TinyJson;
 using Packet.GameServer;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class GameManager : Singleton<GameManager>
 {
@@ -90,7 +91,7 @@ public class GameManager : Singleton<GameManager>
 
     /// <summary>
     /// Player Spawn 해주는 함수
-    /// LocalPlayer만 생성해주고, RemotePlayer는 생성시킬필요 없다.
+    /// LocalPlayer만 생성해주고, RemotePlayer는 생성시킬 필요 없다.
     /// 왜냐면 점수만 Update해서 UI로 보여줄거기 때문이다.
     /// </summary>
     /// <param name="matchId"> match의 id를 받는다 </param>
@@ -119,7 +120,26 @@ public class GameManager : Singleton<GameManager>
 
         playerDictionary.Add(user.SessionId, player);
 
-        if (isLocalPlayer) { localPlayer = player; }
+        if (isLocalPlayer) 
+        { 
+            localPlayer = player;
+            //local player의 die event 연결해주기
+            player.GetComponent<Player>().dieEvent.AddListener(OnLocalPlayerDied);
+        }
+    }
+
+    /// <summary>
+    /// Match가 끝나고 나면 IDictionary에 있는 player 지워주는 함수
+    /// </summary>
+    /// <param name="player">local player를 받는다</param>
+    private async void OnLocalPlayerDied(GameObject player)
+    {
+        // Send a network message telling everyone that we died.
+        await SendMatchStateAsync(OpCodes.TimeDone, MatchDataJson.TimeDone(true));
+
+        // Remove ourself from the players array and destroy our GameObject after 0.5 seconds.
+        playerDictionary.Remove(localUser.SessionId);
+        Destroy(player, 0.5f);
     }
 
     #region Nakama Match State Function
@@ -188,6 +208,9 @@ public class GameManager : Singleton<GameManager>
                 SpawnPlayer(currentMatch.Id, matchState.UserPresence);
                 break;
             case OpCodes.TimeDone:
+                var player = playerDictionary[userSessionId];
+                Destroy(player, 0.5f);
+                playerDictionary.Remove(userSessionId);
                 break;
             default:
                 break;
