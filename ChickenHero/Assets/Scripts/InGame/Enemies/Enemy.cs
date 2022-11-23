@@ -44,7 +44,7 @@ public class Enemy : MonoBehaviour, IDamage
         ManageEnemyPool.Release(this);
         
         GameManager.GetInstance.LocalUserScore += 1;
-        GameManager.GetInstance.IsUpdateScore = true;
+        GameManager.GetInstance.IsScoreUpdate = true;
     }
     #endregion
 }

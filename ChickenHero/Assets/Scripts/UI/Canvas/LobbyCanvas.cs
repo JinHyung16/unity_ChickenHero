@@ -54,7 +54,7 @@ public class LobbyCanvas : MonoBehaviour
     /// <summary>
     /// PlayMode Toggle Button을 누를 때 호출된다
     /// </summary>
-    /// <param name="active"> toggle 눌린 상태를 받는다</param>
+    /// <param name="active"> toggle 눌린 상태를 받는다 </param>
     private void PlayModeSelectToggle(bool active)
     {
         playModePanel.SetActive(active);

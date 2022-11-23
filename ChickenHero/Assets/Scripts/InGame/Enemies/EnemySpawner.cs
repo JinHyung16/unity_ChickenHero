@@ -19,7 +19,7 @@ public class EnemySpawner : MonoBehaviour
 
     IEnumerator enemyIEnumerator;
 
-    public void EnemySpwnStart()
+    public void InitEnemySpawnerPooling()
     {
         enemySpawnTime = 3.0f;
         enemyCount = 10;

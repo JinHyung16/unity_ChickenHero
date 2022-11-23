@@ -15,18 +15,30 @@ public class GameManager : Singleton<GameManager>
     public int LocalUserScore { get; set; }
     public int RemoteUserScore { get; set; }
 
-    public bool IsUpdateScore { get; set; }
+    public bool IsScoreUpdate { get; set; }
     #endregion
+
+    [SerializeField] private GameObject offLinePlayer;
+    [SerializeField] private GameObject playerSpawnPoint;
 
     [SerializeField] private EnemySpawner enemySpawner;
 
+    private void Start()
+    {
+        offLinePlayer.SetActive(false);
+    }
+
     public void GameStart()
     {
-        enemySpawner.EnemySpwnStart();
+        offLinePlayer.SetActive(true);
+        offLinePlayer.transform.position = playerSpawnPoint.transform.position;
+
+        enemySpawner.InitEnemySpawnerPooling();
     }
 
     public void GameExit()
     {
         enemySpawner.EnemySpanwStop();
+        offLinePlayer.SetActive(false);
     }
 }

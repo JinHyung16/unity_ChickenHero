@@ -12,7 +12,7 @@ public class SinglePlayCanvas : MonoBehaviour
     [SerializeField] private TMP_Text scoreTxt;
     [SerializeField] private Button exitBtn;
 
-    [HideInInspector] public int score = 0;
+    private int score = 0;
 
     private void Start()
     {
@@ -30,11 +30,11 @@ public class SinglePlayCanvas : MonoBehaviour
     /// </summary>
     private void ScoreUpdate()
     {
-        if (GameManager.GetInstance.IsUpdateScore)
+        if (GameManager.GetInstance.IsScoreUpdate)
         {
             score = GameManager.GetInstance.LocalUserScore;
             scoreTxt.text = score.ToString();
-            GameManager.GetInstance.IsUpdateScore = false;
+            GameManager.GetInstance.IsScoreUpdate = false;
         }
     }
 

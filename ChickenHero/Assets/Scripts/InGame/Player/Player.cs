@@ -20,20 +20,9 @@ public class Player : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private int eggCount = 0;
     private IObjectPool<Egg> eggPool;
 
-
-    private void Awake()
+    private void OnEnable()
     {
-        eggCount = 20;
-        eggPool = new ObjectPool<Egg>(CreateEgg, OnGetEgg, OnReleaseEgg, OnDestroyEgg, maxSize:eggCount);
-        if (dieEvent == null)
-        {
-            dieEvent = new PlayerDiedEvent();
-        }
-    }
-
-    private void Update()
-    {
-        ThrowEgg();
+        InitPlayerPooling();
     }
 
     public void PlayerDieAnimation()
@@ -41,15 +30,22 @@ public class Player : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         Debug.Log("플레이어 죽음");
     }
 
+    private void InitPlayerPooling()
+    {
+        eggCount = 20;
+        eggPool = new ObjectPool<Egg>(CreateEgg, OnGetEgg, OnReleaseEgg, OnDestroyEgg, maxSize: eggCount);
+        if (dieEvent == null)
+        {
+            dieEvent = new PlayerDiedEvent();
+        }
+    }
+
     private void ThrowEgg()
     {
-        if (IsThrow)
-        {
-            var direction = new Vector2(targetVec.x, targetVec.y);
-            var egg = eggPool.Get();
-            egg.transform.position = playerTrans.position;
-            egg.ShootEgg(direction.normalized);
-        }
+        var direction = new Vector2(targetVec.x, targetVec.y);
+        var egg = eggPool.Get();
+        egg.transform.position = playerTrans.position;
+        egg.ShootEgg(direction.normalized);
     }
 
     /// <summary>
@@ -72,7 +68,7 @@ public class Player : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         if (pointer.pointerClick.gameObject.CompareTag("Enemy"))
         {
             targetVec = pointer.position;
-            IsThrow = true;
+            ThrowEgg();
             HitPoint = 50;
         }
     }
