@@ -8,14 +8,13 @@ public class LoginCanvas : MonoBehaviour
     [SerializeField] private TMP_InputField NameInputField;
     private string nickName = string.Empty;
 
-
     public async void OnLineStart()
     {
         if (CheckInputName)
         {
             UserInfoSetting();
 
-            GameManager.GetInstance.SaveUserInfo(LocalData.GetInstance.Level, nickName, LocalData.GetInstance.Gold);
+            MatchManager.GetInstance.SaveUserInfoServer(nickName, LocalData.GetInstance.Gold);
             await GameServer.GetInstance.LoginToDevice();
             SceneController.GetInstance.GoToScene("Lobby");
         }
@@ -26,12 +25,12 @@ public class LoginCanvas : MonoBehaviour
         if (CheckInputName)
         {
             UserInfoSetting();
-            SceneController.GetInstance.GoToScene("SinglePlay");
+            SceneController.GetInstance.GoToScene("Lobby");
         }
     }
 
     /// <summary>
-    /// InputField에서 입력한 유저 이름을 받는다.
+    /// Name Input Field에서 입력한 유저 이름을 받는다.
     /// </summary>
     public void NickNameInput()
     {
@@ -70,9 +69,8 @@ public class LoginCanvas : MonoBehaviour
         }
         else
         {
-            LocalData.GetInstance.Level = 1;
             LocalData.GetInstance.Name = nickName;
-            LocalData.GetInstance.Gold = 0;
+            LocalData.GetInstance.Gold = 500;
         }
     }
 }

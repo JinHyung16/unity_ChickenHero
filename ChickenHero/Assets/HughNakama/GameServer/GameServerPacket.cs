@@ -25,7 +25,6 @@ namespace Packet.GameServer
     {
         public string userId;
         public string userName;
-        public int userLevel;
         public int userGold;
     }
 
@@ -33,7 +32,6 @@ namespace Packet.GameServer
     {
         public string userId;
         public string userName;
-        public int userLevel;
         public int userGold;
     }
 

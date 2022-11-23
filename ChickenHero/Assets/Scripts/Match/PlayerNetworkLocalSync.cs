@@ -19,7 +19,7 @@ public class PlayerNetworkLocalSync : MonoBehaviour
             return;
         }
 
-        GameManager.GetInstance.SendMatchState(OpCodes.Point,
+        MatchManager.GetInstance.SendMatchState(OpCodes.Point,
             MatchDataJson.Point(player.HitPoint));
     }
 

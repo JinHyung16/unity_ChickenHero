@@ -21,13 +21,14 @@ if hugh_db_err != nil {
 	println("----------------------------------------")
 }
 */
+var db_url = "root:jinhyung@tcp(34.83.17.105:3307)/"
 
 func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
 	println("----------------------------------------")
 	println("[User] 진입 :: SetUserInfo")
 	println("----------------------------------------")
 
-	hugh_db_rul := "root:jinhyung@tcp(34.83.17.105:3307)/"
+	hugh_db_rul := db_url
 	hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
 	if hugh_db_err != nil {
 		println("----------------------------------------")
@@ -45,13 +46,14 @@ func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 		return string(jsonData), nil
 	}
 
+	//만약 정보가 있다면 갱신하는 코드도 추가해야한다.
+
 	insertContext := `user_id, user_name, user_level, user_gold`
 	insertValues := `VALUES(?, ?, ?, ?)`
 	insertQuery := `INSERT INTO user_history` + ` ( ` + insertContext + ` ) ` + insertValues
 	_, insertErr := hugh_db.QueryContext(ctx, insertQuery,
 		reqData.UserId,
 		reqData.UserName,
-		reqData.UserLevel,
 		reqData.UserGold,
 	)
 
@@ -75,7 +77,7 @@ func GetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 	println("[User] 진입 :: GetUserInfo")
 	println("----------------------------------------")
 
-	hugh_db_rul := "root:jinhyung@tcp(34.83.17.105:3307)/"
+	hugh_db_rul := db_url
 	hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
 	if hugh_db_err != nil {
 		println("----------------------------------------")
@@ -102,8 +104,7 @@ func GetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 	resData := UserData{}
 	for selectDB.Next() {
 		selectDB.Scan(
-			&resData.UserID, &resData.UserName,
-			&resData.UserLevel, &resData.UserGold)
+			&resData.UserID, &resData.UserName, &resData.UserGold)
 	}
 
 	resData.Message = "Success Select DB"
@@ -114,4 +115,43 @@ func GetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 	println("[User] 탈출 :: GetUserInfo")
 	println("========================================")
 	return string(jsonData), nil
+}
+
+func RemoveUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
+	println("----------------------------------------")
+	println("[User] 진입 :: RemoveUserInfo")
+	println("----------------------------------------")
+
+	/*
+	hugh_db_rul := db_url
+	hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
+	if hugh_db_err != nil {
+		println("----------------------------------------")
+		println("[User] Error :: RemoveUserInfo\n", hugh_db_rul, "\n", hugh_db_err.Error())
+		println("----------------------------------------")
+	}
+
+	reqData := ReqUserInfoPacket{}
+	reqErr := json.Unmarshal([]byte(payload), &reqData)
+	if reqErr != nil {
+		println("----------------------------------------")
+		println("[User] Error :: RemoveUserInfo - request data\n", reqErr.Error())
+		println("----------------------------------------")
+	}
+
+	//remove 하는거 필요
+
+
+	resData := UserData{}
+	resData.Message = "Success Remove DB"
+	resData.MessageCode = Success
+	jsonData, _ := json.Marshal(resData)
+
+	println("----------------------------------------")
+	println("[User] 탈출 :: RemoveUserInfo")
+	println("========================================")
+	return string(jsonData), nil
+	*/
+
+	return string(""), nil
 }

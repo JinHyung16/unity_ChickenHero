@@ -44,19 +44,6 @@ public class LocalData : Singleton<LocalData>
 
     #region PlayerPrefs Save Data Property
     private string userName = string.Empty;
-
-    public int Level
-    {
-        get
-        {
-            return PlayerPrefs.GetInt(userName + "Level");
-        }
-        set
-        {
-            PlayerPrefs.SetInt("Level", value);
-        }
-    }
-
     public string Name
     {
         get
@@ -78,7 +65,7 @@ public class LocalData : Singleton<LocalData>
         }
         set
         {
-            PlayerPrefs.SetInt("Gold", value);
+            PlayerPrefs.SetInt(userName + "Gold", value);
         }
     }
     #endregion
@@ -89,16 +76,6 @@ public class LocalData : Singleton<LocalData>
     public void ClearAllPlayerPrefs()
     {
         PlayerPrefs.DeleteAll();
-    }
-
-    /// <summary>
-    /// GCP DB서버의 저장된 데이터와 동기화 하는 함수
-    /// PlayerPrefs기준 서버 DB의 내용이 바뀌어야함
-    /// 즉, 우선순이는 PlayerPrefs의 값을 먼저 따라야한다.
-    /// </summary>
-    public void SyncDataToServer()
-    {
-        GameManager.GetInstance.SaveUserInfo(Level, Name, Gold);
     }
 
     /// <summary>

@@ -13,6 +13,7 @@ func InitModule(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runti
 	// user.go rpc 등록
 	initializer.RegisterRpc("set_user_info", SetUserInfo)
 	initializer.RegisterRpc("get_user_info", GetUserInfo)
+	initializer.RegisterRpc("remove_user_info", RemoveUserInfo)
 
 	fmt.Println("[Init Runtime Module] : nakama_plugin SUCCESS")
 	return nil

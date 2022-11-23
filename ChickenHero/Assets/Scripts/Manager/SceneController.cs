@@ -11,6 +11,9 @@ public class SceneController : LazySingleton<SceneController>
     {
         switch (sceneName)
         {
+            case "Login":
+                SceneManager.LoadScene(sceneName);
+                break;
             case "Lobby":
                 SceneManager.LoadScene(sceneName);
                 break;

@@ -14,22 +14,18 @@ public class EnemySpawner : MonoBehaviour
     //±âº» enemy pooling
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private int enemyCount = 0;
+    [SerializeField] private float enemySpawnTime = 0;
     private IObjectPool<Enemy> enemyPool;
 
     IEnumerator enemyIEnumerator;
 
-    private void Awake()
-    {
-        enemyCount = 10;
-        enemyPool = new ObjectPool<Enemy>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, maxSize:enemyCount);
-    }
-    private void Start()
-    {
-        enemyIEnumerator = EnemySpawnTimer();
-    }
-
     public void EnemySpwnStart()
     {
+        enemySpawnTime = 3.0f;
+        enemyCount = 10;
+        enemyPool = new ObjectPool<Enemy>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, maxSize: enemyCount);
+        enemyIEnumerator = EnemySpawnTimer();
+
         StartCoroutine(enemyIEnumerator);
     }
 
@@ -44,7 +40,7 @@ public class EnemySpawner : MonoBehaviour
         {
             var enemy = enemyPool.Get();
             enemy.transform.position = transform.position;
-            yield return null;
+            yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(enemySpawnTime);
         }
     }
 

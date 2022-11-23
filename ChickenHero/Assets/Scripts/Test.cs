@@ -54,7 +54,6 @@ public class Test : MonoBehaviour
         {
             userId = GameServer.GetInstance.userid,
             userName = "¿µ¿õ Ä¡Å²",
-            userLevel = 1,
             userGold = 5000,
         };
 
@@ -69,7 +68,6 @@ public class Test : MonoBehaviour
         };
 
         var res = await GameServer.GetInstance.GetUserInfo(req);
-        LevelTxt.text = res.userLevel.ToString();
         NameTxt.text = res.userName.ToString();
         GoldTxt.text = res.userGold.ToString();
     }

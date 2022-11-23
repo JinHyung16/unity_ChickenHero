@@ -29,5 +29,14 @@ public partial class GameServer
 #endif 
         return JsonConvert.DeserializeObject<UserData>(res.Payload);
     }
+
+    public async Task RemoveUserInfo(ReqUserInfoPacket req)
+    {
+        string json = JsonConvert.SerializeObject(req);
+        var res = await Client.RpcAsync(Session, "remove_user_info", json);
+#if UNITY_EDITOR
+        UnityEngine.Debug.Log(res.Payload);
+#endif 
+    }
     #endregion
 }

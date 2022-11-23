@@ -37,10 +37,14 @@ public class Enemy : MonoBehaviour, IDamage
 
     /// <summary>
     /// 생성된 Enemy Object를 pool에 반환한다.
+    /// GameManager의 점수를 Update하라고 신호를 준다.
     /// </summary>
     private void DestoryEnemy()
     {
         ManageEnemyPool.Release(this);
+        
+        GameManager.GetInstance.LocalUserScore += 1;
+        GameManager.GetInstance.IsUpdateScore = true;
     }
     #endregion
 }
