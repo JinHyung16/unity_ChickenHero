@@ -57,8 +57,8 @@ public class Player : MonoBehaviour
         if (Input.touchCount > 0 && GameManager.GetInstance.IsGameStart)
         {
             Touch myTouch = Input.GetTouch(0);
-            Vector2 touchPos = Camera.main.ScreenToWorldPoint(myTouch.position);
-            RaycastHit2D hit2D = Physics2D.Raycast(touchPos, touchPos);
+            targetVec = Camera.main.ScreenToWorldPoint(myTouch.position);
+            RaycastHit2D hit2D = Physics2D.Raycast(targetVec, targetVec);
             if (hit2D.collider != null)
             {
                 if (hit2D.collider.CompareTag("Enemy"))
@@ -78,10 +78,8 @@ public class Player : MonoBehaviour
     /// </summary>
     private void ThrowEgg()
     {
-        var direction = new Vector2(targetVec.x, targetVec.y);
         var egg = eggPool.Get();
-        egg.transform.position = playerTrans.position;
-        egg.ShootEgg(direction);
+        egg.transform.position = targetVec;
     }
 
     /// <summary>

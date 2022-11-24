@@ -10,7 +10,14 @@ public class EnemySpawner : MonoBehaviour
     /// Single Play, Multi Play 상관없이 Enemy는 생성시켜야 하기 때문에
     /// Game을 시작하려고 Scene을 이동함에 따라 GameManger에서 이를 실행시키도록 한다.
     /// </summary>
-    
+
+
+    //enemy pooling해서 배치할 위치 범위 지정하기
+    [SerializeField] private float xPosRight;
+    [SerializeField] private float xPosLeft;
+    [SerializeField] private float yPosUp;
+    [SerializeField] private float yPosDown;
+
     //기본 enemy pooling
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private int enemyCount = 0;
@@ -21,7 +28,12 @@ public class EnemySpawner : MonoBehaviour
 
     public void InitEnemySpawnerPooling()
     {
-        enemySpawnTime = 3.0f;
+        xPosRight = 2.0f; 
+        xPosLeft = -2.0f;
+        yPosUp = 4.0f;
+        yPosDown = -4.0f;
+
+        enemySpawnTime = 5.0f;
         enemyCount = 10;
         enemyPool = new ObjectPool<Enemy>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, maxSize: enemyCount);
         enemyIEnumerator = EnemySpawnTimer();
@@ -38,8 +50,12 @@ public class EnemySpawner : MonoBehaviour
     {
         while (true)
         {
+            var posX = Random.Range(xPosLeft, xPosRight);
+            var posY = Random.Range(yPosUp, yPosDown);
+            Vector2 posVec = new(posX, posY);
+
             var enemy = enemyPool.Get();
-            enemy.transform.position = transform.position;
+            enemy.transform.position = posVec;
             yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(enemySpawnTime);
         }
     }

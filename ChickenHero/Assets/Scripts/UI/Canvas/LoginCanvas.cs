@@ -84,11 +84,17 @@ public class LoginCanvas : MonoBehaviour, IPointerDownHandler
     {
         if (eventData.pointerClick.name == "Name InputField")
         {
-            MobileManager.GetInstance.ActiveMobileKeyBoard(true);
-        }
-        else
-        {
-            MobileManager.GetInstance.ActiveMobileKeyBoard(false);
+            ActiveMobileKeyBoard();
         }
     }
+
+    /// <summary>
+    /// Android 기기에서 Keyboard창 열기위해 사용하는 함수
+    /// </summary>
+    private TouchScreenKeyboard keyboard;
+    private void ActiveMobileKeyBoard()
+    {
+        keyboard = TouchScreenKeyboard.Open("", TouchScreenKeyboardType.ASCIICapable, false, false, false, false);
+    }
+
 }

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -8,7 +9,7 @@ public class Egg : MonoBehaviour, IEggPower
     [SerializeField] private Rigidbody2D rigid2D;
 
     private Vector2 target;
-    [SerializeField] private float speed = 3.0f;
+    [SerializeField] private float throwSpeed = 3.0f;
     
     //object pool 관련
     private IObjectPool<Egg> ManageEggPool;
@@ -27,37 +28,16 @@ public class Egg : MonoBehaviour, IEggPower
         Power = 1;
     }
 
-    private void Update()
-    {
-        ThrowingTarget();
-    }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Enemy"))
         {
+            Handheld.Vibrate(); //휴대폰에서 진동 울리기
             collision.gameObject.GetComponent<Enemy>().Damaged(Power);
             DestoryEgg();
         }
     }
-
-    /// <summary>
-    /// 적 위치를 받았고, Egg가 생성되었으면 그 위치로 날아간다.
-    /// </summary>
-    private void ThrowingTarget()
-    {
-        rigid2D.velocity += target * Time.deltaTime * speed;
-    }
-
-    /// <summary>
-    /// PlayerInput에서 Egg 생성시켜 발사할 위치 전달받는다.
-    /// </summary>
-    /// <param name="_direction"> 적 위치를 받아서 Egg가 가야할 지점을 받는 매개변수 </param>
-    public void ShootEgg(Vector2 _direction)
-    {
-        target = _direction;
-    }
-
 
     #region Object Pool Manage Function
     /// <summary>
