@@ -5,6 +5,8 @@ using UnityEngine.Pool;
 
 public class Egg : MonoBehaviour, IEggPower
 {
+    [SerializeField] private Rigidbody2D rigid2D;
+
     private Vector2 target;
     [SerializeField] private float speed = 3.0f;
     
@@ -14,8 +16,14 @@ public class Egg : MonoBehaviour, IEggPower
     //interface 구현
     [HideInInspector] public int Power { get; set; }
 
-    private void Start()
+
+    private void OnEnable()
     {
+        rigid2D.bodyType = RigidbodyType2D.Kinematic;
+        if (rigid2D == null)
+        {
+            rigid2D = GetComponent<Rigidbody2D>();
+        }
         Power = 1;
     }
 
@@ -32,12 +40,13 @@ public class Egg : MonoBehaviour, IEggPower
             DestoryEgg();
         }
     }
+
     /// <summary>
     /// 적 위치를 받았고, Egg가 생성되었으면 그 위치로 날아간다.
     /// </summary>
     private void ThrowingTarget()
     {
-        transform.Translate(target * Time.deltaTime * speed);
+        rigid2D.velocity += target * Time.deltaTime * speed;
     }
 
     /// <summary>

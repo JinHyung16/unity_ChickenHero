@@ -246,6 +246,22 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 643264842}
     m_Modifications:
+    - target: {fileID: 563344769641150249, guid: 140668a58f0ede14fbf796b07ff280ff, type: 3}
+      propertyPath: m_UiScaleMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 563344769641150249, guid: 140668a58f0ede14fbf796b07ff280ff, type: 3}
+      propertyPath: m_MatchWidthOrHeight
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 563344769641150249, guid: 140668a58f0ede14fbf796b07ff280ff, type: 3}
+      propertyPath: m_ReferenceResolution.x
+      value: 400
+      objectReference: {fileID: 0}
+    - target: {fileID: 563344769641150249, guid: 140668a58f0ede14fbf796b07ff280ff, type: 3}
+      propertyPath: m_ReferenceResolution.y
+      value: 300
+      objectReference: {fileID: 0}
     - target: {fileID: 3585551943334052532, guid: 140668a58f0ede14fbf796b07ff280ff, type: 3}
       propertyPath: m_Name
       value: MultiPlay Canvas

@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.EventSystems;
 
-public class LoginCanvas : MonoBehaviour
+public class LoginCanvas : MonoBehaviour, IPointerDownHandler
 {
     [SerializeField] private TMP_InputField NameInputField;
     private string nickName = string.Empty;
@@ -71,6 +72,23 @@ public class LoginCanvas : MonoBehaviour
         {
             LocalData.GetInstance.Name = nickName;
             LocalData.GetInstance.Gold = 500;
+        }
+    }
+
+    /// <summary>
+    /// Unity에서 제공하는 IPointerDownHandler interface를 상속받았다
+    /// InputField가 눌렸을 경우, Mobile에서 KeyPard를 열기위해 필요한 함수
+    /// </summary>
+    /// <param name="eventData"> 터치된 정보를 받는다 </param>
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (eventData.pointerClick.name == "Name InputField")
+        {
+            MobileManager.GetInstance.ActiveMobileKeyBoard(true);
+        }
+        else
+        {
+            MobileManager.GetInstance.ActiveMobileKeyBoard(false);
         }
     }
 }

@@ -5,15 +5,16 @@ namespace HughGeneric
 {
     public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {
+        /// <summary>
+        /// Singleton Generic을 이용하는 Manager들은 Awiat를 선언하지 말자!
+        /// </summary>
         private static T instance;
-        private const string path = "/Manager";
         public static T GetInstance
         {
             get
             {
                 if (instance == null)
                 {
-                    instance = Resources.Load<T>(typeof(T).Name + path);
                     return null;
                 }
                 return instance;
@@ -24,8 +25,8 @@ namespace HughGeneric
             if (instance == null)
             {
                 instance = this as T;
-                DontDestroyOnLoad(gameObject);
             }
+            DontDestroyOnLoad(gameObject);
         }
     }
 }

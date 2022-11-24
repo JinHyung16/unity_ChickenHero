@@ -15,6 +15,7 @@ public class GameManager : Singleton<GameManager>
     public int LocalUserScore { get; set; }
     public int RemoteUserScore { get; set; }
 
+    public bool IsGameStart { get; set; }
     public bool IsScoreUpdate { get; set; }
     #endregion
 
@@ -26,10 +27,13 @@ public class GameManager : Singleton<GameManager>
     private void Start()
     {
         offLinePlayer.SetActive(false);
+        PlayerPrefs.DeleteAll();
     }
 
     public void GameStart()
     {
+        IsGameStart = true;
+
         offLinePlayer.SetActive(true);
         offLinePlayer.transform.position = playerSpawnPoint.transform.position;
 
@@ -38,7 +42,10 @@ public class GameManager : Singleton<GameManager>
 
     public void GameExit()
     {
-        enemySpawner.EnemySpanwStop();
+        IsGameStart = false;
+
         offLinePlayer.SetActive(false);
+
+        enemySpawner.EnemySpanwStop();
     }
 }

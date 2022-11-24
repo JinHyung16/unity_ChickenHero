@@ -1,7 +1,5 @@
 using Nakama.TinyJson;
 using System.Collections.Generic;
-using UnityEngine;
-using Nakama.TinyJson;
 
 public class MatchDataJson
 {
