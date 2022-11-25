@@ -5,12 +5,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 
 public class Egg : MonoBehaviour, IEggPower
-{
-    [SerializeField] private Rigidbody2D rigid2D;
-
-    private Vector2 target;
-    [SerializeField] private float throwSpeed = 3.0f;
-    
+{  
     //object pool 관련
     private IObjectPool<Egg> ManageEggPool;
 
@@ -20,11 +15,6 @@ public class Egg : MonoBehaviour, IEggPower
 
     private void OnEnable()
     {
-        rigid2D.bodyType = RigidbodyType2D.Kinematic;
-        if (rigid2D == null)
-        {
-            rigid2D = GetComponent<Rigidbody2D>();
-        }
         Power = 1;
     }
 
@@ -37,9 +27,13 @@ public class Egg : MonoBehaviour, IEggPower
             collision.gameObject.GetComponent<Enemy>().Damaged(Power);
             DestoryEgg();
         }
+        else
+        {
+            DestoryEgg();
+        }
     }
 
-    #region Object Pool Manage Function
+    #region Object Pool Function
     /// <summary>
     /// PlayerInput에서 생성한 Egg Object를 넣어서 관리할 Pool
     /// 해당 Egg Object가 본인이 속한 Pool을 알고 있어야 한다

@@ -12,29 +12,49 @@ public class SinglePlayCanvas : MonoBehaviour
     [SerializeField] private TMP_Text scoreTxt;
     [SerializeField] private Button exitBtn;
 
+    [SerializeField] private TMP_Text timerTxt;
+
     private int score = 0;
 
     private void Start()
     {
-        score = 0;
-        scoreTxt.text = score.ToString();
+        InitSinglePlayCanvas();
     }
-
     private void Update()
     {
-        ScoreUpdate();
+        UpdateScoreSinglePlay();
+        UpdateGameTime();
     }
 
     /// <summary>
-    ///  점수를 계속 갱신한다
+    /// 초기 SinglePlay Scene에서의 UI 세팅
     /// </summary>
-    private void ScoreUpdate()
+    private void InitSinglePlayCanvas()
     {
-        if (GameManager.GetInstance.IsScoreUpdate)
+        score = 0;
+
+        scoreTxt.text = score.ToString();
+    }
+
+    private void UpdateGameTime()
+    {
+        if (GameManager.GetInstance.IsGameStart)
+        {
+            timerTxt.text = GameManager.GetInstance.GameTime.ToString("F1");
+        }
+    }
+
+    /// <summary>
+    ///  Enemy를 잡았을 때, 점수를 계속 갱신한다
+    ///  MltiPlay, SinglePlay 모두 UI로 보여줌
+    /// </summary>
+    private void UpdateScoreSinglePlay()
+    {
+        if (GameManager.GetInstance.IsEnemyDown)
         {
             score = GameManager.GetInstance.LocalUserScore;
             scoreTxt.text = score.ToString();
-            GameManager.GetInstance.IsScoreUpdate = false;
+            GameManager.GetInstance.IsEnemyDown = false;
         }
     }
 

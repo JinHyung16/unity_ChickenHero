@@ -25,6 +25,15 @@ public class LobbyCanvas : MonoBehaviour
 
     private void Start()
     {
+        InitLobbyCanvas();
+        LoadUserInfo();
+    }
+
+    /// <summary>
+    /// 초기 Lobby Scene에서의 UI 세팅
+    /// </summary>
+    private void InitLobbyCanvas()
+    {
         inventoryPanel.SetActive(false);
         playModePanel.SetActive(false);
         optionPanel.SetActive(false);
@@ -32,8 +41,6 @@ public class LobbyCanvas : MonoBehaviour
         inventoryToggle.onValueChanged.AddListener(InventoryPanelToggle);
         playModeSelectToggle.onValueChanged.AddListener(PlayModeSelectToggle);
         optionToggle.onValueChanged.AddListener(OptionPanelToggle);
-
-        LoadUserInfo();
     }
     
     /// <summary>

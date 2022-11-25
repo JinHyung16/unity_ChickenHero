@@ -14,9 +14,19 @@ public class GameManager : Singleton<GameManager>
 
     public int LocalUserScore { get; set; }
     public int RemoteUserScore { get; set; }
+    public int UserGold { get; set; }
 
     public bool IsGameStart { get; set; }
-    public bool IsScoreUpdate { get; set; }
+    public bool IsEnemyDown { get; set; }
+
+    [SerializeField] private float curTime;
+    public float GameTime
+    {
+        get
+        {
+            return curTime;
+        }
+    }
     #endregion
 
     [SerializeField] private GameObject offLinePlayer;
@@ -27,25 +37,52 @@ public class GameManager : Singleton<GameManager>
     private void Start()
     {
         offLinePlayer.SetActive(false);
+
+        curTime = 60.0f;
+
         PlayerPrefs.DeleteAll();
     }
 
+    private void Update()
+    {
+        if (IsGameStart)
+        {
+            curTime -= Time.deltaTime;
+            if (curTime <= 0)
+            {
+                IsGameStart = false;
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// OffLine일 땐 OffLinePlayer 생성만 따로 if문으로 처리해서 게임 시작했음을 알린다
+    /// </summary>
     public void GameStart()
     {
         IsGameStart = true;
-
-        offLinePlayer.SetActive(true);
-        offLinePlayer.transform.position = playerSpawnPoint.transform.position;
-
         enemySpawner.InitEnemySpawnerPooling();
+
+        if (!GameServer.GetInstance.IsLogin)
+        {
+            offLinePlayer.SetActive(true);
+            offLinePlayer.transform.position = playerSpawnPoint.transform.position;
+        }
     }
 
+    /// <summary>
+    /// OffLine일 땐 OffLinePlayer 생성만 따로 if문으로 처리해서 게임 끝났음을 알린다
+    /// </summary>
     public void GameExit()
     {
         IsGameStart = false;
-
-        offLinePlayer.SetActive(false);
-
         enemySpawner.EnemySpanwStop();
+
+        if (!GameServer.GetInstance.IsLogin)
+        {
+            offLinePlayer.SetActive(false);
+            offLinePlayer.transform.position = playerSpawnPoint.transform.position;
+        }
     }
 }

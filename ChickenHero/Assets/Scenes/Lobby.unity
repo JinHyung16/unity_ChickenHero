@@ -123,11 +123,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!224 &675409054 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 4500317537422129419, guid: 3d01560c88ae6e8429fac9ca7d21f865, type: 3}
-  m_PrefabInstance: {fileID: 4500317537023579541}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &781863667
 GameObject:
   m_ObjectHideFlags: 0
@@ -280,61 +275,13 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1691478881
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1691478882}
-  m_Layer: 0
-  m_Name: LobbyManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1691478882
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1691478881}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 675409054}
-  m_Father: {fileID: 0}
-  m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &4500317537023579541
+--- !u!1001 &1383013852
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 1691478882}
     m_Modifications:
-    - target: {fileID: 4500317537422129417, guid: 3d01560c88ae6e8429fac9ca7d21f865, type: 3}
-      propertyPath: m_UiScaleMode
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4500317537422129417, guid: 3d01560c88ae6e8429fac9ca7d21f865, type: 3}
-      propertyPath: m_MatchWidthOrHeight
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 4500317537422129417, guid: 3d01560c88ae6e8429fac9ca7d21f865, type: 3}
-      propertyPath: m_ReferenceResolution.x
-      value: 300
-      objectReference: {fileID: 0}
-    - target: {fileID: 4500317537422129417, guid: 3d01560c88ae6e8429fac9ca7d21f865, type: 3}
-      propertyPath: m_ReferenceResolution.y
-      value: 300
-      objectReference: {fileID: 0}
     - target: {fileID: 4500317537422129419, guid: 3d01560c88ae6e8429fac9ca7d21f865, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -425,3 +372,40 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3d01560c88ae6e8429fac9ca7d21f865, type: 3}
+--- !u!224 &1383013853 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4500317537422129419, guid: 3d01560c88ae6e8429fac9ca7d21f865, type: 3}
+  m_PrefabInstance: {fileID: 1383013852}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1691478881
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1691478882}
+  m_Layer: 0
+  m_Name: LobbyManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1691478882
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1691478881}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1383013853}
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

@@ -30,8 +30,8 @@ public class EnemySpawner : MonoBehaviour
     {
         xPosRight = 2.0f; 
         xPosLeft = -2.0f;
-        yPosUp = 4.0f;
-        yPosDown = -4.0f;
+        yPosUp = 3.0f;
+        yPosDown = -3.0f;
 
         enemySpawnTime = 5.0f;
         enemyCount = 10;

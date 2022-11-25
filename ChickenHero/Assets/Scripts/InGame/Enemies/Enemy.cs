@@ -10,7 +10,7 @@ public class Enemy : MonoBehaviour, IDamage
     //object pooy
     private IObjectPool<Enemy> ManageEnemyPool; //기본 enemy관리하는 pool
 
-    private void Start()
+    private void OnEnable()
     {
         HP = 10;
     }
@@ -21,7 +21,15 @@ public class Enemy : MonoBehaviour, IDamage
         if (HP <= 0)
         {
             DestoryEnemy();
+            EnemyDieUpdateUI();
         }
+    }
+
+    private void EnemyDieUpdateUI()
+    {
+        GameManager.GetInstance.UserGold += 10;
+        GameManager.GetInstance.LocalUserScore += 1;
+        GameManager.GetInstance.IsEnemyDown = true;
     }
 
     #region Object Pool
@@ -43,9 +51,6 @@ public class Enemy : MonoBehaviour, IDamage
     private void DestoryEnemy()
     {
         ManageEnemyPool.Release(this);
-        
-        GameManager.GetInstance.LocalUserScore += 1;
-        GameManager.GetInstance.IsScoreUpdate = true;
     }
     #endregion
 }

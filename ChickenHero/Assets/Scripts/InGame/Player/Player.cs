@@ -51,24 +51,33 @@ public class Player : MonoBehaviour
 
     /// <summary>
     /// Play Mode에서 게임 진행 시 화면 터치하면 실행되는 함수
+    /// 추후 Enemy를 타겟했을 때 뿐만 아니라 해당 위치에 걍 달걀 던지도록 수정할수도 있음
     /// </summary>
     private void Attack()
     {
         if (Input.touchCount > 0 && GameManager.GetInstance.IsGameStart)
         {
             Touch myTouch = Input.GetTouch(0);
-            targetVec = Camera.main.ScreenToWorldPoint(myTouch.position);
-            RaycastHit2D hit2D = Physics2D.Raycast(targetVec, targetVec);
-            if (hit2D.collider != null)
+            if (myTouch.phase == TouchPhase.Began)
             {
-                if (hit2D.collider.CompareTag("Enemy"))
+                targetVec = Camera.main.ScreenToWorldPoint(myTouch.position);
+                RaycastHit2D hit2D = Physics2D.Raycast(targetVec, targetVec);
+                if (hit2D.collider != null)
                 {
+                    IsThrow = true;
                     ThrowEgg();
+
+                    /*
+                    if (hit2D.collider.CompareTag("Enemy"))
+                    {
+                        ThrowEgg();
+                    }
+                    */
                 }
             }
             else
             {
-                return;
+                IsThrow = false;
             }
         }
     }
