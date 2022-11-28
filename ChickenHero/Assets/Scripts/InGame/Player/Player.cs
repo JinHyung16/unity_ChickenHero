@@ -66,13 +66,6 @@ public class Player : MonoBehaviour
                 {
                     IsThrow = true;
                     ThrowEgg();
-
-                    /*
-                    if (hit2D.collider.CompareTag("Enemy"))
-                    {
-                        ThrowEgg();
-                    }
-                    */
                 }
             }
             else

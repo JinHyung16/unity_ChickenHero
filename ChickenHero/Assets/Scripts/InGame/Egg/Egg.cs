@@ -49,6 +49,7 @@ public class Egg : MonoBehaviour, IEggPower
     /// </summary>
     private void DestoryEgg()
     {
+        // 깨란 깨진 Animation 호출 후 해당 frame 다 끝난다음 Release되게 수정
         ManageEggPool.Release(this);
     }
     #endregion

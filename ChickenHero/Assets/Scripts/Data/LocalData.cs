@@ -76,6 +76,9 @@ public class LocalData : Singleton<LocalData>
     public void ClearAllPlayerPrefs()
     {
         PlayerPrefs.DeleteAll();
+#if UNITY_EDITOR
+        Debug.Log("<color=black><br> Delete All User Info PlayerPrefs </br></color>");
+#endif
     }
 
     /// <summary>

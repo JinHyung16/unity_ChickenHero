@@ -8,18 +8,35 @@ namespace HughUtility
     public interface Observer
     {
         //정보 갱신 및 초기화
-        void ObserverUpdateScore(int _score);
+        UIType ObserverNotifyCanvas(UIType type);
     }
 
     public interface Subject
     {
         //Observer 등록
-        void RegisterObserver(Observer _observer);
+        void RegisterObserver(Observer observer);
         
         //Observer 해제
-        void RemoveObserver(Observer _observer);
+        void RemoveObserver(Observer observer);
 
         //모든 Observer 업데이트
-        void NotifyObservers();
+        void NotifyObservers(UIType type, bool active);
+    }
+
+    /// <summary>
+    /// Observer 패턴을 통해 관찰하고 관리할 UI 모음
+    /// Name + UI type으로 명시해놨다.
+    /// </summary>
+    public enum UIType
+    {
+        NoneUI,
+
+        InventoryPanel,
+        PlayModePanel,
+        OptionPanel,
+
+        InventoryToggle,
+        PlayModeToggle,
+        OptionToggle,
     }
 }
