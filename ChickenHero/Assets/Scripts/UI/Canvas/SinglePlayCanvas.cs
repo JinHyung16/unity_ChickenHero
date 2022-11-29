@@ -10,7 +10,6 @@ public class SinglePlayCanvas : MonoBehaviour
 {
     //about UI
     [SerializeField] private TMP_Text scoreTxt;
-    [SerializeField] private Button exitBtn;
 
     [SerializeField] private TMP_Text timerTxt;
 

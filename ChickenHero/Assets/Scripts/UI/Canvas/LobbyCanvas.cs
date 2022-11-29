@@ -8,7 +8,7 @@ using TreeEditor;
 using System.Threading.Tasks;
 using System;
 
-public class LobbyCanvas : MonoBehaviour
+public class LobbyCanvas : UIPopUp
 {
     [Tooltip("TopPanel에 붙는 UI들")]
     [SerializeField] private TMP_Text nameTxt;
@@ -25,8 +25,22 @@ public class LobbyCanvas : MonoBehaviour
 
     private void Start()
     {
+        ObserverManager.GetInstance.RegisterObserver(OnNotice, NoticeType.NoneUI);
         InitLobbyCanvas();
         LoadUserInfo();
+    }
+
+    public void OnNotice(Notice notice)
+    {
+        switch (notice.noticeMSG)
+        {
+            case NoticeType.InventoryPanel:
+                break;
+            case NoticeType.PlayModePanel:
+                break;
+            case NoticeType.OptionPanel:
+                break;
+        }
     }
 
     /// <summary>
