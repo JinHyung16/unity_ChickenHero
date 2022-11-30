@@ -5,15 +5,34 @@ using UnityEngine.EventSystems;
 using HughGeneric;
 using System;
 
-public class LobbySceneManager : Singleton<LobbySceneManager>, IDisposable
+sealed class LobbySceneManager : Singleton<LobbySceneManager>
 {
-    [SerializeField] private Dictionary<UIType, GameObject> PanelDictionary = new Dictionary<UIType, GameObject>();
+    private Dictionary<UIType, GameObject> PanelDictionary;
 
-    public void Dispose()
+    [SerializeField] private List<GameObject> PanelList;
+
+    private void Start()
     {
-        if (GameManager.GetInstance.noticeType != NoticeType.Lobby)
+        InitaDictionary();
+    }
+
+    private void InitaDictionary()
+    {
+        Debug.Log("Init");
+        foreach (GameObject panel in PanelList)
         {
-            GC.SuppressFinalize(this);
+            switch (panel.name)
+            {
+                case "Inventory Panel":
+                    PanelDictionary.Add(UIType.InventoryPanel, panel);
+                    break;
+                case "PlayMode Panel":
+                    PanelDictionary.Add(UIType.PlayModePanel, panel);
+                    break;
+                case "Option Panel":
+                    PanelDictionary.Add(UIType.OptionPanel, panel);
+                    break;
+            }
         }
     }
 
@@ -29,13 +48,18 @@ public class LobbySceneManager : Singleton<LobbySceneManager>, IDisposable
 
         if (PanelDictionary.TryGetValue(type, out GameObject obj))
         {
+            Debug.Log("불러오기");
             foreach (var panel in PanelDictionary)
             {
-                panel.Value.SetActive(false);
                 if (obj == panel.Value)
                 {
-                    panel.Value.transform.SetParent(layer);
-                    panel.Value.SetActive(true);
+                    obj.transform.SetParent(layer);
+                    obj.SetActive(true);
+                }
+                else
+                {
+                    obj.SetActive(false);
+                    obj.transform.SetParent(null);
                 }
             }
         }
@@ -45,8 +69,8 @@ public class LobbySceneManager : Singleton<LobbySceneManager>, IDisposable
     {
         NoneUI = 0,
         
-        InventoryUI,
-        PlayModeUI,
-        OptionUI,
+        InventoryPanel,
+        PlayModePanel,
+        OptionPanel,
     }
 }

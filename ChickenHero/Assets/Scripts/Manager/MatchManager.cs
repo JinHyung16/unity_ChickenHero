@@ -9,7 +9,7 @@ using Nakama.TinyJson;
 using Packet.GameServer;
 using static UnityEditor.Experimental.GraphView.GraphView;
 
-public class MatchManager : Singleton<MatchManager>
+sealed class MatchManager : Singleton<MatchManager>
 {
     //about match
     private IMatch currentMatch;

@@ -1,7 +1,7 @@
 using UnityEngine.SceneManagement;
 using HughGeneric;
 
-public class SceneController : LazySingleton<SceneController>
+sealed class SceneController : LazySingleton<SceneController>
 {
     /// <summary>
     /// Scene 전환을 관리하는 클래스

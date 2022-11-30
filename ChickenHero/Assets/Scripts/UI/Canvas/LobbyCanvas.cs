@@ -26,10 +26,8 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
 
     [SerializeField] private Transform ThisCavnasTransform;
 
-    [SerializeField] private int toogleId;
     private void Start()
     {
-        ObserverManager.GetInstance.RegisterObserver(OnNotice, NoticeType.Lobby);
         InitLobbyCanvas();
         LoadUserInfo();
     }
@@ -42,21 +40,23 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     /// <summary>
     /// 화면상 터치된 toggle button알
     /// </summary>
-    /// <param name="eventData"></param>
+    /// <param name="eventData"> 터치한 지점의 data를 받아온다 </param>
     public void OnPointerDown(PointerEventData eventData)
     {
         switch (eventData.pointerClick.gameObject.name)
         {
             case "Inventory Button":
+                LobbySceneManager.GetInstance.PushPopup(LobbySceneManager.UIType.InventoryPanel, ThisCavnasTransform);
                 break;
             case "PlayMode Button":
+                LobbySceneManager.GetInstance.PushPopup(LobbySceneManager.UIType.PlayModePanel, ThisCavnasTransform);
                 break;
             case "Option Button":
+                LobbySceneManager.GetInstance.PushPopup(LobbySceneManager.UIType.OptionPanel, ThisCavnasTransform);
                 break;
             default:
                 LobbySceneManager.GetInstance.PushPopup(LobbySceneManager.UIType.NoneUI, ThisCavnasTransform);
                 break;
-
         }
     }
 

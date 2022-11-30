@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using HughGeneric;
 
-public class GameManager : Singleton<GameManager>
+sealed class GameManager : Singleton<GameManager>
 {
     #region Property
     /// <summary>
@@ -18,8 +18,6 @@ public class GameManager : Singleton<GameManager>
 
     public bool IsGameStart { get; set; }
     public bool IsEnemyDown { get; set; }
-    
-    public NoticeType noticeType { get; set; }
 
     [SerializeField] private float curTime;
     public float GameTime
@@ -70,8 +68,6 @@ public class GameManager : Singleton<GameManager>
             offLinePlayer.SetActive(true);
             offLinePlayer.transform.position = playerSpawnPoint.transform.position;
         }
-
-        ObserverManager.GetInstance.PostNotice(NoticeType.Play);
     }
 
     /// <summary>
@@ -87,7 +83,5 @@ public class GameManager : Singleton<GameManager>
             offLinePlayer.SetActive(false);
             offLinePlayer.transform.position = playerSpawnPoint.transform.position;
         }
-
-        ObserverManager.GetInstance.PostNotice(NoticeType.Lobby);
     }
 }

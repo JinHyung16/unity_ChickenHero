@@ -4,16 +4,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.EventSystems;
 
 public class Test : MonoBehaviour
 {
+    [SerializeField] private Transform LobbyCanvasTrans;
+
     public KeyCode poolingKey;
     public KeyCode saveInfoKey;
     public KeyCode loadInfoKey;
 
-    [SerializeField] private TMP_Text LevelTxt;
-    [SerializeField] private TMP_Text NameTxt;
-    [SerializeField] private TMP_Text GoldTxt;
+    //[SerializeField] private TMP_Text LevelTxt;
+    //[SerializeField] private TMP_Text NameTxt;
+    //[SerializeField] private TMP_Text GoldTxt;
 
     //UI ฐüทร
     private void Start()
@@ -39,6 +42,18 @@ public class Test : MonoBehaviour
             LoadUserInfo();
         }
         
+    }
+
+    public void ButtonOne()
+    {
+        Debug.Log("Button One");
+        LobbySceneManager.GetInstance.PushPopup(LobbySceneManager.UIType.OptionPanel, this.transform);
+    }
+
+    public void ButtonTwo()
+    {
+        Debug.Log("Button Two");
+        LobbySceneManager.GetInstance.PushPopup(LobbySceneManager.UIType.PlayModePanel, this.transform);
     }
 
     private void PoolTest()
@@ -68,7 +83,7 @@ public class Test : MonoBehaviour
         };
 
         var res = await GameServer.GetInstance.GetUserInfo(req);
-        NameTxt.text = res.userName.ToString();
-        GoldTxt.text = res.userGold.ToString();
+        //NameTxt.text = res.userName.ToString();
+        //GoldTxt.text = res.userGold.ToString();
     }
 }

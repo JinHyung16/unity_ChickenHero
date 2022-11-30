@@ -64,7 +64,6 @@ public class ObserverManager : Singleton<ObserverManager>
     public void PostNotice(NoticeType nType)
     {
         PostNotice(nType, null);
-        GameManager.GetInstance.noticeType = nType;
     }
 
     private void PostNotice(NoticeType type, Hashtable data)
