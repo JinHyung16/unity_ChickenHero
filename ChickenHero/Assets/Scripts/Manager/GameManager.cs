@@ -18,6 +18,8 @@ public class GameManager : Singleton<GameManager>
 
     public bool IsGameStart { get; set; }
     public bool IsEnemyDown { get; set; }
+    
+    public NoticeType noticeType { get; set; }
 
     [SerializeField] private float curTime;
     public float GameTime
@@ -55,7 +57,6 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
-
     /// <summary>
     /// OffLine일 땐 OffLinePlayer 생성만 따로 if문으로 처리해서 게임 시작했음을 알린다
     /// </summary>
@@ -69,6 +70,8 @@ public class GameManager : Singleton<GameManager>
             offLinePlayer.SetActive(true);
             offLinePlayer.transform.position = playerSpawnPoint.transform.position;
         }
+
+        ObserverManager.GetInstance.PostNotice(NoticeType.Play);
     }
 
     /// <summary>
@@ -84,5 +87,7 @@ public class GameManager : Singleton<GameManager>
             offLinePlayer.SetActive(false);
             offLinePlayer.transform.position = playerSpawnPoint.transform.position;
         }
+
+        ObserverManager.GetInstance.PostNotice(NoticeType.Lobby);
     }
 }

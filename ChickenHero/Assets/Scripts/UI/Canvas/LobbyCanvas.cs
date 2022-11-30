@@ -7,8 +7,9 @@ using UnityEngine.UI;
 using TreeEditor;
 using System.Threading.Tasks;
 using System;
+using UnityEngine.EventSystems;
 
-public class LobbyCanvas : UIPopUp
+public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
 {
     [Tooltip("TopPanel에 붙는 UI들")]
     [SerializeField] private TMP_Text nameTxt;
@@ -23,23 +24,39 @@ public class LobbyCanvas : UIPopUp
     [SerializeField] private Toggle playModeSelectToggle;
     [SerializeField] private Toggle optionToggle;
 
+    [SerializeField] private Transform ThisCavnasTransform;
+
+    [SerializeField] private int toogleId;
     private void Start()
     {
-        ObserverManager.GetInstance.RegisterObserver(OnNotice, NoticeType.NoneUI);
+        ObserverManager.GetInstance.RegisterObserver(OnNotice, NoticeType.Lobby);
         InitLobbyCanvas();
         LoadUserInfo();
     }
 
     public void OnNotice(Notice notice)
     {
-        switch (notice.noticeMSG)
+        notice.noticeMSG = NoticeType.Lobby;
+    }
+
+    /// <summary>
+    /// 화면상 터치된 toggle button알
+    /// </summary>
+    /// <param name="eventData"></param>
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        switch (eventData.pointerClick.gameObject.name)
         {
-            case NoticeType.InventoryPanel:
+            case "Inventory Button":
                 break;
-            case NoticeType.PlayModePanel:
+            case "PlayMode Button":
                 break;
-            case NoticeType.OptionPanel:
+            case "Option Button":
                 break;
+            default:
+                LobbySceneManager.GetInstance.PushPopup(LobbySceneManager.UIType.NoneUI, ThisCavnasTransform);
+                break;
+
         }
     }
 

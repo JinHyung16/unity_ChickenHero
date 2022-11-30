@@ -1416,6 +1416,7 @@ MonoBehaviour:
   inventoryToggle: {fileID: 4175960329997955476}
   playModeSelectToggle: {fileID: 8176357567598330558}
   optionToggle: {fileID: 3456263553683087964}
+  toogleId: 0
 --- !u!1 &4500317537631024433
 GameObject:
   m_ObjectHideFlags: 0
@@ -1777,7 +1778,7 @@ GameObject:
   - component: {fileID: 8830200766267345858}
   - component: {fileID: 8176357567598330558}
   m_Layer: 5
-  m_Name: PlayMode ToggleButton
+  m_Name: PlayMode Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1903,7 +1904,7 @@ GameObject:
   - component: {fileID: 958473909471667927}
   - component: {fileID: 4175960329997955476}
   m_Layer: 5
-  m_Name: Inventory ToggleButton
+  m_Name: Inventory Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2241,7 +2242,7 @@ GameObject:
   - component: {fileID: 2282805056155744307}
   - component: {fileID: 3456263553683087964}
   m_Layer: 5
-  m_Name: Option ToggleButton
+  m_Name: Option Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

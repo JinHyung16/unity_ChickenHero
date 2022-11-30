@@ -9,6 +9,16 @@ public class LoginCanvas : MonoBehaviour, IPointerDownHandler
     [SerializeField] private TMP_InputField NameInputField;
     private string nickName = string.Empty;
 
+    private void Start()
+    {
+        ObserverManager.GetInstance.RegisterObserver(OnNotice, NoticeType.Login);
+    }
+
+    public void OnNotice(Notice notice)
+    {
+        notice.noticeMSG = NoticeType.Login;
+    }
+
     public async void OnLineStart()
     {
         if (CheckInputName)
@@ -18,6 +28,7 @@ public class LoginCanvas : MonoBehaviour, IPointerDownHandler
             MatchManager.GetInstance.SaveUserInfoServer(nickName, LocalData.GetInstance.Gold);
             await GameServer.GetInstance.LoginToDevice();
             SceneController.GetInstance.GoToScene("Lobby");
+            ObserverManager.GetInstance.PostNotice(NoticeType.Lobby);
         }
     }
 
@@ -27,6 +38,7 @@ public class LoginCanvas : MonoBehaviour, IPointerDownHandler
         {
             UserInfoSetting();
             SceneController.GetInstance.GoToScene("Lobby");
+            ObserverManager.GetInstance.PostNotice(NoticeType.Lobby);
         }
     }
 

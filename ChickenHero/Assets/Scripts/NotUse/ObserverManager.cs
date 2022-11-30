@@ -64,6 +64,7 @@ public class ObserverManager : Singleton<ObserverManager>
     public void PostNotice(NoticeType nType)
     {
         PostNotice(nType, null);
+        GameManager.GetInstance.noticeType = nType;
     }
 
     private void PostNotice(NoticeType type, Hashtable data)
@@ -104,7 +105,7 @@ public class Notice
 {
     public NoticeType noticeMSG;
     public Hashtable noticeData;
-    private static Notice instnace = new Notice(NoticeType.NoneUI);
+    private static Notice instnace = new Notice(NoticeType.None);
 
     private Notice(NoticeType nType)
     {
@@ -126,15 +127,14 @@ public class Notice
 }
 
 /// <summary>
-/// UI관련하여 Notice할 Data 모음
-/// Toggle 형태의 Panel만 모여져 있다.
-/// Toggle 형태의 Panel은 다른 Panel을 누르면 자동으로 꺼지는 Panel을 말한다.
+/// Game State관련해 씬이 전환됐을 떄 호출
+/// 내가 어디 Scene에 있는지 알려준다.
 /// </summary>
 public enum NoticeType
 {
-    NoneUI = 0,
+    None = 0,
 
-    InventoryPanel,
-    PlayModePanel,
-    OptionPanel,
+    Login,
+    Lobby,
+    Play,
 }
