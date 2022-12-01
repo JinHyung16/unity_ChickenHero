@@ -8,6 +8,7 @@ using TreeEditor;
 using System.Threading.Tasks;
 using System;
 using UnityEngine.EventSystems;
+using static LobbySceneManager;
 
 public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
 {
@@ -15,64 +16,18 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     [SerializeField] private TMP_Text nameTxt;
     [SerializeField] private TMP_Text goldTxt;
 
-    [Tooltip("Bottom Panel에 붙는 UI들")]
-    [SerializeField] private GameObject inventoryPanel;
-    [SerializeField] private GameObject playModePanel;
-    [SerializeField] private GameObject optionPanel;
+    //특수 Panel관련 바인딩 -> 특수 패널은 오로지 1개만 열려야 하는 패널이다 (해당 특수끼린 열리는게 독립적이다)
+    [SerializeField] private List<GameObject> PanelList; //특수 패널을 담은 list
 
-    [SerializeField] private Toggle inventoryToggle;
-    [SerializeField] private Toggle playModeSelectToggle;
-    [SerializeField] private Toggle optionToggle;
-
-    [SerializeField] private Transform ThisCavnasTransform;
+    private Dictionary<UIType, GameObject> PanelDictionary = new Dictionary<UIType, GameObject>(); //패널의 key를 부여해 저장
+    private Queue<GameObject> PanelActiveQueue = new Queue<GameObject>(); //SetActive시 Queue에 넣고 맨 앞은 지우고 오로지 1개만 열리게 저장
 
     private void Start()
     {
-        InitLobbyCanvas();
+        InitaDictionary();
         LoadUserInfo();
     }
 
-    public void OnNotice(Notice notice)
-    {
-        notice.noticeMSG = NoticeType.Lobby;
-    }
-
-    /// <summary>
-    /// 화면상 터치된 toggle button알
-    /// </summary>
-    /// <param name="eventData"> 터치한 지점의 data를 받아온다 </param>
-    public void OnPointerDown(PointerEventData eventData)
-    {
-        switch (eventData.pointerClick.gameObject.name)
-        {
-            case "Inventory Button":
-                LobbySceneManager.GetInstance.PushPopup(LobbySceneManager.UIType.InventoryPanel, ThisCavnasTransform);
-                break;
-            case "PlayMode Button":
-                LobbySceneManager.GetInstance.PushPopup(LobbySceneManager.UIType.PlayModePanel, ThisCavnasTransform);
-                break;
-            case "Option Button":
-                LobbySceneManager.GetInstance.PushPopup(LobbySceneManager.UIType.OptionPanel, ThisCavnasTransform);
-                break;
-            default:
-                LobbySceneManager.GetInstance.PushPopup(LobbySceneManager.UIType.NoneUI, ThisCavnasTransform);
-                break;
-        }
-    }
-
-    /// <summary>
-    /// 초기 Lobby Scene에서의 UI 세팅
-    /// </summary>
-    private void InitLobbyCanvas()
-    {
-        inventoryPanel.SetActive(false);
-        playModePanel.SetActive(false);
-        optionPanel.SetActive(false);
-
-        inventoryToggle.onValueChanged.AddListener(InventoryPanelToggle);
-        playModeSelectToggle.onValueChanged.AddListener(PlayModeSelectToggle);
-        optionToggle.onValueChanged.AddListener(OptionPanelToggle);
-    }
     
     /// <summary>
     /// Login 되었을 때, User의 Info를 가져온다
@@ -87,37 +42,51 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
             goldTxt.text = LocalData.GetInstance.Gold.ToString();
         }
     }
-
-    #region Panel 컨트롤
+    
     /// <summary>
-    /// PlayMode Toggle Button을 누를 때 호출된다
+    /// middle panel 추가하여 터치를 받는 함수
+    /// 다른 Panel이 열린상태에서 이 공간을 터치하면 모두 다 닫히도록 설정
+    /// pointerEnter가 아니라 pointerClick으로 하면 터치 받는 시스템이 달라서 그런지 Null나온다
     /// </summary>
-    /// <param name="active"> toggle 눌린 상태를 받는다 </param>
-    private void PlayModeSelectToggle(bool active)
+    /// <param name="eventData"></param>
+    public void OnPointerDown(PointerEventData eventData)
     {
-        playModePanel.SetActive(active);
+        if (eventData.pointerEnter.gameObject.name == "Middle Panel")
+        {
+            OpenPanel(UIType.NonePanel);
+        }
+    }
+    
+    #region 특수 Panel 컨트롤하는 Button 함수
+    /// <summary>
+    /// LobbyCanvas의 Bottom Panel밑에 Inventory Button에 직접 연결중
+    /// Inventory Button을 누르면 Inventory를 연다.
+    /// </summary>
+    public void InventoryPanelOpen()
+    {
+        OpenPanel(UIType.InventoryPanel);
     }
 
     /// <summary>
-    /// Option Toggle Button을 누를 때 호출된다
+    /// LobbyCanvas의 Bottom Panel밑에 PlayMode Button에 직접 연결중
+    /// PlayMode Button을 누르면 호출된다
     /// </summary>
-    /// <param name="active"> toggle 눌린 상태를 받는다 </param>
-    private void OptionPanelToggle(bool active)
+    public void PlayModePanelOpen()
     {
-        optionPanel.SetActive(active);
+        OpenPanel(UIType.PlayModePanel);
+    }
+
+    /// <summary>
+    /// LobbyCanvas의 Bottom Panel밑에 Option Button에 직접 연결중
+    /// Option Button을 누르면 호출된다
+    /// </summary>
+    public void OptionPanelOpen()
+    {
+        OpenPanel(UIType.OptionPanel);
     }
     #endregion
 
     #region Button에 직접 연결한 Function
-    /// <summary>
-    /// Inventory Toggle Button을 누르면 Inventory를 연다.
-    /// </summary>
-    /// <param name="active"> toggle 눌린 상태를 받는다</param>
-    private void InventoryPanelToggle(bool active)
-    {
-        inventoryPanel.SetActive(active);
-    }
-
     /// <summary>
     /// PlayMode Panel 밑 MultiPlay Button에 직접 연결중
     /// MultiPlay Button을 누르면 매칭을 진행한다.
@@ -147,7 +116,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     /// Save Button을 누르면 유저 정보를 저장한다.
     /// 서버가 연결되어 있으면 DB서버에 유저 정보 갱신한다.
     /// </summary>
-    public void SaveInfoToSever()
+    public void SaveUserInfo()
     {
         string name = nameTxt.text;
         int gold = int.Parse(goldTxt.text);
@@ -166,7 +135,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     /// Clear Button을 누르면 유저 정보를 삭제한다.
     /// 서버 연동시엔 DB서버에서 저장된 유저 정보를 삭제한다
     /// </summary>
-    public void ClearInfo()
+    public void ClearUserInfo()
     {
         PlayerPrefs.DeleteAll();
         if (GameServer.GetInstance.IsLogin)
@@ -175,6 +144,77 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
         }
 
         SceneController.GetInstance.GoToScene("Login");
+    }
+    #endregion
+
+    #region 특수 Panel관련 함수들
+    /// <summary>
+    /// Lobby Scene 진입시, 패널 세팅
+    /// </summary>
+    private void InitaDictionary()
+    {
+        foreach (GameObject panel in PanelList)
+        {
+            switch (panel.gameObject.name)
+            {
+                case "Inventory Panel":
+                    PanelDictionary.Add(UIType.InventoryPanel, panel);
+                    break;
+                case "PlayMode Panel":
+                    PanelDictionary.Add(UIType.PlayModePanel, panel);
+                    break;
+                case "Option Panel":
+                    PanelDictionary.Add(UIType.OptionPanel, panel);
+                    break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// LobbyScene에서 LobbyCanvas에서 입력을 받아서 해당 씬의 패널을 처리해준다
+    /// </summary>
+    /// <param name="type"> Open할 Panel의 Type을 받는다 </param>
+    /// <param name="layer"> Canvas의 위치를 받아 자식으로 넣는다 </param>
+    private void OpenPanel(UIType type)
+    {
+        if (type == UIType.NonePanel)
+        {
+            if (PanelActiveQueue.Count > 0)
+            {
+                foreach (var panel in PanelActiveQueue)
+                {
+                    panel.gameObject.SetActive(false);
+                }
+                PanelActiveQueue.Clear();
+            }
+        }
+
+        if (PanelDictionary.TryGetValue(type, out GameObject obj) && type != UIType.NonePanel)
+        {
+            if(PanelActiveQueue.Count > 0)
+            {
+                var removeObj = PanelActiveQueue.Peek();
+                removeObj.SetActive(false);
+                PanelActiveQueue.Dequeue();
+            }
+
+            PanelActiveQueue.Enqueue(obj);
+            obj.SetActive(true);
+        }
+    }
+
+
+    /// <summary>
+    /// 오로지 1개만 열려야 하는 Panel 모음
+    /// 즉, 해당 Panel이 열리면 나머지 Panel은 자동으로 닫히는 서로 독립적인 Panel 모음
+    /// </summary>
+    private enum UIType
+    {
+        NonePanel = 0,
+
+        InventoryPanel,
+        PlayModePanel,
+        OptionPanel,
     }
     #endregion
 }

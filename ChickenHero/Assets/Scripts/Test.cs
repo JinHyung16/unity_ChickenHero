@@ -8,7 +8,7 @@ using UnityEngine.EventSystems;
 
 public class Test : MonoBehaviour
 {
-    [SerializeField] private Transform LobbyCanvasTrans;
+    [SerializeField] private RectTransform LobbyCanvasTrans;
 
     public KeyCode poolingKey;
     public KeyCode saveInfoKey;
@@ -47,13 +47,13 @@ public class Test : MonoBehaviour
     public void ButtonOne()
     {
         Debug.Log("Button One");
-        LobbySceneManager.GetInstance.PushPopup(LobbySceneManager.UIType.OptionPanel, this.transform);
+        LobbySceneManager.GetInstance.PopupPanel(LobbySceneManager.UIType.OptionPanel, LobbyCanvasTrans);
     }
 
     public void ButtonTwo()
     {
         Debug.Log("Button Two");
-        LobbySceneManager.GetInstance.PushPopup(LobbySceneManager.UIType.PlayModePanel, this.transform);
+        LobbySceneManager.GetInstance.PopupPanel(LobbySceneManager.UIType.PlayModePanel, LobbyCanvasTrans);
     }
 
     private void PoolTest()

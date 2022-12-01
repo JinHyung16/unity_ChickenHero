@@ -100,6 +100,7 @@ public class LoginCanvas : MonoBehaviour, IPointerDownHandler
     private void ActiveMobileKeyBoard()
     {
         keyboard = TouchScreenKeyboard.Open("", TouchScreenKeyboardType.ASCIICapable, false, false, false, false);
+        keyboard.active = true;
     }
 
 }
