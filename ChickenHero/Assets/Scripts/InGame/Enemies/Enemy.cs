@@ -5,6 +5,7 @@ using UnityEngine.Pool;
 
 public class Enemy : MonoBehaviour, IDamage
 {
+    [SerializeField] private SpriteRenderer spriteRenderer;
     public int HP { get; set; }
 
     //object pooy
@@ -13,6 +14,7 @@ public class Enemy : MonoBehaviour, IDamage
     private void OnEnable()
     {
         HP = 10;
+        spriteRenderer.sortingOrder = -2;
     }
 
     public void Damaged(int damage)

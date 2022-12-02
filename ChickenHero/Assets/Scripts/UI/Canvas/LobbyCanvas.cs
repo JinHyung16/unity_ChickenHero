@@ -28,7 +28,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
         LoadUserInfo();
     }
 
-    
+
     /// <summary>
     /// Login 되었을 때, User의 Info를 가져온다
     /// Login시 PlayerPrefs와 Server에 저장했으니 둘이 같은 정보로
@@ -42,7 +42,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
             goldTxt.text = LocalData.GetInstance.Gold.ToString();
         }
     }
-    
+
     /// <summary>
     /// middle panel 추가하여 터치를 받는 함수
     /// 다른 Panel이 열린상태에서 이 공간을 터치하면 모두 다 닫히도록 설정
@@ -51,7 +51,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     /// <param name="eventData"></param>
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (eventData.pointerEnter.gameObject.name == "Middle Panel")
+        if (eventData.pointerEnter.gameObject.CompareTag("ImportantPanel"))
         {
             OpenPanel(UIType.NonePanel);
         }
@@ -191,15 +191,23 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
 
         if (PanelDictionary.TryGetValue(type, out GameObject obj) && type != UIType.NonePanel)
         {
-            if(PanelActiveQueue.Count > 0)
+            if (PanelActiveQueue.Contains(obj))
             {
-                var removeObj = PanelActiveQueue.Peek();
-                removeObj.SetActive(false);
-                PanelActiveQueue.Dequeue();
+                obj.SetActive(false);
+                PanelActiveQueue.Clear();
             }
+            else
+            {
+                if (PanelActiveQueue.Count > 0)
+                {
+                    var removeObj = PanelActiveQueue.Peek();
+                    removeObj.SetActive(false);
+                    PanelActiveQueue.Dequeue();
+                }
 
-            PanelActiveQueue.Enqueue(obj);
-            obj.SetActive(true);
+                PanelActiveQueue.Enqueue(obj);
+                obj.SetActive(true);
+            }
         }
     }
 

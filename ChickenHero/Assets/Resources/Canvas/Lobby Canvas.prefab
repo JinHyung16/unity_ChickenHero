@@ -495,7 +495,7 @@ GameObject:
   - component: {fileID: 8121036723417707212}
   m_Layer: 5
   m_Name: Middle Panel
-  m_TagString: Untagged
+  m_TagString: ImportantPanel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -541,7 +541,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.5566038, g: 0.5566038, b: 0.5566038, a: 0.5058824}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1582,7 +1582,7 @@ GameObject:
   - component: {fileID: 4500317537631024435}
   m_Layer: 5
   m_Name: Top Panel
-  m_TagString: Untagged
+  m_TagString: ImportantPanel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2478,7 +2478,7 @@ GameObject:
   - component: {fileID: 8820860114333689623}
   m_Layer: 5
   m_Name: Bottom Panel
-  m_TagString: Untagged
+  m_TagString: ImportantPanel
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

@@ -87,7 +87,7 @@ public class LoginCanvas : MonoBehaviour, IPointerDownHandler
     /// <param name="eventData"> 터치된 정보를 받는다 </param>
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (eventData.pointerClick.name == "Name InputField")
+        if (eventData.pointerEnter.gameObject.name == "Name InputField")
         {
             ActiveMobileKeyBoard();
         }
