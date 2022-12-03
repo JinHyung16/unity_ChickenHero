@@ -16,23 +16,23 @@ public class Egg : MonoBehaviour, IEggPower
     [HideInInspector] public int Power { get; set; }
 
     //Egg 사라지는 시간 관리하는 코루틴
-    private IEnumerator DeSpawnEggCoroutine;
+    private IEnumerator DeSpawnEgg;
 
     private void OnEnable()
     {
         Power = 1;
         spriteRenderer.sortingOrder = 0;
-        DeSpawnEggCoroutine = DespawnEgg();
+        DeSpawnEgg = DespawnEggCoroutine();
     }
 
     private void OnDisable()
     {
-        StopCoroutine(DeSpawnEggCoroutine);
+        StopCoroutine(DeSpawnEgg);
     }
 
     private void OnDestroy()
     {
-        StopCoroutine(DeSpawnEggCoroutine);
+        StopCoroutine(DeSpawnEgg);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -43,9 +43,24 @@ public class Egg : MonoBehaviour, IEggPower
             collision.gameObject.GetComponent<Enemy>().Damaged(Power);
             DestoryEgg();
         }
-        else
+        else if (collision.CompareTag("CollisionObj"))
         {
             DestoryEgg();
+        }
+    }
+
+    /// <summary>
+    /// Enemy가 파괴될 때 실행되는 Coroutine이다.
+    /// 0.5초뒤에 Pool에 반환하고 Animation을 변환시킨다
+    /// </summary>
+    /// <returns> IEnumerator 반환 </returns>
+    private IEnumerator DespawnEggCoroutine()
+    {
+        while (true)
+        {
+            yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(0.05f);
+            anim.SetInteger("IsBreak", 0);
+            ManageEggPool.Release(this);
         }
     }
 
@@ -67,22 +82,7 @@ public class Egg : MonoBehaviour, IEggPower
     {
         anim.SetInteger("IsBreak", 1);
         // 깨란 깨진 Animation 호출 후 해당 frame 다 끝난다음 Release되게 수정
-        StartCoroutine(DeSpawnEggCoroutine);
-    }
-    
-    /// <summary>
-    /// Enemy가 파괴될 때 실행되는 Coroutine이다.
-    /// 0.5초뒤에 Pool에 반환하고 Animation을 변환시킨다
-    /// </summary>
-    /// <returns> IEnumerator 반환 </returns>
-    private IEnumerator DespawnEgg()
-    {
-        while (true)
-        {
-            yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(0.1f);
-            anim.SetInteger("IsBreak", 0);
-            ManageEggPool.Release(this);
-        }
+        StartCoroutine(DeSpawnEgg);
     }
     #endregion
 }

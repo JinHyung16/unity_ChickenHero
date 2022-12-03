@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 7b9848b1808bc68419914ea6d102dfe1
+guid: 1cd12204403bf8446a9b4be8b3aa2e2b
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -47,7 +47,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 300
+  spritePixelsToUnits: 230
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -117,13 +117,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Egg_3
+      name: ChickenHouse_0
       rect:
         serializedVersion: 2
-        x: 204
-        y: 412
-        width: 233
-        height: 275
+        x: 25
+        y: 68
+        width: 1005
+        height: 1823
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -131,29 +131,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d0ce024aa82b723439899dc6a857d785
-      internalID: -1328861746
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Egg_4
-      rect:
-        serializedVersion: 2
-        x: 572
-        y: 458
-        width: 271
-        height: 228
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 12ac456b0c180e44eb61fe72421e228f
-      internalID: -315476113
+      spriteID: 95b3c903b3c1a7044afdcc9c923d2e79
+      internalID: -2087400269
       vertices: []
       indices: 
       edges: []
@@ -169,11 +148,7 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Egg_3: -1328861746
-      Egg_4: -315476113
-      Egg_1: 125430091
-      Egg_2: 1346293069
-      Egg_0: -622583189
+      ChickenHouse_0: -2087400269
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

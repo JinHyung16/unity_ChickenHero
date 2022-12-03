@@ -464,7 +464,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   scoreTxt: {fileID: 6227361611484366187}
-  exitBtn: {fileID: 6227361611688324884}
   timerTxt: {fileID: 5469884665300706203}
 --- !u!1 &6227361611484366185
 GameObject:

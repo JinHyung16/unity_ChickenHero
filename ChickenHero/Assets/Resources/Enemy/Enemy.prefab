@@ -146,4 +146,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c7a67cf9dfb21f40853da38030f83b4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  rigid2D: {fileID: 4692588032070968616}
   spriteRenderer: {fileID: 1185034437489256613}
+  moveSpeed: 0
+  thinkTime: 0

@@ -92,7 +92,14 @@ public partial class GameServer : LazySingleton<GameServer>
 #if UNITY_EDITOR
         Debug.Log("<color=orange><b>[Game-Server]</b> Socekt Connect : {0} </color>");
 #endif
-        IsLogin = true;
+        if (Socket != null)
+        {
+            IsLogin = true;
+        }
+        else
+        {
+            IsLogin = false;
+        }
         return null;
     }
 

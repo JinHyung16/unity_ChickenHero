@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using HughGeneric;
+using System;
 
-sealed class GameManager : Singleton<GameManager>
+sealed class GameManager : Singleton<GameManager>, IDisposable
 {
     #region Property
     /// <summary>
@@ -29,17 +30,21 @@ sealed class GameManager : Singleton<GameManager>
     }
     #endregion
 
-    [SerializeField] private GameObject offLinePlayer;
-    [SerializeField] private GameObject playerSpawnPoint;
+    public GameObject OfflinePlayerPrefab;
+    [SerializeField] private Transform playerSpawnPoint;
 
     [SerializeField] private EnemySpawner enemySpawner;
 
+    private GameObject offlinePlayer = null;
+
     private void Start()
     {
-        offLinePlayer.SetActive(false);
-
         curTime = 60.0f;
 
+        if (OfflinePlayerPrefab == null)
+        {
+            OfflinePlayerPrefab = Resources.Load("Player/Offline Player") as GameObject;
+        }
         PlayerPrefs.DeleteAll();
     }
 
@@ -62,11 +67,12 @@ sealed class GameManager : Singleton<GameManager>
     {
         IsGameStart = true;
         enemySpawner.InitEnemySpawnerPooling();
-
-        if (!GameServer.GetInstance.IsLogin)
+        if (GameServer.GetInstance.IsLogin == false)
         {
-            offLinePlayer.SetActive(true);
-            offLinePlayer.transform.position = playerSpawnPoint.transform.position;
+            offlinePlayer = Instantiate(OfflinePlayerPrefab);
+            offlinePlayer.transform.SetParent(this.gameObject.transform);
+            offlinePlayer.SetActive(true);
+            offlinePlayer.transform.position = playerSpawnPoint.position;
         }
     }
 
@@ -78,10 +84,15 @@ sealed class GameManager : Singleton<GameManager>
         IsGameStart = false;
         enemySpawner.EnemySpanwStop();
 
-        if (!GameServer.GetInstance.IsLogin)
+        if (GameServer.GetInstance.IsLogin == false)
         {
-            offLinePlayer.SetActive(false);
-            offLinePlayer.transform.position = playerSpawnPoint.transform.position;
+            Dispose();
         }
+    }
+
+    public void Dispose()
+    {
+        offlinePlayer.SetActive(false);
+        GC.SuppressFinalize(offlinePlayer);
     }
 }

@@ -33,7 +33,7 @@ public class EnemySpawner : MonoBehaviour
         yPosUp = 3.0f;
         yPosDown = -3.0f;
 
-        enemySpawnTime = 5.0f;
+        enemySpawnTime = 1.0f;
         enemyCount = 10;
         enemyPool = new ObjectPool<Enemy>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, maxSize: enemyCount);
         enemyIEnumerator = EnemySpawnTimer();

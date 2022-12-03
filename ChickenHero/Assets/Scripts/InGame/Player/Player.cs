@@ -6,9 +6,6 @@ using UnityEngine.Pool;
 
 public class Player : MonoBehaviour
 {
-    //player died event
-    public PlayerDiedEvent dieEvent;
-
     // 던지는 것 관련
     private Vector2 targetVec = Vector2.zero;
     [SerializeField] private Transform playerTrans;
@@ -29,22 +26,11 @@ public class Player : MonoBehaviour
         InitPlayerPooling();
     }
 
-    public void PlayerDieAnimation()
-    {
-        Debug.Log("플레이어 죽음");
-    }
-
     /// <summary>
     /// Player가 Egg Prefab을 Pooling하기 위해 필요한 초기 설정
     /// </summary>
     private void InitPlayerPooling()
     {
-        if (dieEvent == null)
-        {
-            dieEvent = new PlayerDiedEvent();
-            Debug.Log("Player Die Event 연결 완료");
-        }
-
         eggCount = 20;
         eggPool = new ObjectPool<Egg>(CreateEgg, OnGetEgg, OnReleaseEgg, OnDestroyEgg, maxSize: eggCount);
     }
@@ -84,13 +70,11 @@ public class Player : MonoBehaviour
         egg.transform.position = targetVec;
     }
 
-    /// <summary>
-    /// GameManager에서 Matching 후 Local Player의 Die Event를 연결해주는 함수
-    /// </summary>
-    public void DeadDueToTimeDone()
+    public void PlayerDieAnimation()
     {
-        dieEvent.Invoke(gameObject);
+        Debug.Log("플레이어 죽음");
     }
+
 
     #region Object Pool Function
     /// <summary>

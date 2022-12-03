@@ -145,8 +145,6 @@ sealed class MatchManager : Singleton<MatchManager>
         if (isLocalPlayer) 
         { 
             localPlayer = player;
-            //local player의 die event 연결해주기
-            player.GetComponent<Player>().dieEvent.AddListener(OnLocalPlayerDied);
         }
     }
 

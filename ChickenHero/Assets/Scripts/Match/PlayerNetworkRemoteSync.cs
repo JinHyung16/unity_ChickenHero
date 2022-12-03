@@ -34,7 +34,6 @@ public class PlayerNetworkRemoteSync : MonoBehaviour
         switch (matchState.OpCode)
         {
             case OpCodes.TimeDone:
-                player.PlayerDieAnimation();
                 break;
             default:
                 break;

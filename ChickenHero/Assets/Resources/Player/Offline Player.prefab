@@ -25,7 +25,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2086069329814629313}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -5.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -45,12 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58a4aac2da4970c4c98c3d49eb38c394, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dieEvent:
-    m_PersistentCalls:
-      m_Calls: []
   playerTrans: {fileID: 31230632938525868}
   IsThrow: 0
-  HitPoint: 0
   eggPrefab: {fileID: 1087430154396225430, guid: 37548a7c99c075e40899aba4717722fc, type: 3}
   eggCount: 20
 --- !u!1 &8518060441450326359
@@ -126,12 +122,12 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -1099318510, guid: 4c1ffcdd41f439246b1485ff79d52f15, type: 3}
+  m_Sprite: {fileID: -523549109, guid: eef6d8136b8f25b459943dedf224bcb2, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.31, y: 0.45}
+  m_Size: {x: 2.952, y: 4.048}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 7b9848b1808bc68419914ea6d102dfe1
+guid: eef6d8136b8f25b459943dedf224bcb2
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -47,8 +47,8 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 300
-  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 280
+  spriteBorder: {x: 148, y: 0, z: 130, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -105,9 +105,9 @@ TextureImporter:
     buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
-    textureFormat: -1
+    textureFormat: 47
     textureCompression: 1
-    compressionQuality: 50
+    compressionQuality: 100
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
@@ -117,43 +117,22 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Egg_3
+      name: Chiro_0
       rect:
         serializedVersion: 2
-        x: 204
-        y: 412
-        width: 233
-        height: 275
+        x: 150
+        y: 11
+        width: 738
+        height: 1012
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d0ce024aa82b723439899dc6a857d785
-      internalID: -1328861746
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Egg_4
-      rect:
-        serializedVersion: 2
-        x: 572
-        y: 458
-        width: 271
-        height: 228
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 12ac456b0c180e44eb61fe72421e228f
-      internalID: -315476113
+      spriteID: 4fe9aadb2f6702a4b8ff6984ad326e58
+      internalID: -523549109
       vertices: []
       indices: 
       edges: []
@@ -162,18 +141,14 @@ TextureImporter:
     physicsShape: []
     bones: []
     spriteID: 5e97eb03825dee720800000000000000
-    internalID: 0
+    internalID: 1537655665
     vertices: []
     indices: 
     edges: []
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Egg_3: -1328861746
-      Egg_4: -315476113
-      Egg_1: 125430091
-      Egg_2: 1346293069
-      Egg_0: -622583189
+      Chiro_0: -523549109
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0
