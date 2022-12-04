@@ -675,7 +675,6 @@ MonoBehaviour:
   yPosUp: 0
   yPosDown: 0
   enemyPrefab: {fileID: 5845901872631586268, guid: 86f8590656b14934f98eeff353c5d400, type: 3}
-  enemyCount: 0
   enemySpawnTime: 0
 --- !u!4 &2071353457
 Transform:

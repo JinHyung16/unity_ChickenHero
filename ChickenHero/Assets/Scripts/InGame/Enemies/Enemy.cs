@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,6 +7,8 @@ using UnityEngine.Pool;
 
 public class Enemy : MonoBehaviour, IDamage
 {
+    [SerializeField] private Animator anim;
+
     [SerializeField] private Rigidbody2D rigid2D;
     [SerializeField] private SpriteRenderer spriteRenderer;
     
@@ -37,19 +40,15 @@ public class Enemy : MonoBehaviour, IDamage
             switch (collision.gameObject.name)
             {
                 case "Top Collision":
-                    Debug.Log("벽충돌");
                     direction.y *= -1;
                     break;
                 case "Bottom Collision":
-                     Debug.Log("벽충돌");
                     direction.y *= -1;
                     break;
                 case "Right Collision":
-                    Debug.Log("벽충돌");
                     direction.x *= -1;
                     break;
                 case "Left Collision":
-                    Debug.Log("벽충돌");
                     direction.x *= -1;
                     break;
             }
@@ -71,21 +70,12 @@ public class Enemy : MonoBehaviour, IDamage
         StartCoroutine(DirectionThink);
     }
 
-    private void OnDisable()
-    {
-        StopCoroutine(DeSpawnEnemy);
-        StopCoroutine(DirectionThink);
-    }
-
-    private void OnDestroy()
-    {
-        StopCoroutine(DeSpawnEnemy);
-        StopCoroutine(DirectionThink);
-    }
-
     public void Damaged(int damage)
     {
         HP -= damage;
+
+        anim.SetTrigger("IsHurt");
+
         if (HP <= 0)
         {
             DestoryEnemy();
@@ -100,13 +90,13 @@ public class Enemy : MonoBehaviour, IDamage
     /// <returns> IEnumerator 반환 </returns>
     private IEnumerator DespawnEnemyCoroutine()
     {
-        while (true)
-        {
-            yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(despawnTime);
-            ManageEnemyPool.Release(this);
-        }
+        yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(despawnTime);
+        DestoryEnemy();
     }
 
+    /// <summary>
+    /// 움직임 관련
+    /// </summary>
     private void EnemyAutoMove()
     {
         rigid2D.velocity = direction * moveSpeed;
@@ -117,6 +107,10 @@ public class Enemy : MonoBehaviour, IDamage
         }
     }
 
+    /// <summary>
+    /// 움직일 방향을 특정 시간마다 설정하는 코루틴
+    /// </summary>
+    /// <returns> IEnumerator 객체 반환 </returns>
     private IEnumerator ThinkMoveDirectionCoroutine()
     {
         while (true)

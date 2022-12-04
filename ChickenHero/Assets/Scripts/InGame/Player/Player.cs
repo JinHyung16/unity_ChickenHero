@@ -13,7 +13,6 @@ public class Player : MonoBehaviour
 
     // Egg Object Pooling 관련 
     [SerializeField] private GameObject eggPrefab;
-    [SerializeField] private int eggCount = 0;
     private IObjectPool<Egg> eggPool;
 
     private void Update()
@@ -25,14 +24,12 @@ public class Player : MonoBehaviour
     {
         InitPlayerPooling();
     }
-
     /// <summary>
     /// Player가 Egg Prefab을 Pooling하기 위해 필요한 초기 설정
     /// </summary>
     private void InitPlayerPooling()
     {
-        eggCount = 20;
-        eggPool = new ObjectPool<Egg>(CreateEgg, OnGetEgg, OnReleaseEgg, OnDestroyEgg, maxSize: eggCount);
+        eggPool = new ObjectPool<Egg>(CreateEgg, OnGetEgg, OnReleaseEgg, OnDestroyEgg, true, 20, maxSize: 10000);
     }
 
     /// <summary>
@@ -70,12 +67,6 @@ public class Player : MonoBehaviour
         egg.transform.position = targetVec;
     }
 
-    public void PlayerDieAnimation()
-    {
-        Debug.Log("플레이어 죽음");
-    }
-
-
     #region Object Pool Function
     /// <summary>
     /// Egg Object를 생성한다.
@@ -92,28 +83,28 @@ public class Player : MonoBehaviour
     /// <summary>
     /// Pool에서 Object를 가져올 함수
     /// </summary>
-    /// <param name="e">Pool에 있는 Egg를 가져올 매개변수</param>
-    private void OnGetEgg(Egg e)
+    /// <param name="egg">Pool에 있는 Egg를 가져올 매개변수</param>
+    private void OnGetEgg(Egg egg)
     {
-        e.gameObject.SetActive(true);
+        egg.gameObject.SetActive(true);
     }
 
     /// <summary>
     /// Pool에 Object를 돌려줄 함수
     /// </summary>
-    /// <param name="e">Pool에 돌려줄 Egg 매개변수</param>
-    private void OnReleaseEgg(Egg e)
+    /// <param name="egg">Pool에 돌려줄 Egg 매개변수</param>
+    private void OnReleaseEgg(Egg egg)
     {
-        e.gameObject.SetActive(false);
+        egg.gameObject.SetActive(false);
     }
 
     /// <summary>
     /// Pool에서 Object를 파괴할 때 쓸 함수
     /// </summary>
-    /// <param name="e">Pool에서 파괴할 Object type의 매개변수</param>
-    private void OnDestroyEgg(Egg e)
+    /// <param name="egg">Pool에서 파괴할 Object type의 매개변수</param>
+    private void OnDestroyEgg(Egg egg)
     {
-        Destroy(e.gameObject);
+        Destroy(egg.gameObject);
     }
     #endregion
 }

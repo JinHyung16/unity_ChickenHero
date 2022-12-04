@@ -20,11 +20,10 @@ public class EnemySpawner : MonoBehaviour
 
     //기본 enemy pooling
     [SerializeField] private GameObject enemyPrefab;
-    [SerializeField] private int enemyCount = 0;
     [SerializeField] private float enemySpawnTime = 0;
     private IObjectPool<Enemy> enemyPool;
 
-    IEnumerator enemyIEnumerator;
+    IEnumerator enemySpawn;
 
     public void InitEnemySpawnerPooling()
     {
@@ -34,19 +33,18 @@ public class EnemySpawner : MonoBehaviour
         yPosDown = -3.0f;
 
         enemySpawnTime = 1.0f;
-        enemyCount = 10;
-        enemyPool = new ObjectPool<Enemy>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, maxSize: enemyCount);
-        enemyIEnumerator = EnemySpawnTimer();
+        enemyPool = new ObjectPool<Enemy>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, true, 10, maxSize: 20);
+        enemySpawn = EnemySpawnCoroutine();
 
-        StartCoroutine(enemyIEnumerator);
+        StartCoroutine(enemySpawn);
     }
 
     public void EnemySpanwStop()
     {
-        StopCoroutine(enemyIEnumerator);
+        StopCoroutine(enemySpawn);
     }
 
-    private IEnumerator EnemySpawnTimer()
+    private IEnumerator EnemySpawnCoroutine()
     {
         while (true)
         {
@@ -76,28 +74,28 @@ public class EnemySpawner : MonoBehaviour
     /// <summary>
     /// Pool에서 Object를 가져올 함수
     /// </summary>
-    /// <param name="e">Pool에 있는 Enemy를 가져올 매개변수</param>
-    private void OnGetEnemy(Enemy e)
+    /// <param name="enemy">Pool에 있는 Enemy를 가져올 매개변수</param>
+    private void OnGetEnemy(Enemy enemy)
     {
-        e.gameObject.SetActive(true);
+        enemy.gameObject.SetActive(true);
     }
 
     /// <summary>
     /// Pool에 Object를 돌려줄 함수
     /// </summary>
-    /// <param name="e">Pool에 돌려줄 Enemy 매개변수</param>
-    private void OnReleaseEnemy(Enemy e)
+    /// <param name="enemy">Pool에 돌려줄 Enemy 매개변수</param>
+    private void OnReleaseEnemy(Enemy enemy)
     {
-        e.gameObject.SetActive(false);
+        enemy.gameObject.SetActive(false);
     }
 
     /// <summary>
     /// Pool에서 Object를 파괴할 때 쓸 함수
     /// </summary>
-    /// <param name="e">Pool에서 파괴할 Object type의 매개변수</param>
-    private void OnDestroyEnemy(Enemy e)
+    /// <param name="enemy">Pool에서 파괴할 Object type의 매개변수</param>
+    private void OnDestroyEnemy(Enemy enemy)
     {
-        Destroy(e.gameObject);
+        Destroy(enemy.gameObject);
     }
     #endregion
 }
