@@ -35,7 +35,7 @@ public partial class GameServer
         string json = JsonConvert.SerializeObject(req);
         var res = await Client.RpcAsync(Session, "remove_user_info", json);
 #if UNITY_EDITOR
-        UnityEngine.Debug.Log(res.Payload);
+        UnityEngine.Debug.Log("Success Remove" + res.Payload);
 #endif 
     }
     #endregion

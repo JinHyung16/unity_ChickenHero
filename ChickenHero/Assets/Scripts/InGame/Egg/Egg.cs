@@ -14,6 +14,7 @@ public class Egg : MonoBehaviour, IEggPower
 
     private bool IsRelease = true;
 
+    private IEnumerator DeSpawn;
     //interface 구현
     [HideInInspector] public int Power { get; set; }
 
@@ -24,6 +25,8 @@ public class Egg : MonoBehaviour, IEggPower
 
         anim.SetInteger("IsBreak", 0);
         IsRelease = false;
+
+        DeSpawn = DeSpawnCoroutine();
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -33,15 +36,20 @@ public class Egg : MonoBehaviour, IEggPower
             switch (collision.gameObject.tag)
             {
                 case "Enemy":
-                    Handheld.Vibrate(); //휴대폰에서 진동 울리기
+                    HughUtility.Vibration.Vibrate(1);
                     collision.gameObject.GetComponent<Enemy>().Damaged(Power);
                     break;
             }
             anim.SetInteger("IsBreak", 1);
-            Invoke("DestoryEgg", 0.1f);
+            StartCoroutine(DeSpawn);
         }
     }
 
+    private IEnumerator DeSpawnCoroutine()
+    {
+        yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(0.5f);
+        DestoryEgg();
+    }
 
     #region Object Pool Function
     /// <summary>

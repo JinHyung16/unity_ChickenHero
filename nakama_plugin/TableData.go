@@ -11,7 +11,6 @@ const (
 	ServerError     uint = 500
 )
 
-
 //about user data
 type UserData struct {
 	Message     string `json:"message"`

@@ -72,10 +72,17 @@ public class LocalData : Singleton<LocalData>
 
     /// <summary>
     /// 로컬 PlayerPrefs초기화 시 사용할 함수
+    /// 로그인 되어있다면 서버의 데이터도 지워준다.
     /// </summary>
-    public void ClearAllPlayerPrefs()
+    public void ClearAllUserInfo()
     {
         PlayerPrefs.DeleteAll();
+
+        if (GameServer.GetInstance.IsLogin)
+        {
+            MatchManager.GetInstance.RemoveUserInfoServer(GameServer.GetInstance.userid);
+        }
+
 #if UNITY_EDITOR
         Debug.Log("<color=black><br> Delete All User Info PlayerPrefs </br></color>");
 #endif

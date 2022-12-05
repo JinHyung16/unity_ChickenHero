@@ -21,7 +21,10 @@ if hugh_db_err != nil {
 	println("----------------------------------------")
 }
 */
-var db_url = "root:jinhyung@tcp(34.83.17.105:3307)/"
+
+var db_ip = "34.83.17.105:3307"
+var db_url = "root:jinhyung@tcp(" + db_ip +")/"
+//var db_url = "root:jinhyung@tcp(34.83.17.105:3307)/"
 
 func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
 	println("----------------------------------------")
@@ -46,11 +49,11 @@ func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 		return string(jsonData), nil
 	}
 
-	//만약 정보가 있다면 갱신하는 코드도 추가해야한다.
+	//해당 DB에 유저의 정보가 있는지 검색하고 있으면 Update / 없으면 insert실행
 
 	insertContext := `user_id, user_name, user_level, user_gold`
 	insertValues := `VALUES(?, ?, ?, ?)`
-	insertQuery := `INSERT INTO user_history` + ` ( ` + insertContext + ` ) ` + insertValues
+	insertQuery := `INSERT INTO user_data` + ` ( ` + insertContext + ` ) ` + insertValues
 	_, insertErr := hugh_db.QueryContext(ctx, insertQuery,
 		reqData.UserId,
 		reqData.UserName,
@@ -93,7 +96,7 @@ func GetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 		println("----------------------------------------")
 	}
 
-	selectQuery := `SELECT * FROM user_history where user_id=?`
+	selectQuery := `SELECT * FROM user_data where user_id=?`
 	selectDB, selectErr := hugh_db.QueryContext(ctx, selectQuery, reqData.UserId)
 	if selectErr != nil {
 		println("----------------------------------------")
@@ -121,8 +124,7 @@ func RemoveUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk r
 	println("----------------------------------------")
 	println("[User] 진입 :: RemoveUserInfo")
 	println("----------------------------------------")
-
-	/*
+	
 	hugh_db_rul := db_url
 	hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
 	if hugh_db_err != nil {
@@ -139,8 +141,15 @@ func RemoveUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk r
 		println("----------------------------------------")
 	}
 
-	//remove 하는거 필요
-
+	//DB에서 해당 유저 id로 정보 삭제하기
+	delteCondition := `user_id=?`
+	deleteQuery := `DELETE FROM user_data WHERE ` + delteCondition
+	_, deleteErr := hugh_db.QueryContext(ctx, deleteQuery, reqData.UserId)
+	if deleteErr != nil {
+		println("----------------------------------------")
+		println("[User] Error :: GetUserInfo - select DB\n", deleteErr.Error())
+		println("----------------------------------------")
+	}
 
 	resData := UserData{}
 	resData.Message = "Success Remove DB"
@@ -151,7 +160,4 @@ func RemoveUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk r
 	println("[User] 탈출 :: RemoveUserInfo")
 	println("========================================")
 	return string(jsonData), nil
-	*/
-
-	return string(""), nil
 }

@@ -133,16 +133,10 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     /// <summary>
     /// Option Panel 밑 Clear Button에 직접 연결중
     /// Clear Button을 누르면 유저 정보를 삭제한다.
-    /// 서버 연동시엔 DB서버에서 저장된 유저 정보를 삭제한다
     /// </summary>
     public void ClearUserInfo()
     {
-        PlayerPrefs.DeleteAll();
-        if (GameServer.GetInstance.IsLogin)
-        {
-            MatchManager.GetInstance.RemoveUserInfoServer(GameServer.GetInstance.userid);
-        }
-
+        LocalData.GetInstance.ClearAllUserInfo();
         SceneController.GetInstance.GoToScene("Login");
     }
     #endregion
