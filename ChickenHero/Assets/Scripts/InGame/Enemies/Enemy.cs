@@ -1,9 +1,8 @@
-using Newtonsoft.Json.Linq;
-using System.CodeDom;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using Cysharp.Threading.Tasks;
+using System;
 
 public class Enemy : MonoBehaviour, IDamage
 {
@@ -18,12 +17,11 @@ public class Enemy : MonoBehaviour, IDamage
     private IEnumerator DirectionThink;
     [SerializeField] private float thinkTime;
 
+    //enemy despawn time
+    [SerializeField] private double despawnTime;
+
     //enemy HP
     public int HP { get; set; }
-
-    //enemy 사라지는 시간 관리하기 -> 자동으로 해제
-    private IEnumerator DeSpawnEnemy;
-    [SerializeField] private float despawnTime;
 
     //object pooy
     private IObjectPool<Enemy> ManageEnemyPool; //기본 enemy관리하는 pool
@@ -60,9 +58,8 @@ public class Enemy : MonoBehaviour, IDamage
         HP = 10;
         spriteRenderer.sortingOrder = -2;
 
-        despawnTime = 5.0f;
-        DeSpawnEnemy = DespawnEnemyCoroutine();
-        StartCoroutine(DeSpawnEnemy);
+        despawnTime = 5.0;
+        DespawnEnemy();
 
         moveSpeed = 3.0f;
         thinkTime = 3.0f;
@@ -82,17 +79,23 @@ public class Enemy : MonoBehaviour, IDamage
             EnemyDieUpdateToDisplay();
         }
     }
+    
+    /// <summary>
+    /// HP가 0아래로 떨어지 않은 Enemy들을 Pool에 반환해주는 함수
+    /// UniTask를 이용해 콜백을 주어 DespawnTime이후 반환되게 설정
+    /// </summary>
+    private async void DespawnEnemy()
+    {
+        anim.SetInteger("IsBreak", 1);
+        await UniTask.Delay(TimeSpan.FromSeconds(despawnTime));
+        DestoryEnemy();
+    }
 
     /// <summary>
     /// Enemy가 파괴될 때 실행되는 Coroutine이다.
     /// 0.5초뒤에 Pool에 반환하고 Animation을 변환시킨다
     /// </summary>
     /// <returns> IEnumerator 반환 </returns>
-    private IEnumerator DespawnEnemyCoroutine()
-    {
-        yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(despawnTime);
-        DestoryEnemy();
-    }
 
     /// <summary>
     /// 움직임 관련
@@ -115,8 +118,8 @@ public class Enemy : MonoBehaviour, IDamage
     {
         while (true)
         {
-            float x = Random.Range(-1.0f, 1.0f);
-            float y = Random.Range(-1.0f, 1.0f);
+            float x = UnityEngine.Random.Range(-1.0f, 1.0f);
+            float y = UnityEngine.Random.Range(-1.0f, 1.0f);
 
             direction = new Vector2(x, y);
             yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(thinkTime);

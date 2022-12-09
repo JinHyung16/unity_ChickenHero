@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
+using Cysharp.Threading.Tasks;
+using System;
 
 public class Egg : MonoBehaviour, IEggPower
 {
@@ -12,9 +14,6 @@ public class Egg : MonoBehaviour, IEggPower
     //object pool 관련
     private IObjectPool<Egg> ManageEggPool;
 
-    private bool IsRelease = true;
-
-    private IEnumerator DeSpawn;
     //interface 구현
     [HideInInspector] public int Power { get; set; }
 
@@ -22,11 +21,6 @@ public class Egg : MonoBehaviour, IEggPower
     {
         Power = 1;
         spriteRenderer.sortingOrder = 0;
-
-        anim.SetInteger("IsBreak", 0);
-        IsRelease = false;
-
-        DeSpawn = DeSpawnCoroutine();
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -40,14 +34,15 @@ public class Egg : MonoBehaviour, IEggPower
                     collision.gameObject.GetComponent<Enemy>().Damaged(Power);
                     break;
             }
-            anim.SetInteger("IsBreak", 1);
-            StartCoroutine(DeSpawn);
+
+            DespawnEnemy();
         }
     }
 
-    private IEnumerator DeSpawnCoroutine()
+    private async void DespawnEnemy()
     {
-        yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(0.5f);
+        anim.SetInteger("IsBreak", 1);
+        await UniTask.Delay(TimeSpan.FromSeconds(0.1));
         DestoryEgg();
     }
 
@@ -67,11 +62,8 @@ public class Egg : MonoBehaviour, IEggPower
     /// </summary>
     public void DestoryEgg()
     {
-        if (!IsRelease)
-        {
-            ManageEggPool.Release(this);
-            IsRelease = true;
-        }
+        anim.SetInteger("IsBreak", 0);
+        ManageEggPool.Release(this);
     }
     #endregion
 }
