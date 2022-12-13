@@ -1,4 +1,3 @@
-    using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Nakama;
@@ -7,7 +6,6 @@ using UnityEngine.UI;
 using HughGeneric;
 using Nakama.TinyJson;
 using Packet.GameServer;
-using static UnityEditor.Experimental.GraphView.GraphView;
 
 sealed class MatchManager : Singleton<MatchManager>
 {

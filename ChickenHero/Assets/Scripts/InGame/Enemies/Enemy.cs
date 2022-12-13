@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Pool;
-using Cysharp.Threading.Tasks;
 using System;
 
 public class Enemy : MonoBehaviour, IDamage
@@ -14,17 +13,20 @@ public class Enemy : MonoBehaviour, IDamage
     //enemy move
     private Vector2 direction;
     [SerializeField] private float moveSpeed;
-    private IEnumerator DirectionThink;
+    private IEnumerator DirectionThinkIEnum;
     [SerializeField] private float thinkTime;
 
     //enemy despawn time
-    [SerializeField] private double despawnTime;
+    private IEnumerator DespawnIEnum;
+    [SerializeField] private float despawnTime;
 
     //enemy HP
     public int HP { get; set; }
 
     //object pooy
     private IObjectPool<Enemy> ManageEnemyPool; //기본 enemy관리하는 pool
+    private bool IsRelease = false;
+
 
     private void FixedUpdate()
     {
@@ -58,25 +60,27 @@ public class Enemy : MonoBehaviour, IDamage
         HP = 10;
         spriteRenderer.sortingOrder = -2;
 
-        despawnTime = 5.0;
-        DespawnEnemy();
+        despawnTime = 5.0f;
+        DespawnIEnum = DespawnEnemyCoroutine();
+        StartCoroutine(DespawnIEnum);
 
         moveSpeed = 3.0f;
         thinkTime = 3.0f;
-        DirectionThink = ThinkMoveDirectionCoroutine();
-        StartCoroutine(DirectionThink);
+        DirectionThinkIEnum = ThinkMoveDirectionCoroutine();
+        StartCoroutine(DirectionThinkIEnum);
+
+        IsRelease = false;
     }
 
     public void Damaged(int damage)
     {
         HP -= damage;
-
         anim.SetTrigger("IsHurt");
 
         if (HP <= 0)
         {
-            DestoryEnemy();
             EnemyDieUpdateToDisplay();
+            DestoryEnemy();
         }
     }
     
@@ -84,10 +88,9 @@ public class Enemy : MonoBehaviour, IDamage
     /// HP가 0아래로 떨어지 않은 Enemy들을 Pool에 반환해주는 함수
     /// UniTask를 이용해 콜백을 주어 DespawnTime이후 반환되게 설정
     /// </summary>
-    private async void DespawnEnemy()
+    private IEnumerator DespawnEnemyCoroutine()
     {
-        anim.SetInteger("IsBreak", 1);
-        await UniTask.Delay(TimeSpan.FromSeconds(despawnTime));
+        yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(despawnTime);
         DestoryEnemy();
     }
 
@@ -151,7 +154,11 @@ public class Enemy : MonoBehaviour, IDamage
     /// </summary>
     private void DestoryEnemy()
     {
-        ManageEnemyPool.Release(this);
+        if (!IsRelease)
+        {
+            ManageEnemyPool.Release(this);
+            IsRelease = true;
+        }
     }
     #endregion
 }

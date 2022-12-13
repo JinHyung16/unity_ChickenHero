@@ -22,7 +22,7 @@ if hugh_db_err != nil {
 }
 */
 
-var db_ip = "34.83.17.105:3307"
+var db_ip = "34.82.120.148"
 var db_url = "root:jinhyung@tcp(" + db_ip +")/"
 //var db_url = "root:jinhyung@tcp(34.83.17.105:3307)/"
 

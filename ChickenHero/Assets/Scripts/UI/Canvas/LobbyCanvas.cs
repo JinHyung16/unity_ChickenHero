@@ -4,11 +4,9 @@ using UnityEngine;
 using TMPro;
 using Packet.GameServer;
 using UnityEngine.UI;
-using TreeEditor;
 using System.Threading.Tasks;
 using System;
 using UnityEngine.EventSystems;
-using static LobbySceneManager;
 
 public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
 {
