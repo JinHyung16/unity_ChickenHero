@@ -36,7 +36,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     {
         if (GameServer.GetInstance.IsLogin)
         {
-            nameTxt.text = LocalData.GetInstance.Name;
+            nameTxt.text = LocalData.GetInstance.Name.ToString();
             goldTxt.text = LocalData.GetInstance.Gold.ToString();
         }
     }

@@ -45,7 +45,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
         {
             OfflinePlayerPrefab = Resources.Load("Player/Offline Player") as GameObject;
         }
-        PlayerPrefs.DeleteAll();
+        //PlayerPrefs.DeleteAll();
     }
 
     private void Update()
@@ -66,6 +66,8 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
     public void GameStart()
     {
         IsGameStart = true;
+        curTime = 60.0f;
+
         enemySpawner.InitEnemySpawnerPooling();
         if (GameServer.GetInstance.IsLogin == false)
         {
@@ -88,6 +90,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
         {
             Dispose();
         }
+        curTime = 0.0f;
     }
 
     public void Dispose()

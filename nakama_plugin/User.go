@@ -50,24 +50,59 @@ func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 	}
 
 	//해당 DB에 유저의 정보가 있는지 검색하고 있으면 Update / 없으면 insert실행
-
-	insertContext := `user_id, user_name, user_level, user_gold`
-	insertValues := `VALUES(?, ?, ?, ?)`
-	insertQuery := `INSERT INTO user_data` + ` ( ` + insertContext + ` ) ` + insertValues
-	_, insertErr := hugh_db.QueryContext(ctx, insertQuery,
-		reqData.UserId,
-		reqData.UserName,
-		reqData.UserGold,
-	)
-
-	if insertErr != nil {
+	var idExist bool
+	var nameExist bool
+	checkQuery := `SELECT EXISTS (SELECT * FROM user_data where user_id=? user_name=? limit 1) as success`
+	checkErr := hugh_db.QueryRow(checkQuery, reqData.UserId, reqData.UserName).Scan(&idExist, &nameExist)
+	if checkErr != nil {
 		println("----------------------------------------")
-		println("[User] Error :: SetUserInfo - insert DB\n", insertErr.Error())
+		println("[User] Error :: SetUserInfo - check DB\n", checkErr.Error())
 		println("----------------------------------------")
 		jsonData, _ := json.Marshal(reqData)
 		return string(jsonData), nil
 	}
 
+	//DB에 검색시 존재하지 않으면 DB insert 해주기
+	if !idExist && !nameExist{
+		println("----------------------------------------")
+		println("[User] Error :: SetUserInfo - check DB not exist id: ", idExist, "name: ", nameExist)
+		println("----------------------------------------")
+
+		insertContext := `user_id, user_name, user_gold`
+		insertValues := `VALUES(?, ?, ?)`
+		insertQuery := `INSERT INTO user_data` + ` ( ` + insertContext + ` ) ` + insertValues
+		_, insertErr := hugh_db.QueryContext(ctx, insertQuery,
+			reqData.UserId,
+			reqData.UserName,
+			reqData.UserGold,
+		)
+		
+		if insertErr != nil {
+			println("----------------------------------------")
+			println("[User] Error :: SetUserInfo - insert DB\n", insertErr.Error())
+			println("----------------------------------------")
+			jsonData, _ := json.Marshal(reqData)
+			return string(jsonData), nil
+		}
+	}
+
+	//DB에 검사시 존재한다면 Gold Upate 해주기
+	updateContext := `user_gold=?`
+	updateQuery := `UPDATE user_data SET ` + updateContext + `WHERE user_id=? user_name=?`
+	_, updateErr := hugh_db.QueryContext(ctx, updateQuery,
+		reqData.UserGold,
+		reqData.UserId,
+		reqData.UserName,
+	)
+	
+	if updateErr != nil {
+		println("----------------------------------------")
+		println("[User] Error :: SetUserInfo - update DB\n", updateErr.Error())
+		println("----------------------------------------")
+		jsonData, _ := json.Marshal(reqData)
+		return string(jsonData), nil
+	}
+	
 	println("----------------------------------------")
 	println("[User] 탈출 :: SetUserInfo")
 	println("========================================")

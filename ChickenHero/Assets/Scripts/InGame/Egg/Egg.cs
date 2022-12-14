@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
 using System;
+using HughUtility;
 
 public class Egg : MonoBehaviour, IEggPower
 {
@@ -34,7 +35,7 @@ public class Egg : MonoBehaviour, IEggPower
             {
                 case "Enemy":
 #if UNITY_ANDROID
-                    Handheld.Vibrate();
+                    HughUtility.Vibration.Vibrate((long)Convert.ToSingle(0.1f));
 #endif
                     collision.gameObject.GetComponent<Enemy>().Damaged(Power);
                     break;

@@ -10,14 +10,13 @@ public partial class GameServer
     /// </summary>
 
     #region User
-    public async Task<UserData> SetUserInfo(ReqSetUserPacket req)
+    public async Task SetUserInfo(ReqSetUserPacket req)
     {
         string json = JsonConvert.SerializeObject(req);
         var res = await Client.RpcAsync(Session, "set_user_info", json);
 #if UNITY_EDITOR
         UnityEngine.Debug.Log(res.Payload);
 #endif 
-        return JsonConvert.DeserializeObject<UserData>(res.Payload);
     }
 
     public async Task<UserData> GetUserInfo(ReqUserInfoPacket req)
