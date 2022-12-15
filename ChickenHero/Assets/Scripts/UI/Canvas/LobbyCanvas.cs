@@ -28,17 +28,14 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
 
 
     /// <summary>
-    /// Login 되었을 때, User의 Info를 가져온다
+    /// Online, Offline 상관없이 Login 되었을 때, User의 Info를 가져온다
     /// Login시 PlayerPrefs와 Server에 저장했으니 둘이 같은 정보로
     /// PlayerPrefs에서 user의 정보를 꺼내와서 붙여준다.
     /// </summary>
     private void LoadUserInfo()
     {
-        if (GameServer.GetInstance.IsLogin)
-        {
-            nameTxt.text = LocalData.GetInstance.Name.ToString();
-            goldTxt.text = LocalData.GetInstance.Gold.ToString();
-        }
+        nameTxt.text = LocalData.GetInstance.Name.ToString();
+        goldTxt.text = LocalData.GetInstance.Gold.ToString();
     }
 
     /// <summary>

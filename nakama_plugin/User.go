@@ -22,9 +22,10 @@ if hugh_db_err != nil {
 }
 */
 
-var db_ip = "34.82.120.148"
+var db_ip = "35.233.151.86"
 var db_url = "root:jinhyung@tcp(" + db_ip +")/"
 //var db_url = "root:jinhyung@tcp(34.83.17.105:3307)/"
+
 
 func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
 	println("----------------------------------------")
@@ -50,10 +51,9 @@ func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 	}
 
 	//해당 DB에 유저의 정보가 있는지 검색하고 있으면 Update / 없으면 insert실행
-	var idExist bool
 	var nameExist bool
-	checkQuery := `SELECT EXISTS (SELECT * FROM user_data where user_id=? user_name=? limit 1) as success`
-	checkErr := hugh_db.QueryRow(checkQuery, reqData.UserId, reqData.UserName).Scan(&idExist, &nameExist)
+	checkQuery := `SELECT EXISTS (SELECT user_name FROM user_data where user_name=?)`
+	checkErr := hugh_db.QueryRow(checkQuery, reqData.UserId, reqData.UserName).Scan(&nameExist)
 	if checkErr != nil {
 		println("----------------------------------------")
 		println("[User] Error :: SetUserInfo - check DB\n", checkErr.Error())
@@ -63,9 +63,9 @@ func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 	}
 
 	//DB에 검색시 존재하지 않으면 DB insert 해주기
-	if !idExist && !nameExist{
+	if  !nameExist{
 		println("----------------------------------------")
-		println("[User] Error :: SetUserInfo - check DB not exist id: ", idExist, "name: ", nameExist)
+		println("[User] Error :: SetUserInfo - check DB not exist name: ", nameExist)
 		println("----------------------------------------")
 
 		insertContext := `user_id, user_name, user_gold`
@@ -88,7 +88,7 @@ func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 
 	//DB에 검사시 존재한다면 Gold Upate 해주기
 	updateContext := `user_gold=?`
-	updateQuery := `UPDATE user_data SET ` + updateContext + `WHERE user_id=? user_name=?`
+	updateQuery := `UPDATE user_data ` + updateContext + `WHERE user_id=? and user_name=?`
 	_, updateErr := hugh_db.QueryContext(ctx, updateQuery,
 		reqData.UserGold,
 		reqData.UserId,

@@ -76,7 +76,7 @@ public class LoginCanvas : MonoBehaviour, IPointerDownHandler
         else
         {
             LocalData.GetInstance.Name = nickName;
-            LocalData.GetInstance.Gold = 500;
+            LocalData.GetInstance.Gold = 0;
         }
     }
 

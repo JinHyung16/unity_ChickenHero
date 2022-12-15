@@ -8,7 +8,7 @@ using HughGeneric;
 public partial class GameServer : LazySingleton<GameServer>
 {
     protected string Scheme = "http";
-    protected string Host = "34.168.4.247"; // @GCP hugh-server VM 외부 ip
+    protected string Host = "34.105.50.13"; // @GCP hugh-server VM 외부 ip
     protected int Port = 7350;
     protected string ServerKey = "defaultkey";
 

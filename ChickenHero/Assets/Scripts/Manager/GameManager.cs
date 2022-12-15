@@ -55,7 +55,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
             curTime -= Time.deltaTime;
             if (curTime <= 0)
             {
-                IsGameStart = false;
+                GameClear();
             }
         }
     }
@@ -91,6 +91,16 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
             Dispose();
         }
         curTime = 0.0f;
+    }
+
+    public void GameClear()
+    {
+        IsGameStart = false;
+        enemySpawner.EnemySpanwStop();
+        curTime = 0.0f;
+
+        LocalData.GetInstance.Gold = UserGold;
+        SceneController.GetInstance.GoToScene("Lobby");
     }
 
     public void Dispose()

@@ -61,10 +61,6 @@ sealed class MatchManager : Singleton<MatchManager>
 
             await GameServer.GetInstance.SetUserInfo(reqData);
         }
-        else
-        {
-            return;
-        }
     }
 
     public async void RemoveUserInfoServer(string _userId)
