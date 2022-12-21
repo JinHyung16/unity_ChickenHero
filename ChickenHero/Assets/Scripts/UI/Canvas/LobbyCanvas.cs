@@ -38,21 +38,16 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
         goldTxt.text = LocalData.GetInstance.Gold.ToString();
     }
 
+    #region Panel Open하는 Button관련 함수들
     /// <summary>
-    /// middle panel 추가하여 터치를 받는 함수
-    /// 다른 Panel이 열린상태에서 이 공간을 터치하면 모두 다 닫히도록 설정
-    /// pointerEnter가 아니라 pointerClick으로 하면 터치 받는 시스템이 달라서 그런지 Null나온다
+    /// LobbyCanvase의 Bottom Panel밑에 Shop Button에 직접 연결중
+    /// Shop Button을 누르면 Shop을 연다.
     /// </summary>
-    /// <param name="eventData"></param>
-    public void OnPointerDown(PointerEventData eventData)
+    public void ShopPanelOpen()
     {
-        if (eventData.pointerEnter.gameObject.CompareTag("ImportantPanel"))
-        {
-            OpenPanel(UIType.NonePanel);
-        }
+        OpenPanel(UIType.ShopPanel);
     }
-    
-    #region 특수 Panel 컨트롤하는 Button 함수
+
     /// <summary>
     /// LobbyCanvas의 Bottom Panel밑에 Inventory Button에 직접 연결중
     /// Inventory Button을 누르면 Inventory를 연다.
@@ -72,7 +67,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     }
 
     /// <summary>
-    /// LobbyCanvas의 Bottom Panel밑에 Option Button에 직접 연결중
+    /// LobbyCanvas의 Top Panel밑에 Option Button에 직접 연결중
     /// Option Button을 누르면 호출된다
     /// </summary>
     public void OptionPanelOpen()
@@ -81,7 +76,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     }
     #endregion
 
-    #region Button에 직접 연결한 Function
+    #region Panel내 Button 기능 함수들
     /// <summary>
     /// PlayMode Panel 밑 MultiPlay Button에 직접 연결중
     /// MultiPlay Button을 누르면 매칭을 진행한다.
@@ -136,7 +131,20 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     }
     #endregion
 
-    #region 특수 Panel관련 함수들
+    #region Always Panel컨트롤 함수들
+    /// <summary>
+    /// 다른 Panel이 열린상태에서 AlwaysPanel tag를 갖고있는 곳을 터치하면 활성화된 모든 패널이 닫힌다
+    /// pointerEnter형식으로 받아라 모바일에서 터치 입력 받는다
+    /// </summary>
+    /// <param name="eventData"></param>
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (eventData.pointerEnter.gameObject.CompareTag("AlwaysPanel"))
+        {
+            OpenPanel(UIType.NonePanel);
+        }
+    }
+
     /// <summary>
     /// Lobby Scene 진입시, 패널 세팅
     /// </summary>
@@ -154,6 +162,9 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
                     break;
                 case "Option Panel":
                     PanelDictionary.Add(UIType.OptionPanel, panel);
+                    break;
+                case "Shop Panel":
+                    PanelDictionary.Add(UIType.ShopPanel, panel);
                     break;
             }
         }
@@ -212,6 +223,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
         InventoryPanel,
         PlayModePanel,
         OptionPanel,
+        ShopPanel,
     }
     #endregion
 }

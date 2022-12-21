@@ -35,7 +35,7 @@ public class Egg : MonoBehaviour, IEggPower
             {
                 case "Enemy":
 #if UNITY_ANDROID
-                    HughUtility.Vibration.Vibrate((long)Convert.ToSingle(0.1f));
+                    HughUtility.Vibration.Vibrate((long)100);
 #endif
                     collision.gameObject.GetComponent<Enemy>().Damaged(Power);
                     break;

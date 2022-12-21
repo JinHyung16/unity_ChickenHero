@@ -68,6 +68,18 @@ public class LocalData : Singleton<LocalData>
             PlayerPrefs.SetInt(userName + "Gold", value);
         }
     }
+
+    public int Power
+    {
+        get
+        {
+            return PlayerPrefs.GetInt(userName + "Power");
+        }
+        set
+        {
+            PlayerPrefs.SetInt(userName + "Power", value);
+        }
+    }
     #endregion
 
     /// <summary>

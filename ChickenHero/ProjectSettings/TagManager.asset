@@ -6,8 +6,8 @@ TagManager:
   tags:
   - Egg
   - Enemy
-  - ImportantPanel
   - CollisionObj
+  - AlwaysPanel
   layers:
   - Default
   - TransparentFX
