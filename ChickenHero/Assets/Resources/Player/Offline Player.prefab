@@ -45,10 +45,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58a4aac2da4970c4c98c3d49eb38c394, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  chickenData: {fileID: 11400000, guid: 8302a3cec531ef14388b7ab83754dea1, type: 2}
   playerTrans: {fileID: 31230632938525868}
   IsThrow: 0
   eggPrefab: {fileID: 1087430154396225430, guid: 37548a7c99c075e40899aba4717722fc, type: 3}
-  eggCount: 20
 --- !u!1 &8518060441450326359
 GameObject:
   m_ObjectHideFlags: 0
@@ -122,7 +122,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -523549109, guid: eef6d8136b8f25b459943dedf224bcb2, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -130,6 +130,6 @@ SpriteRenderer:
   m_Size: {x: 2.952, y: 4.048}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0

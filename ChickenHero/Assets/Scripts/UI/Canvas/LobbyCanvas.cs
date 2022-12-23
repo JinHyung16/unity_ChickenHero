@@ -15,7 +15,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     [SerializeField] private TMP_Text goldTxt;
 
     //특수 Panel관련 바인딩 -> 특수 패널은 오로지 1개만 열려야 하는 패널이다 (해당 특수끼린 열리는게 독립적이다)
-    [SerializeField] private List<GameObject> PanelList; //특수 패널을 담은 list
+    [SerializeField] private List<GameObject> PanelList; //패널을 담은 list
 
     private Dictionary<UIType, GameObject> PanelDictionary = new Dictionary<UIType, GameObject>(); //패널의 key를 부여해 저장
     private Queue<GameObject> PanelActiveQueue = new Queue<GameObject>(); //SetActive시 Queue에 넣고 맨 앞은 지우고 오로지 1개만 열리게 저장

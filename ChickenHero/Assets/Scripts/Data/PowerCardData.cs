@@ -7,7 +7,7 @@ using UnityEngine;
 public class PowerCardData : ScriptableObject
 {
     public Sprite powerCardSprite;
-    public string powerCardName;
+    public string powerCardDescription;
     public int cardPower;
     public int weight;
 }

@@ -30,7 +30,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
     }
     #endregion
 
-    public GameObject OfflinePlayerPrefab;
+    [SerializeField] private GameObject OfflinePlayerPrefab;
     [SerializeField] private Transform playerSpawnPoint;
 
     [SerializeField] private EnemySpawner enemySpawner;

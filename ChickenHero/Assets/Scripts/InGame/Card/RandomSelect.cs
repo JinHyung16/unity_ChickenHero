@@ -5,18 +5,19 @@ using UnityEngine;
 public class RandomSelect : MonoBehaviour
 {
     public List<GameObject> PowerDeck = new List<GameObject>();
-    public int powerDeckTotalWeight;
+    [SerializeField] private int powerDeckTotalWeight;
 
     private GameObject pickCard;
 
-    private void Start()
+
+    private void OnEnable()
     {
-        foreach(var card in PowerDeck)
+        foreach (var card in PowerDeck)
         {
-            powerDeckTotalWeight += card.GetComponent<PowerCard>().weight;
+            //PowerCard GameObject가 Canvas하위에 있는 Object에 PowerCard.cs가 붙어있어서 InChildren으로 호출해야함
+            powerDeckTotalWeight += card.GetComponentInChildren<PowerCard>().weight;
         }
     }
-
     private GameObject RandomPowerCard()
     {
         int weights = 0;
@@ -26,7 +27,7 @@ public class RandomSelect : MonoBehaviour
 
         foreach (var card in PowerDeck)
         {
-            weights += card.GetComponent<PowerCard>().weight;
+            weights += card.GetComponentInChildren<PowerCard>().weight;
             if (selectNum <= weights)
             {
                 return card;

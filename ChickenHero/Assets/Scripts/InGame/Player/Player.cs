@@ -6,6 +6,12 @@ using UnityEngine.Pool;
 
 public class Player : MonoBehaviour
 {
+    [SerializeField] private ChickenData chickenData;
+
+    //chicken 종류별 data 담기
+    private SpriteRenderer spriteRenderer;
+    private int hp;
+
     // 던지는 것 관련
     private Vector2 targetVec = Vector2.zero;
     [SerializeField] private Transform playerTrans;
@@ -15,15 +21,24 @@ public class Player : MonoBehaviour
     [SerializeField] private GameObject eggPrefab;
     private IObjectPool<Egg> eggPool;
 
+    private void OnEnable()
+    {
+        InitChickenData();
+        InitPlayerPooling();
+    }
+
     private void Update()
     {
         Attack();
     }
 
-    private void OnEnable()
+    private void InitChickenData()
     {
-        InitPlayerPooling();
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        spriteRenderer.sprite = chickenData.playerSprite;
+        hp = chickenData.chickenHP;
     }
+
     /// <summary>
     /// Player가 Egg Prefab을 Pooling하기 위해 필요한 초기 설정
     /// </summary>
