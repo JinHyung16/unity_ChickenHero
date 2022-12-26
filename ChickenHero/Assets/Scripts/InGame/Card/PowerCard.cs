@@ -12,6 +12,7 @@ public class PowerCard : MonoBehaviour
 
     private RectTransform rectTransfrom;
     private Image cardImg;
+    private string powerCardName;
 
     public int power;
     public int weight;
@@ -24,6 +25,7 @@ public class PowerCard : MonoBehaviour
 
         descriptionTxt.text = powerCardData.powerCardDescription;
         cardImg.sprite = powerCardData.powerCardSprite;
+        powerCardName = powerCardData.powerCardName;
         power = powerCardData.cardPower;
         weight = powerCardData.weight;
     }

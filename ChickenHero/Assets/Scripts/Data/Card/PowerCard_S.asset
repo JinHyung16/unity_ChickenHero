@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: PowerCard_S
   m_EditorClassIdentifier: 
   powerCardSprite: {fileID: 905410819, guid: 0985eec040ac32b4487ddbbf4f4d4df6, type: 3}
+  powerCardName: S
   powerCardDescription: Power +100
   cardPower: 100
   weight: 1

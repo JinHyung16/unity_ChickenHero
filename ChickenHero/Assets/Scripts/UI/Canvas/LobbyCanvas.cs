@@ -7,8 +7,9 @@ using UnityEngine.UI;
 using System.Threading.Tasks;
 using System;
 using UnityEngine.EventSystems;
+using HughUI; //UIType 사용을 위해
 
-public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
+public class LobbyCanvas : HughUI.HughUIControl
 {
     [Tooltip("TopPanel에 붙는 UI들")]
     [SerializeField] private TMP_Text nameTxt;
@@ -137,7 +138,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     /// pointerEnter형식으로 받아라 모바일에서 터치 입력 받는다
     /// </summary>
     /// <param name="eventData"></param>
-    public void OnPointerDown(PointerEventData eventData)
+    public override void OnPointerDown(PointerEventData eventData)
     {
         if (eventData.pointerEnter.gameObject.CompareTag("AlwaysPanel"))
         {
@@ -148,7 +149,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     /// <summary>
     /// Lobby Scene 진입시, 패널 세팅
     /// </summary>
-    private void InitaDictionary()
+    public override void InitaDictionary()
     {
         foreach (GameObject panel in PanelList)
         {
@@ -175,7 +176,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     /// </summary>
     /// <param name="type"> Open할 Panel의 Type을 받는다 </param>
     /// <param name="layer"> Canvas의 위치를 받아 자식으로 넣는다 </param>
-    private void OpenPanel(UIType type)
+    public override void OpenPanel(UIType type)
     {
         if (type == UIType.NonePanel)
         {
@@ -211,19 +212,5 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
         }
     }
 
-
-    /// <summary>
-    /// 오로지 1개만 열려야 하는 Panel 모음
-    /// 즉, 해당 Panel이 열리면 나머지 Panel은 자동으로 닫히는 서로 독립적인 Panel 모음
-    /// </summary>
-    private enum UIType
-    {
-        NonePanel = 0,
-
-        InventoryPanel,
-        PlayModePanel,
-        OptionPanel,
-        ShopPanel,
-    }
     #endregion
 }

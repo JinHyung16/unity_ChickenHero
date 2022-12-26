@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: PowerCard_B
   m_EditorClassIdentifier: 
   powerCardSprite: {fileID: 1255418047, guid: 0985eec040ac32b4487ddbbf4f4d4df6, type: 3}
+  powerCardName: B
   powerCardDescription: Power +10
   cardPower: 10
   weight: 10

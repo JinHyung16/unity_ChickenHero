@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class RandomSelect : MonoBehaviour
 {
-    public List<GameObject> PowerDeck = new List<GameObject>();
+    [SerializeField] List<GameObject> PowerDeck = new List<GameObject>();
     [SerializeField] private int powerDeckTotalWeight;
 
     private GameObject pickCard;
