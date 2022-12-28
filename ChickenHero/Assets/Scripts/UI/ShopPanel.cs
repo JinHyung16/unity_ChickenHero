@@ -5,17 +5,17 @@ using TMPro;
 
 public class ShopPanel : MonoBehaviour
 {
-    [SerializeField] private TMP_Text upgradeLevelTxt; //현재 power 단계 보여주는 text
+    [SerializeField] private TMP_Text upgradaePowerTxt; //현재 power 단계 보여주는 text
     [SerializeField] private TMP_Text goldTxt; //업그레이드시 필요한 골드량 보여주는 text
 
-    [SerializeField] private int upgradeLevel = 1;
     [SerializeField] private int upgradePower = 1;
     [SerializeField] private int upgradeGold = 100; //업그레이드시 필요한 골드
 
-    private int ownUpgradeLevel; //본인이 upgrade한 단계 저장한 값 담기
+    private int ownUpgradePower; //본인이 upgrade한 단계 저장한 값 담기
     private int ownGold; //본인이 소지하고 있는 돈 저장한 값 담기
-    
-    public RandomSelect randomSelectObj;
+
+
+    [SerializeField] private RandomSelect randomSelect;
 
     private void OnEnable()
     {
@@ -24,7 +24,7 @@ public class ShopPanel : MonoBehaviour
 
     private void InitShop()
     {
-        ownUpgradeLevel = LocalData.GetInstance.UpgradeLevel;
+        ownUpgradePower = LocalData.GetInstance.Power;
         ownGold = LocalData.GetInstance.Gold;
         upgradeGold = 100;
     }
@@ -33,7 +33,6 @@ public class ShopPanel : MonoBehaviour
     {
         if (upgradeGold <= ownGold)
         {
-            upgradeLevel++;
             upgradePower++;
             upgradeGold++;
 
@@ -48,7 +47,7 @@ public class ShopPanel : MonoBehaviour
 
     private void DisplayUpdate()
     {
-        upgradeLevelTxt.text = "Lv" + upgradeLevel.ToString();
+        upgradaePowerTxt.text = upgradePower.ToString();
         goldTxt.text = upgradeGold.ToString() + "G";
     }
 
@@ -57,6 +56,6 @@ public class ShopPanel : MonoBehaviour
     /// </summary>
     public void RandomPick()
     {
-        randomSelectObj.RandomCardOpen();
+        randomSelect.RandomCardOpen();
     }
 }

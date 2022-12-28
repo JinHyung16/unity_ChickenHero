@@ -10,5 +10,5 @@ public class PowerCardData : ScriptableObject
     public string powerCardName;
     public string powerCardDescription;
     public int cardPower;
-    public int weight;
+    public int cardWeighted;
 }

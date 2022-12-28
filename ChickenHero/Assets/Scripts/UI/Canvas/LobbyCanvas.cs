@@ -9,7 +9,7 @@ using System;
 using UnityEngine.EventSystems;
 using HughUI; //UIType 사용을 위해
 
-public class LobbyCanvas : HughUI.HughUIControl
+public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
 {
     [Tooltip("TopPanel에 붙는 UI들")]
     [SerializeField] private TMP_Text nameTxt;
@@ -138,7 +138,7 @@ public class LobbyCanvas : HughUI.HughUIControl
     /// pointerEnter형식으로 받아라 모바일에서 터치 입력 받는다
     /// </summary>
     /// <param name="eventData"></param>
-    public override void OnPointerDown(PointerEventData eventData)
+    public void OnPointerDown(PointerEventData eventData)
     {
         if (eventData.pointerEnter.gameObject.CompareTag("AlwaysPanel"))
         {
@@ -149,7 +149,7 @@ public class LobbyCanvas : HughUI.HughUIControl
     /// <summary>
     /// Lobby Scene 진입시, 패널 세팅
     /// </summary>
-    public override void InitaDictionary()
+    public void InitaDictionary()
     {
         foreach (GameObject panel in PanelList)
         {
@@ -168,6 +168,11 @@ public class LobbyCanvas : HughUI.HughUIControl
                     PanelDictionary.Add(UIType.ShopPanel, panel);
                     break;
             }
+
+            if (panel.activeSelf)
+            {
+                panel.SetActive(false);
+            }
         }
     }
 
@@ -176,7 +181,7 @@ public class LobbyCanvas : HughUI.HughUIControl
     /// </summary>
     /// <param name="type"> Open할 Panel의 Type을 받는다 </param>
     /// <param name="layer"> Canvas의 위치를 받아 자식으로 넣는다 </param>
-    public override void OpenPanel(UIType type)
+    public void OpenPanel(UIType type)
     {
         if (type == UIType.NonePanel)
         {

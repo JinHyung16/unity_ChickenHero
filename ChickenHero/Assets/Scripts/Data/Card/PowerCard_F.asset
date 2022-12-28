@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   powerCardSprite: {fileID: -797454083, guid: 0985eec040ac32b4487ddbbf4f4d4df6, type: 3}
   powerCardName: F
-  powerCardDescription: Power Reset
+  powerCardDescription: Reset
   cardPower: 0
-  weight: 30
+  cardWeighted: 89

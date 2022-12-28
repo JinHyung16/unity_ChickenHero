@@ -80,19 +80,6 @@ public class LocalData : Singleton<LocalData>
             PlayerPrefs.SetInt(userName + "Power", value);
         }
     }
-
-    //상점에서 업그레이드
-    public int UpgradeLevel
-    {
-        get
-        {
-            return PlayerPrefs.GetInt(userName + "UpgradeLevel");
-        }
-        set
-        {
-            PlayerPrefs.SetInt(userName + "UpgradeLevel", value);
-        }
-    }
     #endregion
 
     /// <summary>

@@ -7,7 +7,7 @@ namespace HughUtility.Observer
     public interface IObserver
     {
         //power card opoen Data 알려주기
-        void CardOpen(string cardName, int cardPower);
+        void UpdateOpenPowerCard(string name, int power);
     }
 
     public interface ISubject

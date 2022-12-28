@@ -416,7 +416,7 @@ GameObject:
   - component: {fileID: 4070714761671144293}
   - component: {fileID: 8612253752720359801}
   m_Layer: 5
-  m_Name: Level Text (TMP)
+  m_Name: UpgradePower Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -470,7 +470,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Lv1
+  m_text: 1
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 49efbd8f9b0c2024084a42801d14ec5c, type: 2}
   m_sharedMaterial: {fileID: -6061703769517391553, guid: 49efbd8f9b0c2024084a42801d14ec5c, type: 2}
@@ -1606,19 +1606,19 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3586449730953393898}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4343330356675555657}
-  m_Father: {fileID: 7516805606931393786}
-  m_RootOrder: 0
+  m_Father: {fileID: 6039439048904231639}
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.2, y: 0.37142858}
-  m_AnchorMax: {x: 0.8, y: 0.62285715}
+  m_AnchorMin: {x: 0.22146618, y: 0.17526798}
+  m_AnchorMax: {x: 0.78573316, y: 0.4281961}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -18, y: -6}
+  m_SizeDelta: {x: -6, y: -6}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6019312265816046304
 CanvasRenderer:
@@ -2334,7 +2334,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8403554555466595711}
   m_Layer: 5
-  m_Name: PowerUp
+  m_Name: PowerUpGroup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2380,7 +2380,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &6039439048904231639
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2394,6 +2394,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8403554555466595711}
+  - {fileID: 9178132050301528568}
   - {fileID: 7516805606931393786}
   m_Father: {fileID: 4500317537422129419}
   m_RootOrder: 6
@@ -2453,12 +2454,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b425aadd93c9db148946b63cc2edfe9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  upgradeLevelTxt: {fileID: 8612253752720359801}
+  upgradaePowerTxt: {fileID: 8612253752720359801}
   goldTxt: {fileID: 4498772097626014031}
-  upgradeLevel: 1
   upgradePower: 1
   upgradeGold: 0
-  randomSelectObj: {fileID: 2564777734146609422}
+  randomSelect: {fileID: 2564777734146609422}
 --- !u!1 &4948540166445834320
 GameObject:
   m_ObjectHideFlags: 0
@@ -2483,18 +2483,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4948540166445834320}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 9178132050301528568}
+  m_Children: []
   m_Father: {fileID: 6039439048904231639}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -60}
+  m_AnchoredPosition: {x: 0, y: -60.00002}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2564777734146609422
@@ -2509,12 +2508,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 912ca217bc5d28e439f4ad964b82915a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PowerDeck:
-  - {fileID: 290920832124115238, guid: d415be626bb853d49a8422d4a3ebae95, type: 3}
-  - {fileID: 8422133453691701094, guid: 70081caeffc67db49a9752c7a2f447db, type: 3}
-  - {fileID: 3963488701236169372, guid: 29262dc8e1d24f342a4d491bc557351d, type: 3}
-  - {fileID: 2469579512373727439, guid: ac3f78428ea4cc64bb0e1c1f4a2da73b, type: 3}
-  powerDeckTotalWeight: 0
+  PowerCardDataList:
+  - {fileID: 11400000, guid: fb10e1fd1f539fb4d9d5cd5e962aef9e, type: 2}
+  - {fileID: 11400000, guid: 60bd7234419284743b84c1be1ee842ca, type: 2}
+  - {fileID: 11400000, guid: 283870e302e67b8418493c452abda896, type: 2}
+  - {fileID: 11400000, guid: 9859efb95711fb544947e6592fb13150, type: 2}
+  powerCard: {fileID: 8422133453691701094, guid: 70081caeffc67db49a9752c7a2f447db, type: 3}
 --- !u!1 &5406196643012059970
 GameObject:
   m_ObjectHideFlags: 0
