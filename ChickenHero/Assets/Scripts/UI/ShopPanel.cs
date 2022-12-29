@@ -13,7 +13,6 @@ public class ShopPanel : MonoBehaviour, IObserver
     [SerializeField] private int upgradeGold = 100; //업그레이드시 필요한 골드
 
     private int ownUpgradePower; //본인이 upgrade한 단계 저장한 값 담기
-    private int ownGold; //본인이 소지하고 있는 돈 저장한 값 담기
 
     private void OnEnable()
     {
@@ -23,19 +22,17 @@ public class ShopPanel : MonoBehaviour, IObserver
     private void InitShopPanel()
     {
         ownUpgradePower = LocalData.GetInstance.Power;
-        ownGold = LocalData.GetInstance.Gold;
         upgradeGold = 100;
     }
 
     public void PowerUp()
     {
-        if (upgradeGold <= ownGold)
+        if (upgradeGold <= LocalData.GetInstance.Gold)
         {
             upgradePower++;
             upgradeGold++;
 
             DisplayUpdate();
-            LocalData.GetInstance.Power += upgradePower;
         }
         else
         {
@@ -47,9 +44,12 @@ public class ShopPanel : MonoBehaviour, IObserver
     {
         upgradaePowerTxt.text = upgradePower.ToString();
         goldTxt.text = upgradeGold.ToString() + "G";
+
+        LocalData.GetInstance.Power = upgradePower;
     }
 
     #region Observer Pattern - IObserver interface 구현
+
     public void UpdateOpenPowerCard(PowerCardData cardData)
     {
         switch (cardData.powerCardName)

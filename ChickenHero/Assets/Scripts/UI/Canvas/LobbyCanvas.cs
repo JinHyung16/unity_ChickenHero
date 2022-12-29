@@ -8,8 +8,9 @@ using System.Threading.Tasks;
 using System;
 using UnityEngine.EventSystems;
 using HughUI; //UIType 사용을 위해
+using HughUtility.Observer;
 
-public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
+public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, IObserver
 {
     [Tooltip("TopPanel에 붙는 UI들")]
     [SerializeField] private TMP_Text nameTxt;
@@ -21,33 +22,10 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
     private Dictionary<UIType, GameObject> PanelDictionary = new Dictionary<UIType, GameObject>(); //패널의 key를 부여해 저장
     private Queue<GameObject> PanelActiveQueue = new Queue<GameObject>(); //SetActive시 Queue에 넣고 맨 앞은 지우고 오로지 1개만 열리게 저장
 
-
-    [SerializeField] private ShopPanel shopPanelObserver; //ShopPanel Observer
-    [SerializeField] private RandomSelect randomSelectSubject; //RandomSelect Subject
-
     private void Start()
     {
         InitaDictionary();
         LoadUserInfo();
-
-        InitObserverPattern();
-    }
-
-    private void OnDisable()
-    {
-        Debug.Log("Scene이 이동하면서 LobbyCanvas 비활성화");
-    }
-    private void OnDestroy()
-    {
-        Debug.Log("Scene이 이동하면서 LobbyCanvas 파괴");
-        randomSelectSubject.RemoveObserver(shopPanelObserver);
-    }
-    /// <summary>
-    /// Random 뽑기 시 Objserver와 Subject들 바인딩하기
-    /// </summary>
-    private void InitObserverPattern()
-    {
-        randomSelectSubject.RegisterObserver(shopPanelObserver);
     }
 
     /// <summary>
@@ -60,6 +38,13 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler
         nameTxt.text = LocalData.GetInstance.Name.ToString();
         goldTxt.text = LocalData.GetInstance.Gold.ToString();
     }
+
+    #region Observer Pattern - IObserver interface 구현
+    public void UpdateOpenPowerCard(PowerCardData cardData)
+    {
+        LoadUserInfo();
+    }
+    #endregion
 
     #region Panel Open하는 Button관련 함수들
     /// <summary>

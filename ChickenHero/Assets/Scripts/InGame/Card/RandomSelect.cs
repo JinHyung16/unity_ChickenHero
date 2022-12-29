@@ -24,6 +24,7 @@ public class RandomSelect : MonoBehaviour, ISubject
     private void OnEnable()
     {
         InitRandomSelect();
+        InitObserver(true);
     }
 
     /// <summary>
@@ -33,6 +34,7 @@ public class RandomSelect : MonoBehaviour, ISubject
     private void OnDisable()
     {
         ResetRandomSelect();
+        InitObserver(false);
     }
 
     /// <summary>
@@ -112,14 +114,36 @@ public class RandomSelect : MonoBehaviour, ISubject
             obj.GetComponent<PowerCard>().SetPowerCard(powerCardData);
             obj.SetActive(true);
         }
-
+        
         NotifyObservers();
     }
 
-
     #region Observer Pattern - ISubject interface 구현
 
+    [SerializeField] private LobbyCanvas LobbyCanvasObserver;
+    [SerializeField] private ShopPanel ShopPanelObserver;
     private List<IObserver> ObserverList = new List<IObserver>(); //Objserver들 저장할 List
+
+    /// <summary>
+    /// Observer들을 Observer List에 저장해두는 함수
+    /// parameter에 따라 OnEable / OnDisable에 사용하는게 다르다
+    /// </summary>
+    /// <param name="register"> 등록 또는 해제여부를 판한다는 parameter </param>
+    private void InitObserver(bool register)
+    {
+        if (register)
+        {
+            RegisterObserver(LobbyCanvasObserver);
+            RegisterObserver(ShopPanelObserver);
+        }
+        else
+        {
+            RemoveObserver(LobbyCanvasObserver);
+            RemoveObserver(ShopPanelObserver);
+        }
+    }
+
+
     public void RegisterObserver(IObserver observer)
     {
         this.ObserverList.Add(observer);

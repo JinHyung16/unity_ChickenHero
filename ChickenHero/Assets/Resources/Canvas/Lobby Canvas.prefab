@@ -2098,8 +2098,6 @@ MonoBehaviour:
   - {fileID: 3258344477372215895}
   - {fileID: 1533783368298109965}
   - {fileID: 4697832330353230931}
-  shopPanelObserver: {fileID: 6914001547234463089}
-  randomSelectSubject: {fileID: 2564777734146609422}
 --- !u!1 &4500317537631024433
 GameObject:
   m_ObjectHideFlags: 0
@@ -2504,6 +2502,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 283870e302e67b8418493c452abda896, type: 2}
   - {fileID: 11400000, guid: 9859efb95711fb544947e6592fb13150, type: 2}
   powerCard: {fileID: 8422133453691701094, guid: 70081caeffc67db49a9752c7a2f447db, type: 3}
+  LobbyCanvasObserver: {fileID: 4500317537422129418}
+  ShopPanelObserver: {fileID: 6914001547234463089}
 --- !u!1 &5406196643012059970
 GameObject:
   m_ObjectHideFlags: 0
