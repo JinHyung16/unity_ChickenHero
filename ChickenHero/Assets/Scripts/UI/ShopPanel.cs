@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using HughUtility.Observer;
 
-public class ShopPanel : MonoBehaviour
+public class ShopPanel : MonoBehaviour, IObserver
 {
     [SerializeField] private TMP_Text upgradaePowerTxt; //현재 power 단계 보여주는 text
     [SerializeField] private TMP_Text goldTxt; //업그레이드시 필요한 골드량 보여주는 text
@@ -14,15 +15,12 @@ public class ShopPanel : MonoBehaviour
     private int ownUpgradePower; //본인이 upgrade한 단계 저장한 값 담기
     private int ownGold; //본인이 소지하고 있는 돈 저장한 값 담기
 
-
-    [SerializeField] private RandomSelect randomSelect;
-
     private void OnEnable()
     {
-        InitShop();
+        InitShopPanel();
     }
 
-    private void InitShop()
+    private void InitShopPanel()
     {
         ownUpgradePower = LocalData.GetInstance.Power;
         ownGold = LocalData.GetInstance.Gold;
@@ -51,11 +49,20 @@ public class ShopPanel : MonoBehaviour
         goldTxt.text = upgradeGold.ToString() + "G";
     }
 
-    /// <summary>
-    /// 랜덤 뽑기 버튼을 눌렀을 때, 실행하는 함수
-    /// </summary>
-    public void RandomPick()
+    #region Observer Pattern - IObserver interface 구현
+    public void UpdateOpenPowerCard(PowerCardData cardData)
     {
-        randomSelect.RandomCardOpen();
+        switch (cardData.powerCardName)
+        {
+            case "F":
+                upgradePower = 1;
+                break;
+            default:
+                upgradePower += cardData.cardPower;
+                break;
+        }
+
+        DisplayUpdate();
     }
+    #endregion
 }

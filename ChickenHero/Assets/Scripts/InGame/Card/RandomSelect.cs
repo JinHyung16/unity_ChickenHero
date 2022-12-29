@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using HughUtility.Observer;
 using System;
+using UnityEngine.UI;
 
-public class RandomSelect : MonoBehaviour
+public class RandomSelect : MonoBehaviour, ISubject
 {
+    [SerializeField] private Button radomPickBtn;
+
     //뽑을 PowerCardData를 담고 있는 리스트
     [SerializeField] private List<PowerCardData> PowerCardDataList = new List<PowerCardData>();
 
@@ -13,12 +16,14 @@ public class RandomSelect : MonoBehaviour
 
     [SerializeField] private GameObject powerCard; //PowerCard Canvas Object
 
+    //Instantiate한 PowerCard 오브젝트 담을 Dictionary
     private Dictionary<string, GameObject> PowerCardDictionary = new Dictionary<string, GameObject>();
-    private PowerCardData powerCardData;
+
+    private PowerCardData powerCardData; //뽑은 PowerCardData 담을 변수
 
     private void OnEnable()
     {
-        InitPowerCardData();
+        InitRandomSelect();
     }
 
     /// <summary>
@@ -27,25 +32,39 @@ public class RandomSelect : MonoBehaviour
     /// </summary>
     private void OnDisable()
     {
-        if (PowerCardDictionary.Count > 0)
-        {
-            foreach (var temp in PowerCardDictionary.Values)
-            {
-                Destroy(temp);
-            }
-        }
+        ResetRandomSelect();
     }
 
     /// <summary>
+    /// ShopPanel열릴 때, OnEnable에서 실행되는 함수
     /// PowerCardData 리스트에서 각 card들이 갖고 있는 가중치들을 가져와 powerDeckTotalWeight에 저장해둔다
+    /// Random Pick Button도 바인딩 중이다
     /// </summary>
-    private void InitPowerCardData()
+    private void InitRandomSelect()
     {
         foreach (var card in PowerCardDataList)
         {
             //PowerCard GameObject가 Canvas하위에 있는 Object에 PowerCard.cs가 붙어있어서 InChildren으로 호출해야함
             powerCardDataWeightedTotal += card.cardWeighted;
         }
+
+        radomPickBtn.onClick.AddListener(RandomCardOpen);
+    }
+
+    /// <summary>
+    /// ShopPanel이 OnDisable 될 때 실행되는 함수
+    /// 0 또는 null로 reset이 되어야 하는 값들을 초기화하고 있다.
+    /// </summary>
+    private void ResetRandomSelect()
+    {
+        foreach (var temp in PowerCardDictionary.Values)
+        {
+            Destroy(temp);
+        }
+        PowerCardDictionary.Clear();
+
+        powerCardDataWeightedTotal = 0;
+        radomPickBtn.onClick.RemoveListener(RandomCardOpen);
     }
 
     /// <summary>
@@ -81,7 +100,7 @@ public class RandomSelect : MonoBehaviour
     public void RandomCardOpen()
     {
         powerCardData = RandomPowerCard();
-        string name = powerCardData.name;
+        string name = powerCardData.powerCardName;
 
         if (!PowerCardDictionary.ContainsKey(name) || PowerCardDictionary.Count <= 0)
         {
@@ -93,5 +112,30 @@ public class RandomSelect : MonoBehaviour
             obj.GetComponent<PowerCard>().SetPowerCard(powerCardData);
             obj.SetActive(true);
         }
+
+        NotifyObservers();
     }
+
+
+    #region Observer Pattern - ISubject interface 구현
+
+    private List<IObserver> ObserverList = new List<IObserver>(); //Objserver들 저장할 List
+    public void RegisterObserver(IObserver observer)
+    {
+        this.ObserverList.Add(observer);
+    }
+
+    public void RemoveObserver(IObserver observer)
+    {
+        this.ObserverList.Remove(observer);
+    }
+
+    public void NotifyObservers()
+    {
+        foreach (var observer in ObserverList)
+        {
+            observer.UpdateOpenPowerCard(powerCardData);
+        }
+    }
+    #endregion
 }
