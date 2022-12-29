@@ -218,6 +218,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Lobby Canvas
       objectReference: {fileID: 0}
+    - target: {fileID: 4697832330353230931, guid: 3d01560c88ae6e8429fac9ca7d21f865, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 9178132050301528568, guid: 3d01560c88ae6e8429fac9ca7d21f865, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0

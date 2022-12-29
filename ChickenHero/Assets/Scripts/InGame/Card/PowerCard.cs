@@ -6,21 +6,17 @@ using UnityEngine.UI;
 using DG.Tweening;
 using HughUtility.Observer;
 using System;
+using Cysharp.Threading.Tasks.Triggers;
 
-public class PowerCard : MonoBehaviour, IDisposable, ISubject
+public class PowerCard : MonoBehaviour
 {
     [SerializeField] private CanvasGroup canvaseGroup;
     [SerializeField] private RectTransform rectTransfrom;
-    private float fadeTime = 0.5f;
+    private float fadeTime = 0.2f;
 
     [SerializeField] private TMP_Text descriptionTxt;
-    private Image cardImg;
+    [SerializeField] private Image cardImg;
     private string powerCardName;
-
-    public int power;
-
-    private Tween tweenRect;
-    private Tween tweenCanvas;
 
     private void OnEnable()
     {
@@ -29,8 +25,7 @@ public class PowerCard : MonoBehaviour, IDisposable, ISubject
 
     private void OnDisable()
     {
-        CancelInvoke("RotateCard");
-        CancelInvoke("Dispose");
+        CancelInvoke("CardDespawn");
     }
 
     /// <summary>
@@ -40,7 +35,6 @@ public class PowerCard : MonoBehaviour, IDisposable, ISubject
     private void InitPowerCard()
     {
         rectTransfrom.sizeDelta = new Vector2(250f, 350f);
-        cardImg = GetComponentInChildren<Image>();
 
         fadeTime = 0.2f;
     }
@@ -52,13 +46,12 @@ public class PowerCard : MonoBehaviour, IDisposable, ISubject
     /// <param name="cardData"> RandomSelect에서 뽑은 PowerCardData</param>
     public void SetPowerCard(PowerCardData cardData)
     {
-        RotateCard();
-
-        descriptionTxt.text = "Power\n" + cardData.powerCardDescription.ToString();
-        cardImg.sprite = cardData.powerCardSprite;
+        descriptionTxt.text = "Power\n" + cardData.powerCardDescription;
+        cardImg.overrideSprite = cardData.powerCardSprite;
 
         powerCardName = cardData.powerCardName;
-        power = cardData.cardPower;
+
+        RotateCard();
     }
 
     /// <summary>
@@ -68,35 +61,18 @@ public class PowerCard : MonoBehaviour, IDisposable, ISubject
     {
         canvaseGroup.alpha = 0.0f;
         rectTransfrom.transform.localPosition = new Vector3(0, -100.0f, 0);
-        tweenRect = rectTransfrom.DOAnchorPos(new Vector2(0.0f, 0.0f), fadeTime, false).SetEase(Ease.OutElastic);
-        tweenCanvas = canvaseGroup.DOFade(1, fadeTime);
+        rectTransfrom.DOAnchorPos(new Vector2(0.0f, 0.0f), fadeTime, false).SetEase(Ease.OutElastic);
+        canvaseGroup.DOFade(1, fadeTime);
 
-        Invoke("Dispose", 0.5f);
+        Invoke("CardDespawn", 0.5f);
     }
 
     /// <summary>
-    /// 카드 사라실때 오브젝트 파괴하기
+    /// PowerCard가 다 보여진 후, SetActive만 꺼준다.
+    /// 왜냐면 RandomSelect.cs에서 Dictionary에 저장해두다가 ShopPanel꺼질 때 한번에 지울거기 때문
     /// </summary>
-    public void Dispose()
+    private void CardDespawn()
     {
-        tweenRect.Kill();
-        tweenCanvas.Kill();
-
-        GC.SuppressFinalize(this.gameObject);
-        Destroy(this.gameObject);
+        this.gameObject.SetActive(false);
     }
-
-    #region Objserver Pattern 관련 함수
-    public void RegisterObserver(IObserver observer)
-    {
-    }
-
-    public void RemoveObserver(IObserver observer)
-    {
-    }
-
-    public void NotifyObservers()
-    {
-    }
-    #endregion
 }

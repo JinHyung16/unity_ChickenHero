@@ -465,6 +465,54 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2163456690729454817, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456690729454817, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456690729454817, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456690729454817, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456690729454817, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456690729454817, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456691369839626, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456691369839626, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456691369839626, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456691369839626, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456691369839626, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456691369839626, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2525787116519582953, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
       propertyPath: m_AdditionalShaderChannelsFlag
       value: 25

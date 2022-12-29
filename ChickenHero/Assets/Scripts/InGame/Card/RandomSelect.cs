@@ -12,6 +12,8 @@ public class RandomSelect : MonoBehaviour
     private int powerCardDataWeightedTotal; //PowerCardData들의 총 가중치 합
 
     [SerializeField] private GameObject powerCard; //PowerCard Canvas Object
+
+    private Dictionary<string, GameObject> PowerCardDictionary = new Dictionary<string, GameObject>();
     private PowerCardData powerCardData;
 
     private void OnEnable()
@@ -19,14 +21,26 @@ public class RandomSelect : MonoBehaviour
         InitPowerCardData();
     }
 
+    /// <summary>
+    /// ShopPanel이 닫힐 때, 오픈했던 카드들 다 한번에 지워준다.
+    /// GC 호출을 줄이고자 이런 방식을 채택
+    /// </summary>
+    private void OnDisable()
+    {
+        if (PowerCardDictionary.Count > 0)
+        {
+            foreach (var temp in PowerCardDictionary.Values)
+            {
+                Destroy(temp);
+            }
+        }
+    }
 
     /// <summary>
     /// PowerCardData 리스트에서 각 card들이 갖고 있는 가중치들을 가져와 powerDeckTotalWeight에 저장해둔다
     /// </summary>
-
     private void InitPowerCardData()
     {
-
         foreach (var card in PowerCardDataList)
         {
             //PowerCard GameObject가 Canvas하위에 있는 Object에 PowerCard.cs가 붙어있어서 InChildren으로 호출해야함
@@ -59,13 +73,25 @@ public class RandomSelect : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// ShopPanel에서 뽑기 버튼을 누르면 실제로 카드를 Open하고
+    /// 해당 PowerCardData를 PowerCard UI에 데이터를 바인딩해준다.
+    /// Dictionary에 저장해두는데, 없으면 저장 있으면 그 있는 값을 그대로 다시 보여준다.
+    /// </summary>
     public void RandomCardOpen()
     {
-        this.powerCardData = RandomPowerCard();
+        powerCardData = RandomPowerCard();
+        string name = powerCardData.name;
 
-        var card = Instantiate(powerCard);
-        card.SetActive(false);
-        card.GetComponent<PowerCard>().SetPowerCard(this.powerCardData);
-        card.SetActive(true);
+        if (!PowerCardDictionary.ContainsKey(name) || PowerCardDictionary.Count <= 0)
+        {
+            PowerCardDictionary.Add(name, Instantiate(powerCard, null));
+        }
+
+        if (PowerCardDictionary.TryGetValue(name, out GameObject obj))
+        {
+            obj.GetComponent<PowerCard>().SetPowerCard(powerCardData);
+            obj.SetActive(true);
+        }
     }
 }

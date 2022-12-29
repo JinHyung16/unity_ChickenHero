@@ -344,4 +344,4 @@ MonoBehaviour:
   canvaseGroup: {fileID: 765106806046875679}
   rectTransfrom: {fileID: 3425813067230628518}
   descriptionTxt: {fileID: 9048689873267096113}
-  power: 0
+  cardImg: {fileID: 3389587858056161807}
