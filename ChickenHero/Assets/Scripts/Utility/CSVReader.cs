@@ -10,9 +10,9 @@ namespace HughUtility
         static string splite_read_line = @"\r\n|\n\r|\n|\r";
         static char[] TRIM_CHARS = { '\"' };
 
-        public static List<Dictionary<string, object>> Read(string file)
+        public static List<Dictionary<string, string>> ReadFile(string file)
         {
-            var list = new List<Dictionary<string, object>>();
+            var list = new List<Dictionary<string, string>>();
             TextAsset data = Resources.Load(file) as TextAsset;
 
             var lines = Regex.Split(data.text, splite_read_line); // CSV파일의 작성되어 있는 모든 라인을 읽어 라인수를 저장한다.
@@ -32,17 +32,17 @@ namespace HughUtility
                     continue;
                 }
 
-                var body_colum = new Dictionary<string, object>(); // 각 라인의 해당하는 값들을 읽는다.
+                var body_colum = new Dictionary<string, string>(); // 각 라인의 해당하는 값들을 읽는다.
 
-                for (var j = 0; j < header_colum.Length && j < values.Length; j++)
+                for (var j = 0; j < header_colum.Length && j < values.Length; j++) //읽은 header만큼 읽는다
                 {
                     string value = values[j];
                     value = value.TrimStart(TRIM_CHARS).TrimEnd(TRIM_CHARS).Replace("\\", "");
-                    object finalvalue = value;
+                    string finalvalue = value;
                     int n;
                     if (int.TryParse(value, out n))
                     {
-                        finalvalue = n;
+                        finalvalue = n.ToString();
                     }
                     body_colum[header_colum[j]] = finalvalue;
                 }

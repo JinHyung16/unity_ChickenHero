@@ -45,7 +45,6 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
         {
             OfflinePlayerPrefab = Resources.Load("Player/Offline Player") as GameObject;
         }
-        //PlayerPrefs.DeleteAll();
     }
 
     private void Update()

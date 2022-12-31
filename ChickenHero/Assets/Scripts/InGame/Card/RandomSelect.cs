@@ -4,10 +4,12 @@ using UnityEngine;
 using HughUtility.Observer;
 using System;
 using UnityEngine.UI;
+using TMPro;
 
 public class RandomSelect : MonoBehaviour, ISubject
 {
     [SerializeField] private Button radomPickBtn;
+    [SerializeField] private TMP_Text randomPickTxt;
 
     //뽑을 PowerCardData를 담고 있는 리스트
     [SerializeField] private List<PowerCardData> PowerCardDataList = new List<PowerCardData>();
@@ -20,6 +22,12 @@ public class RandomSelect : MonoBehaviour, ISubject
     private Dictionary<string, GameObject> PowerCardDictionary = new Dictionary<string, GameObject>();
 
     private PowerCardData powerCardData; //뽑은 PowerCardData 담을 변수
+
+
+    private IEnumerator DisplayPickableIEnum;
+
+    //Random Pick을 위해 필요한 비용
+    private int pickCost = 0;
 
     private void OnEnable()
     {
@@ -50,7 +58,11 @@ public class RandomSelect : MonoBehaviour, ISubject
             powerCardDataWeightedTotal += card.cardWeighted;
         }
 
+        pickCost = LocalData.GetInstance.PickCost;
+
         radomPickBtn.onClick.AddListener(RandomCardOpen);
+
+        DisplayPickableIEnum = DisplaPickableCoroutine();
     }
 
     /// <summary>
@@ -67,6 +79,9 @@ public class RandomSelect : MonoBehaviour, ISubject
 
         powerCardDataWeightedTotal = 0;
         radomPickBtn.onClick.RemoveListener(RandomCardOpen);
+
+        StopCoroutine(DisplayPickableIEnum);
+        DisplayPickableIEnum = null;
     }
 
     /// <summary>
@@ -101,21 +116,53 @@ public class RandomSelect : MonoBehaviour, ISubject
     /// </summary>
     public void RandomCardOpen()
     {
-        powerCardData = RandomPowerCard();
-        string name = powerCardData.powerCardName;
-
-        if (!PowerCardDictionary.ContainsKey(name) || PowerCardDictionary.Count <= 0)
+        if (pickCost <= LocalData.GetInstance.Gold)
         {
-            PowerCardDictionary.Add(name, Instantiate(powerCard, null));
-        }
+            powerCardData = RandomPowerCard();
+            string name = powerCardData.powerCardName;
 
-        if (PowerCardDictionary.TryGetValue(name, out GameObject obj))
-        {
-            obj.GetComponent<PowerCard>().SetPowerCard(powerCardData);
-            obj.SetActive(true);
+            if (!PowerCardDictionary.ContainsKey(name) || PowerCardDictionary.Count <= 0)
+            {
+                PowerCardDictionary.Add(name, Instantiate(powerCard, null));
+            }
+
+            if (PowerCardDictionary.TryGetValue(name, out GameObject obj))
+            {
+                obj.GetComponent<PowerCard>().SetPowerCard(powerCardData);
+                obj.SetActive(true);
+            }
+
+            LocalData.GetInstance.Power = powerCardData.cardPower;
+            LocalData.GetInstance.Gold -= pickCost;
+            NotifyObservers();
         }
-        
-        NotifyObservers();
+        else
+        {
+            StartCoroutine(DisplayPickableIEnum);
+        }
+    }
+
+    private IEnumerator DisplaPickableCoroutine()
+    {
+        DisplaPickable(false);
+        yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(0.5f);
+        DisplaPickable(true);
+    }
+
+    private void DisplaPickable(bool pickable)
+    {
+        if (pickable)
+        {
+            randomPickTxt.text = "파워 뽑기\n" + pickCost;
+            radomPickBtn.interactable = true;
+
+            DisplayPickableIEnum = DisplaPickableCoroutine();
+        }
+        else
+        {
+            randomPickTxt.text = "골드가 부족합니다";
+            radomPickBtn.interactable = false;
+        }
     }
 
     #region Observer Pattern - ISubject interface 구현

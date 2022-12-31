@@ -2496,6 +2496,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   radomPickBtn: {fileID: 2871125917949324590}
+  randomPickTxt: {fileID: 6406869308285189277}
   PowerCardDataList:
   - {fileID: 11400000, guid: fb10e1fd1f539fb4d9d5cd5e962aef9e, type: 2}
   - {fileID: 11400000, guid: 60bd7234419284743b84c1be1ee842ca, type: 2}
@@ -3605,7 +3606,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uD30C\uC6CC \uBF51\uAE30"
+  m_text: "\uD30C\uC6CC \uBF51\uAE30\n100G"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 49efbd8f9b0c2024084a42801d14ec5c, type: 2}
   m_sharedMaterial: {fileID: -6061703769517391553, guid: 49efbd8f9b0c2024084a42801d14ec5c, type: 2}

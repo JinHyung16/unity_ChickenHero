@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using HughGeneric;
+using HughUtility;
+
 public class LocalData : Singleton<LocalData>
 {
     /// <summary>
@@ -9,38 +11,11 @@ public class LocalData : Singleton<LocalData>
     /// User의 레벨, 골드량만을 저장해두고 Server연동되면 동기화 할 목적도 포함
     /// </summary>
 
-    #region PlayerPrefs Bool type
-    /// <summary>
-    /// PlayerPrefs에서 Bool 타입 지원하지 않아 만든 커스텀 함수
-    /// PlayerPrefs에 저장할 때 쓰이는 함수
-    /// </summary>
-    /// <param name="key"> PlayerPrefs에 저장할 key값</param>
-    /// <param name="state"> PlayerPrefs에 저장할 실제 값으로 false, true에 따라 0, 1 Int로 변환해 저장한다</param>
-    public static void SetBool(string key, bool state)
+    private void Start()
     {
-        PlayerPrefs.SetInt(key, state ? 1 : 0);
+        ReadCSVData();
+        PlayerPrefs.DeleteAll();
     }
-
-    /// <summary>
-    /// PlayerPrefs에서 Bool 타입은 지원하지 않아 만든 커스텀 함수
-    /// PlayerPrefs에서 Bool 가져올 때 쓰이는 함수
-    /// </summary>
-    /// <param name="key"> key값을 받아 Bool Type으로 저장한다 </param>
-    /// <returns> key값으로 찾은 value int가 0인지 1인지에 따라 bool type으로 return한다 </returns>
-
-    public static bool GetBool(string key)
-    {
-        int value = PlayerPrefs.GetInt(key);
-        if (value == 1)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    #endregion
 
     #region PlayerPrefs Save Data Property
     private string userName = string.Empty;
@@ -82,6 +57,7 @@ public class LocalData : Singleton<LocalData>
     }
     #endregion
 
+    #region PlayerPrefs Control Function
     /// <summary>
     /// 로컬 PlayerPrefs초기화 시 사용할 함수
     /// 로그인 되어있다면 서버의 데이터도 지워준다.
@@ -117,4 +93,54 @@ public class LocalData : Singleton<LocalData>
             return true;
         }
     }
+    #endregion
+
+    #region CSV Data
+
+    private int randomPickGold;
+    public int PickCost
+    {
+        get
+        {
+            return randomPickGold;
+        }
+    }
+
+    private Dictionary<string, int> UpgradeCostDictionary = new Dictionary<string, int>();
+    
+    private void ReadCSVData()
+    {
+        string shopFile = "CSVData/ShopData";
+        List<Dictionary<string, string>> csvDataList = CSVReader.ReadFile(shopFile);
+
+        for (int i = 0; i < csvDataList.Count; i++)
+        {
+            string level = csvDataList[i]["UpgradeLevel"].ToString();
+            int cost = int.Parse(csvDataList[i]["UpgradeCost"].ToString(), System.Globalization.NumberStyles.Integer);
+            int pickGold = int.Parse(csvDataList[i]["PickCost"].ToString(), System.Globalization.NumberStyles.Integer);
+            if (pickGold != 0)
+            {
+                randomPickGold = pickGold;
+            }
+            AddDictinary(level, cost);
+        }
+    }
+
+    private void AddDictinary(string level, int cost)
+    {
+        UpgradeCostDictionary.Add(level, cost);
+    }
+
+    public int GetUpgradeCost(string level)
+    {
+        if (UpgradeCostDictionary.TryGetValue(level, out int value))
+        {
+            return value;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    #endregion
 }
