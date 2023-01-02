@@ -4,16 +4,34 @@ using UnityEngine;
 
 namespace HughUtility.Observer
 {
-    public interface IObserver
+    #region LobbyObserver
+    public interface LobbyObserver
     {
         //power card opoen Data 알려주기
         void UpdateOpenPowerCard(PowerCardData cardData);
     }
 
-    public interface ISubject
+    public interface LobbySubject
     {
-        void RegisterObserver(IObserver observer);
-        void RemoveObserver(IObserver observer);
+        void RegisterObserver(LobbyObserver observer);
+        void RemoveObserver(LobbyObserver observer);
         void NotifyObservers();
     }
+    #endregion
+
+    #region GamePlayer Observer - Single Play or Multi Play
+    public interface GameObserver
+    {
+        void UpdateHPText(int playerHP);
+        void UpdateScoreText(int score);
+    }
+
+    public interface GameSubject
+    {
+        void RegisterObserver(GameObserver observer);
+        void RemoveObserver(GameObserver observer);
+        void NotifyObservers();
+    }
+    #endregion
+
 }

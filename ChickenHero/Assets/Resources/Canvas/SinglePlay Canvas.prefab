@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3573369915039073580}
   - component: {fileID: 5469884665300706203}
   m_Layer: 5
-  m_Name: Timer Text
+  m_Name: HP Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -66,7 +66,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 0 sec
+  m_text: 100
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 49efbd8f9b0c2024084a42801d14ec5c, type: 2}
   m_sharedMaterial: {fileID: -6061703769517391553, guid: 49efbd8f9b0c2024084a42801d14ec5c, type: 2}
@@ -463,8 +463,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ff3cc3eb0b247a40891bac26201ca69, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scoreTxt: {fileID: 6227361611484366187}
-  timerTxt: {fileID: 5469884665300706203}
+  playerScoreTxt: {fileID: 6227361611484366187}
+  playerHPTxt: {fileID: 5469884665300706203}
 --- !u!1 &6227361611484366185
 GameObject:
   m_ObjectHideFlags: 0

@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
+using Cysharp.Threading.Tasks;
 using System;
 using HughUtility;
 
-public class Egg : MonoBehaviour, IEggPower
+public class Egg : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private Animator anim;
@@ -15,35 +16,41 @@ public class Egg : MonoBehaviour, IEggPower
     private IObjectPool<Egg> ManageEggPool;
     private bool IsPoolRelease = false;
 
-    //interface 구현
-    [HideInInspector] public int Power { get; set; }
+    //Egg Power
+    [SerializeField] private int eggPower;
 
     private void OnEnable()
     {
-        Power = 1;
+        eggPower = 1;
         spriteRenderer.sortingOrder = 0;
         IsPoolRelease = false;
 
         anim.SetInteger("IsBreak", 0);
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private async void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject != null)
         {
-            switch (collision.gameObject.tag)
+            if (collision.gameObject.CompareTag("Enemy"))
             {
-                case "Enemy":
 #if UNITY_ANDROID
-                    HughUtility.Vibration.Vibrate((long)100);
+                HughUtility.Vibration.Vibrate((long)100);
 #endif
-                    collision.gameObject.GetComponent<Enemy>().Damaged(Power);
-                    break;
+                collision.gameObject.GetComponent<Enemy>().DamagedToEgg(eggPower);
             }
-            anim.SetInteger("IsBreak", 1);
-            Invoke("DestoryEgg", 0.1f);
+
+            await DestroyEggCoroutine();
         }
+
     }
+
+    private IEnumerator DestroyEggCoroutine() => UniTask.ToCoroutine(async () =>
+    {
+        anim.SetInteger("IsBreak", 1);
+        await UniTask.Delay(TimeSpan.FromSeconds(0.05f), ignoreTimeScale: false);
+        DestroyEgg();
+    });
 
     #region Object Pool Function
     /// <summary>
@@ -59,13 +66,13 @@ public class Egg : MonoBehaviour, IEggPower
     /// <summary>
     /// 생성된 Egg object를 pool에 반환한다
     /// </summary>
-    public void DestoryEgg()
-    {
+    private void DestroyEgg()
+    {   
         if (!IsPoolRelease)
         {
             ManageEggPool.Release(this);
             IsPoolRelease = true;
-        }
+        }     
     }
     #endregion
 }

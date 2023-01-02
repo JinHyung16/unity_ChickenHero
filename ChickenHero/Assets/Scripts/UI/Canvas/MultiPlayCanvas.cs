@@ -16,11 +16,6 @@ public class MultiPlayCanvas : MonoBehaviour
     {
         InitMultiPlayCanvas();
     }
-    private void Update()
-    {
-        UpdateGameTime();
-        UpdateScoreMultiPlay();
-    }
 
     /// <summary>
     /// 초기 MultiPlay Scene UI 설정
@@ -33,28 +28,14 @@ public class MultiPlayCanvas : MonoBehaviour
         remoteScoreText.text = remoteScore.ToString();
     }
 
-
-    private void UpdateGameTime()
-    {
-        if (GameManager.GetInstance.IsGameStart)
-        {
-            timerText.text = GameManager.GetInstance.GameTime.ToString("F1");
-        }
-    }
-
     /// <summary>
     /// Score Update해서 UI로 화면에 보여준다
     /// </summary>
     private void UpdateScoreMultiPlay()
     {
-        if (GameManager.GetInstance.IsEnemyDown)
-        {
-            localScore = GameManager.GetInstance.LocalUserScore;
-            remoteScore = GameManager.GetInstance.RemoteUserScore;
+        localScore = GameManager.GetInstance.PlayerScore;
 
-            localScoreText.text = localScore.ToString();
-            remoteScoreText.text = remoteScore.ToString();
-            GameManager.GetInstance.IsEnemyDown = false;
-        }
+        localScoreText.text = localScore.ToString();
+        remoteScoreText.text = remoteScore.ToString();
     }
 }

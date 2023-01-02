@@ -4,7 +4,7 @@ using UnityEngine;
 using TMPro;
 using HughUtility.Observer;
 
-public class ShopPanel : MonoBehaviour, IObserver
+public class ShopPanel : MonoBehaviour, LobbyObserver
 {
     [SerializeField] private TMP_Text upgradaePowerTxt; //현재 power 단계 보여주는 text
     [SerializeField] private TMP_Text goldTxt; //업그레이드시 필요한 골드량 보여주는 text

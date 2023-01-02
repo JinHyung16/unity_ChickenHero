@@ -2,35 +2,53 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Pool;
 using System;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 
-public class Enemy : MonoBehaviour, IDamage
+public class Enemy : MonoBehaviour
 {
     [SerializeField] private Animator anim;
 
     [SerializeField] private Rigidbody2D rigid2D;
     [SerializeField] private SpriteRenderer spriteRenderer;
-    
+
     //enemy move
     private Vector2 direction;
     [SerializeField] private float moveSpeed;
-    private IEnumerator DirectionThinkIEnum;
-    [SerializeField] private float thinkTime;
-
-    //enemy despawn time
-    private IEnumerator DespawnIEnum;
-    [SerializeField] private float despawnTime;
-
-    //enemy HP
-    public int HP { get; set; }
 
     //object pooy
     private IObjectPool<Enemy> ManageEnemyPool; //기본 enemy관리하는 pool
     private bool IsRelease = false;
 
+    //Enemy HP 관련
+    private int enemyHP;
+
+    //UniTask 관련
+    private CancellationTokenSource tokenSource;
+
+    private void OnEnable()
+    {
+        tokenSource = new CancellationTokenSource();
+        spriteRenderer.sortingOrder = -2;
+
+        moveSpeed = 3.0f;
+
+        AutoDespawnEnemy().Forget();
+        TinkMoveDirection().Forget();
+
+        enemyHP = 4;
+
+        IsRelease = false;
+    }
+
+    private void OnDisable()
+    {
+        tokenSource.Cancel();
+    }
 
     private void FixedUpdate()
     {
-        EnemyAutoMove();
+        EnemyAutoMovement();
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -53,71 +71,46 @@ public class Enemy : MonoBehaviour, IDamage
                     break;
             }
         }
-    }
 
-    private void OnEnable()
-    {
-        HP = 10;
-        spriteRenderer.sortingOrder = -2;
-
-        despawnTime = 5.0f;
-        DespawnIEnum = DespawnEnemyCoroutine();
-        StartCoroutine(DespawnIEnum);
-
-        moveSpeed = 3.0f;
-        thinkTime = 3.0f;
-        DirectionThinkIEnum = ThinkMoveDirectionCoroutine();
-        StartCoroutine(DirectionThinkIEnum);
-
-        IsRelease = false;
-    }
-
-    public void Damaged(int damage)
-    {
-        HP -= damage;
-        anim.SetTrigger("IsHurt");
-
-        if (HP <= 0)
+        if (collision.gameObject.CompareTag("Egg"))
         {
-            EnemyDieUpdateToDisplay();
-            DestoryEnemy();
+            anim.SetTrigger("IsHurt");
         }
     }
-    
-    /// <summary>
-    /// HP가 0아래로 떨어지 않은 Enemy들을 Pool에 반환해주는 함수
-    /// UniTask를 이용해 콜백을 주어 DespawnTime이후 반환되게 설정
-    /// </summary>
-    private IEnumerator DespawnEnemyCoroutine()
+
+    public void DamagedToEgg(int damage)
     {
-        yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(despawnTime);
-        DestoryEnemy();
+        this.enemyHP -= damage;
+        if (enemyHP <= 0)
+        {
+            Debug.Log("Enemy HP: " + enemyHP);
+
+            tokenSource.Cancel();
+            DestroyEnemy();
+        }
     }
 
     /// <summary>
-    /// Enemy가 파괴될 때 실행되는 Coroutine이다.
-    /// 0.5초뒤에 Pool에 반환하고 Animation을 변환시킨다
+    /// Enemy 생성 후, 죽지 않으면 자동으로 특정 시간 지난 후 사라지게 해주는 함수
     /// </summary>
-    /// <returns> IEnumerator 반환 </returns>
+    private async UniTaskVoid AutoDespawnEnemy()
+    {
+        await UniTask.Delay(TimeSpan.FromSeconds(5), ignoreTimeScale: false, cancellationToken: tokenSource.Token);
+        DestroyEnemy();
+    }
 
     /// <summary>
-    /// 움직임 관련
+    /// Direction 방향으로 FixedUpdate에서 실행되는 움직임 함수
     /// </summary>
-    private void EnemyAutoMove()
+    private void EnemyAutoMovement()
     {
         rigid2D.velocity = direction * moveSpeed;
-
-        if (direction.x <= rigid2D.position.x && direction.y <= rigid2D.position.y)
-        {
-            thinkTime -= 1.0f;
-        }
     }
 
     /// <summary>
-    /// 움직일 방향을 특정 시간마다 설정하는 코루틴
+    /// UniTask Coroutine을 실행하는 움직임 방향 바꾸는 함수
     /// </summary>
-    /// <returns> IEnumerator 객체 반환 </returns>
-    private IEnumerator ThinkMoveDirectionCoroutine()
+    private async UniTaskVoid TinkMoveDirection()
     {
         while (true)
         {
@@ -125,15 +118,8 @@ public class Enemy : MonoBehaviour, IDamage
             float y = UnityEngine.Random.Range(-1.0f, 1.0f);
 
             direction = new Vector2(x, y);
-            yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(thinkTime);
+            await UniTask.Delay(TimeSpan.FromSeconds(3), ignoreTimeScale: false, cancellationToken: tokenSource.Token);
         }
-    }
-
-    private void EnemyDieUpdateToDisplay()
-    {
-        GameManager.GetInstance.UserGold += 10;
-        GameManager.GetInstance.LocalUserScore += 1;
-        GameManager.GetInstance.IsEnemyDown = true;
     }
 
     #region Object Pool
@@ -152,7 +138,7 @@ public class Enemy : MonoBehaviour, IDamage
     /// GameManager의 LocalUser 점수를 Update 해준다.
     /// GameManager의 점수를 Update하라고 신호를 준다.
     /// </summary>
-    private void DestoryEnemy()
+    private void DestroyEnemy()
     {
         if (!IsRelease)
         {

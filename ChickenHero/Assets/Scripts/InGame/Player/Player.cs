@@ -8,10 +8,16 @@ public class Player : MonoBehaviour
 {
     [SerializeField] private ChickenData chickenData;
 
-    //chicken 종류별 data 담기
+    //chicken data 관련 바인딩할 변수
     private SpriteRenderer spriteRenderer;
-    private int hp;
-
+    private int playerHP;
+    public int PlayerHP
+    {
+        get
+        {
+            return playerHP;
+        }
+    }
     // 던지는 것 관련
     private Vector2 targetVec = Vector2.zero;
     [SerializeField] private Transform playerTrans;
@@ -36,7 +42,7 @@ public class Player : MonoBehaviour
     {
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         spriteRenderer.sprite = chickenData.playerSprite;
-        hp = chickenData.chickenHP;
+        playerHP = chickenData.chickenHP;
     }
 
     /// <summary>

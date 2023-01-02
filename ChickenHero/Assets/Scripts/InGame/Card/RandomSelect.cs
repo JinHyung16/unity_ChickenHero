@@ -6,7 +6,7 @@ using System;
 using UnityEngine.UI;
 using TMPro;
 
-public class RandomSelect : MonoBehaviour, ISubject
+public class RandomSelect : MonoBehaviour, LobbySubject
 {
     [SerializeField] private Button radomPickBtn;
     [SerializeField] private TMP_Text randomPickTxt;
@@ -169,7 +169,7 @@ public class RandomSelect : MonoBehaviour, ISubject
 
     [SerializeField] private LobbyCanvas LobbyCanvasObserver;
     [SerializeField] private ShopPanel ShopPanelObserver;
-    private List<IObserver> ObserverList = new List<IObserver>(); //Objserver들 저장할 List
+    private List<LobbyObserver> ObserverList = new List<LobbyObserver>(); //Objserver들 저장할 List
 
     /// <summary>
     /// Observer들을 Observer List에 저장해두는 함수
@@ -191,12 +191,12 @@ public class RandomSelect : MonoBehaviour, ISubject
     }
 
 
-    public void RegisterObserver(IObserver observer)
+    public void RegisterObserver(LobbyObserver observer)
     {
         this.ObserverList.Add(observer);
     }
 
-    public void RemoveObserver(IObserver observer)
+    public void RemoveObserver(LobbyObserver observer)
     {
         this.ObserverList.Remove(observer);
     }

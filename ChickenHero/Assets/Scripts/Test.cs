@@ -44,18 +44,6 @@ public class Test : MonoBehaviour
         
     }
 
-    public void ButtonOne()
-    {
-        Debug.Log("Button One");
-        LobbySceneManager.GetInstance.PopupPanel(LobbySceneManager.UIType.OptionPanel, LobbyCanvasTrans);
-    }
-
-    public void ButtonTwo()
-    {
-        Debug.Log("Button Two");
-        LobbySceneManager.GetInstance.PopupPanel(LobbySceneManager.UIType.PlayModePanel, LobbyCanvasTrans);
-    }
-
     private void PoolTest()
     {
         GameObject testEgg = null;

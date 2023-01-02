@@ -10,7 +10,7 @@ using UnityEngine.EventSystems;
 using HughUI; //UIType 사용을 위해
 using HughUtility.Observer;
 
-public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, IObserver
+public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
 {
     [Tooltip("TopPanel에 붙는 UI들")]
     [SerializeField] private TMP_Text nameTxt;

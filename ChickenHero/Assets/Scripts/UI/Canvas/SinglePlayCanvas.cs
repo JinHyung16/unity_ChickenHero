@@ -4,25 +4,26 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using HughUtility;
+using HughUtility.Observer;
 
-
-public class SinglePlayCanvas : MonoBehaviour
+public class SinglePlayCanvas : MonoBehaviour, GameObserver
 {
     //about UI
-    [SerializeField] private TMP_Text scoreTxt;
+    [SerializeField] private TMP_Text playerScoreTxt;
 
-    [SerializeField] private TMP_Text timerTxt;
+    [SerializeField] private TMP_Text playerHPTxt;
 
-    private int score = 0;
+    private int playerHp = 0;
+    private int playerScore = 0;
 
     private void Start()
     {
         InitSinglePlayCanvas();
+        GameManager.GetInstance.RegisterObserver(this);
     }
-    private void Update()
+    private void OnDestroy()
     {
-        UpdateScoreSinglePlay();
-        UpdateGameTime();
+        GameManager.GetInstance.RemoveObserver(this);
     }
 
     /// <summary>
@@ -30,31 +31,14 @@ public class SinglePlayCanvas : MonoBehaviour
     /// </summary>
     private void InitSinglePlayCanvas()
     {
-        score = 0;
-
-        scoreTxt.text = score.ToString();
+        playerScore = 0;
+        DisplayUpdate();
     }
 
-    private void UpdateGameTime()
+    private void DisplayUpdate()
     {
-        if (GameManager.GetInstance.IsGameStart)
-        {
-            timerTxt.text = GameManager.GetInstance.GameTime.ToString("F1");
-        }
-    }
-
-    /// <summary>
-    ///  Enemy를 잡았을 때, 점수를 계속 갱신한다
-    ///  MltiPlay, SinglePlay 모두 UI로 보여줌
-    /// </summary>
-    private void UpdateScoreSinglePlay()
-    {
-        if (GameManager.GetInstance.IsEnemyDown)
-        {
-            score = GameManager.GetInstance.LocalUserScore;
-            scoreTxt.text = score.ToString();
-            GameManager.GetInstance.IsEnemyDown = false;
-        }
+        playerHPTxt.text = playerHp.ToString();
+        playerScoreTxt.text = playerScore.ToString();
     }
 
     /// <summary>
@@ -66,4 +50,18 @@ public class SinglePlayCanvas : MonoBehaviour
         SceneController.GetInstance.GoToScene("Lobby");
         GameManager.GetInstance.GameExit();
     }
+
+    #region Observer 패턴 구현 - GameObserver
+    public void UpdateHPText(int playerHP)
+    {
+        this.playerHp = playerHP;
+        DisplayUpdate();
+    }
+
+    public void UpdateScoreText(int score)
+    {
+        this.playerScore = score;
+        DisplayUpdate();
+    }
+    #endregion
 }
