@@ -17,7 +17,7 @@ public class LoginCanvas : MonoBehaviour
 
             MatchManager.GetInstance.SaveUserInfoServer(nickName, LocalData.GetInstance.Gold);
             await GameServer.GetInstance.LoginToDevice();
-            SceneController.GetInstance.GoToScene("Lobby");
+            SceneController.GetInstance.GoToScene("Lobby").Forget();
         }
     }
 
@@ -26,7 +26,7 @@ public class LoginCanvas : MonoBehaviour
         if (CheckInputName)
         {
             UserInfoSetting();
-            SceneController.GetInstance.GoToScene("Lobby");
+            SceneController.GetInstance.GoToScene("Lobby").Forget();
         }
     }
 
@@ -71,7 +71,7 @@ public class LoginCanvas : MonoBehaviour
         else
         {
             LocalData.GetInstance.Name = nickName;
-            LocalData.GetInstance.Gold = 0;
+            LocalData.GetInstance.Gold = 99999;
         }
     }
 }

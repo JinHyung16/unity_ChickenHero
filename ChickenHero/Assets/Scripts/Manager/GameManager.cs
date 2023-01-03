@@ -4,10 +4,10 @@ using UnityEngine;
 using HughGeneric;
 using System;
 using HughUtility.Observer;
+using UnityEngine.SocialPlatforms.Impl;
 
 sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
 {
-    public int userGold { get; set; }
     public bool IsGameStart { get; set; }
 
     private int playerScore;
@@ -15,9 +15,11 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
     {
         get { return playerScore; }
     }
-    private int playerHP;
 
-    [SerializeField] private GameObject OfflinePlayerPrefab;
+    private int playerHP;
+    public int PlayerHP { set { this.playerHP = value; } }
+
+    [SerializeField] private GameObject playerPrefab;
     [SerializeField] private Transform playerSpawnPoint;
 
     [SerializeField] private EnemySpawner enemySpawner;
@@ -26,9 +28,9 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
 
     private void Start()
     {
-        if (OfflinePlayerPrefab == null)
+        if (playerPrefab == null)
         {
-            OfflinePlayerPrefab = Resources.Load("Player/Offline Player") as GameObject;
+            playerPrefab = Resources.Load("Player/Offline Player") as GameObject;
         }
     }
 
@@ -37,13 +39,15 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
     /// </summary>
     public void GameStart()
     {
+        playerScore = 0;
+
         IsGameStart = true;
 
-        enemySpawner.InitEnemySpawnerPooling();
+        enemySpawner.StartEnemySpawnerPooling();
 
         if (GameServer.GetInstance.IsLogin == false)
         {
-            offlinePlayer = Instantiate(OfflinePlayerPrefab);
+            offlinePlayer = Instantiate(playerPrefab);
             offlinePlayer.transform.SetParent(this.gameObject.transform);
             offlinePlayer.SetActive(true);
             offlinePlayer.transform.position = playerSpawnPoint.position;
@@ -56,7 +60,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
     public void GameExit()
     {
         IsGameStart = false;
-        enemySpawner.EnemySpanwStop();
+        enemySpawner.StopEnemySpawnerPooling();
 
         if (GameServer.GetInstance.IsLogin == false)
         {
@@ -70,16 +74,27 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
     public void GameClear()
     {
         IsGameStart = false;
-        enemySpawner.EnemySpanwStop();
+        enemySpawner.StopEnemySpawnerPooling();
 
-        LocalData.GetInstance.Gold = userGold;
-        SceneController.GetInstance.GoToScene("Lobby");
+        playerScore /= 5;
+        int gold = playerScore;
+        LocalData.GetInstance.Gold += gold;
+        SceneController.GetInstance.GoToScene("Lobby").Forget();
+    }
+    
+    public void UpdateHPInGame(int damange)
+    {
+        this.playerHP -= damange;
+        NotifyObservers();
+        if (this.playerHP <= 0)
+        {
+            GameClear();
+        }
     }
 
-    public void SetGameplayInfo(int hp, int score)
+    public void UpdateScoreInGame()
     {
-        this.playerHP = hp;
-        this.playerScore = score;
+        this.playerScore += 1;
         NotifyObservers();
     }
 
@@ -98,7 +113,6 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
     public void RegisterObserver(GameObserver observer)
     {
         GameObserverList.Add(observer);
-        Debug.Log("GameManager Observer °¹¼ö" + GameObserverList.Count);
     }
 
     public void RemoveObserver(GameObserver observer)

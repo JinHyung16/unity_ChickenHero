@@ -6,6 +6,7 @@ using UnityEngine.Pool;
 using Cysharp.Threading.Tasks;
 using System;
 using HughUtility;
+using System.Threading;
 
 public class Egg : MonoBehaviour
 {
@@ -17,40 +18,55 @@ public class Egg : MonoBehaviour
     private bool IsPoolRelease = false;
 
     //Egg Power
-    [SerializeField] private int eggPower;
+    public int EggPower { get; private set; }
+
+    //UniTask 관련
+    private CancellationTokenSource tokenSource;
 
     private void OnEnable()
     {
-        eggPower = 1;
+        if (tokenSource != null)
+        {
+            tokenSource.Dispose();
+        }
+        tokenSource = new CancellationTokenSource();
+
+        EggPower = 1;
         spriteRenderer.sortingOrder = 0;
         IsPoolRelease = false;
 
         anim.SetInteger("IsBreak", 0);
     }
+    private void OnDisable()
+    {
+        tokenSource.Cancel();
+    }
 
-    private async void OnTriggerEnter2D(Collider2D collision)
+    private void OnDestroy()
+    {
+        tokenSource.Cancel();
+        tokenSource.Dispose();
+    }
+    private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject != null)
         {
             if (collision.gameObject.CompareTag("Enemy"))
             {
-#if UNITY_ANDROID
-                HughUtility.Vibration.Vibrate((long)100);
-#endif
-                collision.gameObject.GetComponent<Enemy>().DamagedToEgg(eggPower);
+                HughUtility.Vibration.Vibrate(1000);
             }
-
-            await DestroyEggCoroutine();
+            //경고 무시하려고 Forget붙임
+            DestroyEggCoroutine().Forget();
         }
 
     }
-
-    private IEnumerator DestroyEggCoroutine() => UniTask.ToCoroutine(async () =>
+    
+    private async UniTaskVoid DestroyEggCoroutine()
     {
         anim.SetInteger("IsBreak", 1);
-        await UniTask.Delay(TimeSpan.FromSeconds(0.05f), ignoreTimeScale: false);
+        await UniTask.Delay(TimeSpan.FromSeconds(0.1f), cancellationToken: tokenSource.Token);
         DestroyEgg();
-    });
+    }
 
     #region Object Pool Function
     /// <summary>

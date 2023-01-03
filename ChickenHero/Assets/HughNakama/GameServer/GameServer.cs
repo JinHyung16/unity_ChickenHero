@@ -5,6 +5,8 @@ using Nakama;
 using System.Net.Http;
 using System.Threading.Tasks;
 using HughGeneric;
+using Cysharp.Threading.Tasks;
+
 public partial class GameServer : LazySingleton<GameServer>
 {
     protected string Scheme = "http";
@@ -25,7 +27,7 @@ public partial class GameServer : LazySingleton<GameServer>
     public string userNickName;
     public bool IsLogin = false;
 
-    public async Task<ApiResponseException> LoginToDevice()
+    public async UniTask<ApiResponseException> LoginToDevice()
     {
 #if UNITY_EDITOR
         Debug.LogFormat("<color=orange><b>[Game-Server]</b> DeviceLogin : Host : {0}, Port : {1} </color>", Host, Port);
@@ -121,7 +123,7 @@ public partial class GameServer : LazySingleton<GameServer>
     }
     */
 
-    public async Task Disconnect()
+    public async UniTask Disconnect()
     {
         if (Socket != null)
         {
@@ -139,7 +141,7 @@ public partial class GameServer : LazySingleton<GameServer>
 #endif
     }
 
-    public async Task GetAccoount()
+    public async UniTask GetAccoount()
     {
         var response = await Client.GetAccountAsync(Session);
         userNickName = response.User.Username;
@@ -147,7 +149,7 @@ public partial class GameServer : LazySingleton<GameServer>
         Debug.LogFormat("userid : {0}", response.User.Id);
     }
 
-    public async Task<ApiResponseException> UpdateAccount(string username)
+    public async UniTask<ApiResponseException> UpdateAccount(string username)
     {
         try
         {

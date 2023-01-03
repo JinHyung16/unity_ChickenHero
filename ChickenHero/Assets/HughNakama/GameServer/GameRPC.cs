@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Threading.Tasks;
 using Packet.GameServer;
 using Newtonsoft.Json;
+using Cysharp.Threading.Tasks;
 
 public partial class GameServer
 {
@@ -10,7 +11,7 @@ public partial class GameServer
     /// </summary>
 
     #region User
-    public async Task SetUserInfo(ReqSetUserPacket req)
+    public async UniTask SetUserInfo(ReqSetUserPacket req)
     {
         string json = JsonConvert.SerializeObject(req);
         var res = await Client.RpcAsync(Session, "set_user_info", json);
@@ -19,7 +20,7 @@ public partial class GameServer
 #endif 
     }
 
-    public async Task<UserData> GetUserInfo(ReqUserInfoPacket req)
+    public async UniTask<UserData> GetUserInfo(ReqUserInfoPacket req)
     {
         string json = JsonConvert.SerializeObject(req);
         var res = await Client.RpcAsync(Session, "get_user_info", json);
@@ -29,7 +30,7 @@ public partial class GameServer
         return JsonConvert.DeserializeObject<UserData>(res.Payload);
     }
 
-    public async Task RemoveUserInfo(ReqUserInfoPacket req)
+    public async UniTask RemoveUserInfo(ReqUserInfoPacket req)
     {
         string json = JsonConvert.SerializeObject(req);
         var res = await Client.RpcAsync(Session, "remove_user_info", json);

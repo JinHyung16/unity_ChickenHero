@@ -11,13 +11,7 @@ public class Player : MonoBehaviour
     //chicken data 관련 바인딩할 변수
     private SpriteRenderer spriteRenderer;
     private int playerHP;
-    public int PlayerHP
-    {
-        get
-        {
-            return playerHP;
-        }
-    }
+
     // 던지는 것 관련
     private Vector2 targetVec = Vector2.zero;
     [SerializeField] private Transform playerTrans;
@@ -38,11 +32,17 @@ public class Player : MonoBehaviour
         Attack();
     }
 
+    /// <summary>
+    /// OnEnable시 OnEnable에서 수행할 데이터 초기화 부분
+    /// </summary>
     private void InitChickenData()
     {
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         spriteRenderer.sprite = chickenData.playerSprite;
+
         playerHP = chickenData.chickenHP;
+        GameManager.GetInstance.PlayerHP = this.playerHP;
+        GameManager.GetInstance.NotifyObservers();
     }
 
     /// <summary>

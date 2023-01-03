@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using Cysharp.Threading.Tasks;
+using System;
+using System.Threading;
 
 public class EnemySpawner : MonoBehaviour
 {
@@ -10,7 +13,6 @@ public class EnemySpawner : MonoBehaviour
     /// Single Play, Multi Play 상관없이 Enemy는 생성시켜야 하기 때문에
     /// Game을 시작하려고 Scene을 이동함에 따라 GameManger에서 이를 실행시키도록 한다.
     /// </summary>
-
 
     //enemy pooling해서 배치할 위치 범위 지정하기
     [SerializeField] private float xPosRight;
@@ -23,38 +25,45 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private float enemySpawnTime = 0;
     private IObjectPool<Enemy> enemyPool;
 
-    IEnumerator enemySpawn;
+    //UniTask 관련
+    private CancellationTokenSource tokenSource;
 
-    public void InitEnemySpawnerPooling()
+    public void StartEnemySpawnerPooling()
     {
         xPosRight = 2.0f; 
         xPosLeft = -2.0f;
         yPosUp = 3.0f;
         yPosDown = -3.0f;
 
-        enemySpawnTime = 1.0f;
+        //tokenSource가 이미 할당되어 있다면 해제하고 다시 생성하자
+        if (tokenSource != null)
+        {
+            tokenSource.Dispose();
+        }
+        tokenSource = new CancellationTokenSource();
+
+        enemySpawnTime = 1.5f;
         enemyPool = new ObjectPool<Enemy>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, true, 10, maxSize: 20);
-        enemySpawn = EnemySpawnCoroutine();
 
-        StartCoroutine(enemySpawn);
+        EnemySpawnCoroutine().Forget();
     }
 
-    public void EnemySpanwStop()
+    public void StopEnemySpawnerPooling()
     {
-        StopCoroutine(enemySpawn);
+        tokenSource.Cancel();
     }
 
-    private IEnumerator EnemySpawnCoroutine()
+    private async UniTaskVoid EnemySpawnCoroutine()
     {
         while (true)
         {
-            var posX = Random.Range(xPosLeft, xPosRight);
-            var posY = Random.Range(yPosUp, yPosDown);
+            var posX = UnityEngine.Random.Range(xPosLeft, xPosRight);
+            var posY = UnityEngine.Random.Range(yPosUp, yPosDown);
             Vector2 posVec = new(posX, posY);
 
             var enemy = enemyPool.Get();
             enemy.transform.position = posVec;
-            yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(enemySpawnTime);
+            await UniTask.Delay(TimeSpan.FromSeconds(enemySpawnTime), cancellationToken: tokenSource.Token);
         }
     }
 

@@ -93,9 +93,9 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     {
         if (GameServer.GetInstance.IsLogin)
         {
-            SceneController.GetInstance.GoToScene("MultiPlay");
+            //GameManager.GetInstance.GameStart();
+            SceneController.GetInstance.GoToScene("MultiPlay").Forget();
             await MatchManager.GetInstance.MatchSetup();
-            GameManager.GetInstance.GameStart();
         }
     }
 
@@ -105,8 +105,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     /// </summary>
     public void GoToSinglePlay()
     {
-        SceneController.GetInstance.GoToScene("SinglePlay");
-        GameManager.GetInstance.GameStart();
+        SceneController.GetInstance.GoToScene("SinglePlay").Forget();
     }
 
     /// <summary>
@@ -135,7 +134,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     public void ClearUserInfo()
     {
         LocalData.GetInstance.ClearAllUserInfo();
-        SceneController.GetInstance.GoToScene("Login");
+        SceneController.GetInstance.GoToScene("Login").Forget();
     }
     #endregion
 

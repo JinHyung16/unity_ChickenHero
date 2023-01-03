@@ -345,8 +345,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8f5cfe10ffb57044a130cccd26fb4ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  curTime: 0
-  OfflinePlayerPrefab: {fileID: 2086069329814629313, guid: 8a1b3bf59d28c29408eea1eebcf7be35, type: 3}
+  playerPrefab: {fileID: 2086069329814629313, guid: 8a1b3bf59d28c29408eea1eebcf7be35, type: 3}
   playerSpawnPoint: {fileID: 327181879}
   enemySpawner: {fileID: 2071353456}
 --- !u!4 &707844837

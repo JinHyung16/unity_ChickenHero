@@ -16,12 +16,16 @@ public class SinglePlayCanvas : MonoBehaviour, GameObserver
     private int playerHp = 0;
     private int playerScore = 0;
 
+    private void Awake()
+    {
+        GameManager.GetInstance.RegisterObserver(this);
+    }
     private void Start()
     {
         InitSinglePlayCanvas();
-        GameManager.GetInstance.RegisterObserver(this);
     }
-    private void OnDestroy()
+
+    private void OnDisable()
     {
         GameManager.GetInstance.RemoveObserver(this);
     }
@@ -31,6 +35,7 @@ public class SinglePlayCanvas : MonoBehaviour, GameObserver
     /// </summary>
     private void InitSinglePlayCanvas()
     {
+        GameManager.GetInstance.GameStart();
         playerScore = 0;
         DisplayUpdate();
     }
@@ -47,8 +52,8 @@ public class SinglePlayCanvas : MonoBehaviour, GameObserver
     /// </summary>
     public void ExitSingleGame()
     {
-        SceneController.GetInstance.GoToScene("Lobby");
         GameManager.GetInstance.GameExit();
+        SceneController.GetInstance.GoToScene("Lobby").Forget();
     }
 
     #region Observer 패턴 구현 - GameObserver
