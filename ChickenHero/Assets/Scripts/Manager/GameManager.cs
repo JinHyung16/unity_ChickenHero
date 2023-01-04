@@ -4,7 +4,6 @@ using UnityEngine;
 using HughGeneric;
 using System;
 using HughUtility.Observer;
-using UnityEngine.SocialPlatforms.Impl;
 
 sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
 {

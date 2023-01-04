@@ -2,18 +2,34 @@ using UnityEngine.SceneManagement;
 using HughGeneric;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using DG.Tweening;
+using TMPro;
+using System;
 
-sealed class SceneController : LazySingleton<SceneController>
+sealed class SceneController : Singleton<SceneController>
 {
+    [SerializeField] private GameObject loadingCanvas;
+    private CanvasGroup loadingCanvasGroup;
+
+    [SerializeField] private TMP_Text loadingGaugeTxt;
+
     //실제 로딩 시간
     private float minLoadDuration = 4.0f;
 
     //로딩 시간 중 최솟값을 담을 변수
-    public float LoadRatio { get; private set; }
+    private float loadRatio;
 
     //fake 로딩 시간
     private float fakeLoadTime;
     private float fakeLoadRatio;
+
+    private void Start()
+    {
+        loadingCanvasGroup = loadingCanvas.GetComponent<CanvasGroup>();
+        loadingCanvasGroup.alpha = 1.0f;
+
+        loadingCanvas.SetActive(false);
+    }
 
     /// <summary>
     /// Scene 전환시 호출되는 비동기 함수
@@ -23,6 +39,8 @@ sealed class SceneController : LazySingleton<SceneController>
     /// <returns> UniTaskVoid를 리턴하는데 이는 async void와 동일 그러나 성능면 우위 </returns>
     public async UniTaskVoid GoToScene(string sceneName)
     {
+        loadingCanvas.SetActive(true);
+
         AsyncOperation loadSceneAsync = SceneManager.LoadSceneAsync(sceneName);
         if (loadSceneAsync == null)
         {
@@ -35,12 +53,16 @@ sealed class SceneController : LazySingleton<SceneController>
             //fake 로딩 시간 계산하기
             fakeLoadTime += Time.deltaTime;
             fakeLoadRatio = fakeLoadTime / minLoadDuration;
-
             //실제 로딩 시간과 fake 로딩 시간 중 최솟값으로 로딩률 지정하기
-            LoadRatio = Mathf.Min(loadSceneAsync.progress + 0.1f, fakeLoadRatio);
+            loadRatio = Mathf.Min(loadSceneAsync.progress + 0.1f, fakeLoadRatio);
 
-            if (LoadRatio >= 1.0f)
+            //text update하기
+            loadingGaugeTxt.text = (loadRatio * 100).ToString("F0") + "%";
+            
+            if (loadRatio >= 1.0f)
             {
+                loadingCanvasGroup.DOFade(1, 1.0f);
+                loadingCanvas.SetActive(false);
                 break;
             }
 

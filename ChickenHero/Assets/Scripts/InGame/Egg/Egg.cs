@@ -53,9 +53,8 @@ public class Egg : MonoBehaviour
         {
             if (collision.gameObject.CompareTag("Enemy"))
             {
-                HughUtility.Vibration.Vibrate(1000);
+                HughUtility.Vibration.Vibrate(100);
             }
-            //경고 무시하려고 Forget붙임
             DestroyEggCoroutine().Forget();
         }
 

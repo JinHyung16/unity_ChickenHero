@@ -1,78 +1,49 @@
-using UnityEngine;
 using System.Collections;
+using UnityEngine;
 
 namespace HughUtility
 {
     public static class Vibration
     {
-
 #if UNITY_ANDROID && !UNITY_EDITOR
-    public static AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-    public static AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-    public static AndroidJavaObject vibrator = currentActivity.Call<AndroidJavaObject>("getSystemService", "Vibrator");
-#else
-        public static AndroidJavaClass unityPlayer;
-        public static AndroidJavaObject currentActivity;
-        public static AndroidJavaObject vibrator;
+    public static AndroidJavaClass AndroidPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+    public static AndroidJavaObject AndroidcurrentActivity = AndroidPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+    public static AndroidJavaObject AndroidVibrator = AndroidcurrentActivity.Call<AndroidJavaObject>("getSystemService", "vibrator");
 #endif
-
         public static void Vibrate()
         {
-            if (isAndroid())
-            {
-                vibrator.Call("vibrate");
-            }
-            else
-            {
-                Handheld.Vibrate();
-            }
+#if UNITY_ANDROID && !UNITY_EDITOR
+        AndroidVibrator.Call("vibrate");
+#else
+            Handheld.Vibrate();
+#endif
         }
-
 
         public static void Vibrate(long milliseconds)
         {
-            if (isAndroid())
-            {
-                vibrator.Call("vibrate", milliseconds);
-            }
-            else
-            {
-                Handheld.Vibrate();
-            }
+#if UNITY_ANDROID && !UNITY_EDITOR
+        AndroidVibrator.Call("vibrate", milliseconds);
+#else
+            Handheld.Vibrate();
+#endif
         }
-
         public static void Vibrate(long[] pattern, int repeat)
         {
-            if (isAndroid())
-            {
-                vibrator.Call("vibrate", pattern, repeat);
-            }
-            else
-            {
-                Handheld.Vibrate();
-            }
-        }
 
-        public static bool HasVibrator()
-        {
-            return isAndroid();
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        AndroidVibrator.Call("vibrate", pattern, repeat);
+#else
+            Handheld.Vibrate();
+#endif
         }
 
         public static void Cancel()
         {
-            if (isAndroid())
-            {
-                vibrator.Call("cancel");
-            }
-        }
-
-        private static bool isAndroid()
-        {
 #if UNITY_ANDROID && !UNITY_EDITOR
-            return true;
-#else
-            return false;
+            AndroidVibrator.Call("cancel");
 #endif
         }
+
     }
 }

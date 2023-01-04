@@ -55,6 +55,18 @@ public class LocalData : Singleton<LocalData>
             PlayerPrefs.SetInt(userName + "Power", value);
         }
     }
+
+    public int UpgradeLevel
+    {
+        get
+        {
+            return PlayerPrefs.GetInt(userName + "UpgradeLevel");
+        }
+        set
+        {
+            PlayerPrefs.SetInt(userName + "UpgradeLevel", value);
+        }
+    }
     #endregion
 
     #region PlayerPrefs Control Function
@@ -95,16 +107,9 @@ public class LocalData : Singleton<LocalData>
     }
     #endregion
 
-    #region CSV Data
+    #region CSV Data Contorller Functions
 
-    private int randomPickGold;
-    public int PickCost
-    {
-        get
-        {
-            return randomPickGold;
-        }
-    }
+    public int PickCost { get; private set; }
 
     private Dictionary<string, int> UpgradeCostDictionary = new Dictionary<string, int>();
     
@@ -120,7 +125,7 @@ public class LocalData : Singleton<LocalData>
             int pickGold = int.Parse(csvDataList[i]["PickCost"].ToString(), System.Globalization.NumberStyles.Integer);
             if (pickGold != 0)
             {
-                randomPickGold = pickGold;
+                PickCost = pickGold;
             }
             AddDictinary(level, cost);
         }

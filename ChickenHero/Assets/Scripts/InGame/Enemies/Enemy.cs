@@ -40,7 +40,6 @@ public class Enemy : MonoBehaviour
 
         moveSpeed = 4.0f;
 
-        //경고 무시하려고 Forget붙임
         AutoDespawnEnemy().Forget();
         TinkMoveDirection().Forget();
 
