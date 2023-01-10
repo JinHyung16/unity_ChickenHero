@@ -16,4 +16,4 @@ MonoBehaviour:
   powerCardName: S
   powerCardDescription: +100
   cardPower: 100
-  cardWeighted: 1
+  cardWeighted: 10

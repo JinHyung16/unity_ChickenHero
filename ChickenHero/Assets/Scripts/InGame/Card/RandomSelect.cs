@@ -93,14 +93,14 @@ public class RandomSelect : MonoBehaviour, LobbySubject
     private PowerCardData RandomPowerCard()
     {
         int weighted = 0;
-        int referenceWeighted = 0;
+        int selectTotalWeight = 0;
 
-        referenceWeighted = Mathf.RoundToInt(powerCardDataWeightedTotal * UnityEngine.Random.Range(0.0f, 1.0f));
+        selectTotalWeight = Mathf.RoundToInt(powerCardDataWeightedTotal * UnityEngine.Random.Range(0.0f, 1.0f));
 
         foreach (var card in PowerCardDataList)
         {
             weighted += card.cardWeighted;
-            if (referenceWeighted <= weighted)
+            if (selectTotalWeight <= weighted)
             {
                 return card;
             }

@@ -78,7 +78,7 @@ public class LocalData : Singleton<LocalData>
     {
         PlayerPrefs.DeleteAll();
 
-        if (GameServer.GetInstance.IsLogin)
+        if (GameServer.GetInstance.GetIsServerConnect())
         {
             MatchManager.GetInstance.RemoveUserInfoServer(GameServer.GetInstance.userid);
         }

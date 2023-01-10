@@ -24,6 +24,8 @@ namespace HughUtility.Observer
     {
         void UpdateHPText(int playerHP);
         void UpdateScoreText(int score);
+
+        void UpdateAttackDamage();
     }
 
     public interface GameSubject

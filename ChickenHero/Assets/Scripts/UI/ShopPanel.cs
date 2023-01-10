@@ -10,7 +10,7 @@ public class ShopPanel : MonoBehaviour, LobbyObserver
     [SerializeField] private TMP_Text goldTxt; //업그레이드시 필요한 골드량 보여주는 text
 
     [SerializeField] private int upgradePower = 1;
-    [SerializeField] private int upgradeGold = 100; //업그레이드시 필요한 골드
+    [SerializeField] private int upgradeGold = 0; //업그레이드시 필요한 골드
 
     private int ownUpgradePower; //본인이 upgrade한 단계 저장한 값 담기
 
@@ -30,16 +30,16 @@ public class ShopPanel : MonoBehaviour, LobbyObserver
         if (upgradeGold <= LocalData.GetInstance.Gold)
         {
             upgradePower++;
-            LocalData.GetInstance.UpgradeLevel++;
+            LocalData.GetInstance.UpgradeLevel += 1;
 
             LocalData.GetInstance.Power += upgradePower;
+            upgradeGold = LocalData.GetInstance.GetUpgradeCost(LocalData.GetInstance.UpgradeLevel.ToString());
             DisplayUpdate();
         }
         else
         {
             return;
         }
-        upgradeGold = LocalData.GetInstance.GetUpgradeCost(LocalData.GetInstance.UpgradeLevel.ToString());
     }
 
     private void DisplayUpdate()

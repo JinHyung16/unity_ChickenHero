@@ -44,7 +44,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
 
         enemySpawner.StartEnemySpawnerPooling();
 
-        if (GameServer.GetInstance.IsLogin == false)
+        if (!GameServer.GetInstance.GetIsServerConnect())
         {
             offlinePlayer = Instantiate(playerPrefab);
             offlinePlayer.transform.SetParent(this.gameObject.transform);
@@ -61,7 +61,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
         IsGameStart = false;
         enemySpawner.StopEnemySpawnerPooling();
 
-        if (GameServer.GetInstance.IsLogin == false)
+        if (!GameServer.GetInstance.GetIsServerConnect())
         {
             Dispose();
         }
@@ -125,6 +125,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
         {
             observer.UpdateHPText(playerHP);
             observer.UpdateScoreText(playerScore);
+            observer.UpdateAttackDamage();
         }
     }
     #endregion

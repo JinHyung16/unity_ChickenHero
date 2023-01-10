@@ -2,23 +2,68 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using Cysharp.Threading.Tasks;
+using System;
 using UnityEngine.EventSystems;
+using System.Threading;
 
 public class LoginCanvas : MonoBehaviour
 {
+    [SerializeField] private GameObject LoginCheckPanel; //서버 연결이 안되어있을 때, 띄울 공지창
+    private CancellationTokenSource tokenSource;
+
     [SerializeField] private TMP_InputField NameInputField;
     private string nickName = string.Empty;
 
-    public async void OnLineStart()
+    private void Awake()
+    {
+        LoginCheckPanel.SetActive(false);
+        if (tokenSource != null)
+        {
+            tokenSource.Dispose();
+        }
+        tokenSource = new CancellationTokenSource();
+
+        LoginToServer();
+    }
+
+    private void OnDisable()
+    {
+        tokenSource.Cancel();
+    }
+    private void OnDestroy()
+    {
+        tokenSource.Cancel();
+        tokenSource.Dispose();
+    }
+
+    private async void LoginToServer()
+    {
+        await GameServer.GetInstance.LoginToDevice();
+    }
+
+    //public async void OnLineStart()
+    public void OnLineStart()
     {
         if (CheckInputName)
         {
-            UserInfoSetting();
+            if (GameServer.GetInstance.GetIsServerConnect())
+            {
+                UserInfoSetting();
+                SceneController.GetInstance.GoToScene("Lobby").Forget();
+            }
+            else
+            {
 
-            MatchManager.GetInstance.SaveUserInfoServer(nickName, LocalData.GetInstance.Gold);
-            await GameServer.GetInstance.LoginToDevice();
-            SceneController.GetInstance.GoToScene("Lobby").Forget();
+                LoginCheckPanelUpdate().Forget();
+            }
         }
+    }
+    private async UniTaskVoid LoginCheckPanelUpdate()
+    {
+        LoginCheckPanel.SetActive(true);
+        await UniTask.Delay(TimeSpan.FromSeconds(1.0f), cancellationToken: tokenSource.Token);
+        LoginCheckPanel.SetActive(false);
     }
 
     public void OffLineStart()

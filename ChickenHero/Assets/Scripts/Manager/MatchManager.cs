@@ -28,7 +28,7 @@ sealed class MatchManager : Singleton<MatchManager>
     /// </summary>
     public async Task MatchSetup()
     {
-        if (GameServer.GetInstance.IsLogin)
+        if (GameServer.GetInstance.GetIsServerConnect())
         {
             //about nakama match
             playerDictionary = new Dictionary<string, GameObject>();
@@ -50,7 +50,7 @@ sealed class MatchManager : Singleton<MatchManager>
     /// <param name="gold">유저의 재화량 전달</param>
     public async void SaveUserInfoServer(string name, int gold)
     {
-        if (GameServer.GetInstance.IsLogin)
+        if (GameServer.GetInstance.GetIsServerConnect())
         {
             ReqSetUserPacket reqData = new ReqSetUserPacket
             {
@@ -77,9 +77,10 @@ sealed class MatchManager : Singleton<MatchManager>
     /// Match를 진행한다
     /// </summary>
     /// <param name="minPlayer"> 최소 플레이어 인원을 설정한다. 기본은 2명 </param>
-    private async Task JoinMatch(int minPlayer = 2)
+    /// <param name="maxPlayer"> 최대 플레이어 인원을 설정한다. 기본은 2명 </param>
+    private async Task JoinMatch(int minPlayer = 2, int maxPlayer = 2)
     {
-        var matchMakingTicket = await GameServer.GetInstance.Socket.AddMatchmakerAsync("*", minPlayer, 2);
+        var matchMakingTicket = await GameServer.GetInstance.Socket.AddMatchmakerAsync("*", minPlayer, maxPlayer);
         ticket = matchMakingTicket.Ticket;
 #if UNITY_EDITOR
         Debug.Log("<color=green><b> Find Match </b></color>");

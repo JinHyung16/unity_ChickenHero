@@ -91,7 +91,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     /// </summary>
     public async void GoToMultiPlay()
     {
-        if (GameServer.GetInstance.IsLogin)
+        if (GameServer.GetInstance.GetIsServerConnect())
         {
             //GameManager.GetInstance.GameStart();
             SceneController.GetInstance.GoToScene("MultiPlay").Forget();
@@ -121,7 +121,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
         LocalData.GetInstance.Name = name;
         LocalData.GetInstance.Gold = gold;
 
-        if (GameServer.GetInstance.IsLogin)
+        if (GameServer.GetInstance.GetIsServerConnect())
         {
             MatchManager.GetInstance.SaveUserInfoServer(name, gold);
         }

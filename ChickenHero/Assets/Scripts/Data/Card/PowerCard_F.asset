@@ -16,4 +16,4 @@ MonoBehaviour:
   powerCardName: F
   powerCardDescription: Reset
   cardPower: 1
-  cardWeighted: 99
+  cardWeighted: 70

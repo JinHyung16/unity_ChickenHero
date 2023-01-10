@@ -22,10 +22,10 @@ if hugh_db_err != nil {
 }
 */
 
-var db_ip = "35.233.151.86"
-var db_url = "root:jinhyung@tcp(" + db_ip +")/"
-//var db_url = "root:jinhyung@tcp(34.83.17.105:3307)/"
+var db_ip = "34.145.19.90" //hugh_db VIM의 외부 IP
+var db_url = "root:jinhyung@tcp(" + db_ip + ")/"
 
+//var db_url = "root:jinhyung@tcp(34.83.17.105:3307)/"
 
 func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
 	println("----------------------------------------")
@@ -56,27 +56,25 @@ func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 	checkErr := hugh_db.QueryRow(checkQuery, reqData.UserId, reqData.UserName).Scan(&nameExist)
 	if checkErr != nil {
 		println("----------------------------------------")
-		println("[User] Error :: SetUserInfo - check DB\n", checkErr.Error())
+		println("[User] WARNING :: SetUserInfo - check DB\n", checkErr.Error())
 		println("----------------------------------------")
-		jsonData, _ := json.Marshal(reqData)
-		return string(jsonData), nil
 	}
 
 	//DB에 검색시 존재하지 않으면 DB insert 해주기
-	if  !nameExist{
+	if !nameExist {
 		println("----------------------------------------")
-		println("[User] Error :: SetUserInfo - check DB not exist name: ", nameExist)
+		println("[User] Check DB STATE IS FALSE :: Insert DB Start")
 		println("----------------------------------------")
 
 		insertContext := `user_id, user_name, user_gold`
-		insertValues := `VALUES(?, ?, ?)`
-		insertQuery := `INSERT INTO user_data` + ` ( ` + insertContext + ` ) ` + insertValues
+		insertValues := `VALUES (?, ?, ?)`
+		insertQuery := `INSERT INTO user_data` + ` (` + insertContext + `) ` + insertValues
 		_, insertErr := hugh_db.QueryContext(ctx, insertQuery,
 			reqData.UserId,
 			reqData.UserName,
 			reqData.UserGold,
 		)
-		
+
 		if insertErr != nil {
 			println("----------------------------------------")
 			println("[User] Error :: SetUserInfo - insert DB\n", insertErr.Error())
@@ -86,6 +84,9 @@ func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 		}
 	}
 
+	println("----------------------------------------")
+	println("[User] Check DB STATE IS TRUE :: Update DB Start")
+	println("----------------------------------------")
 	//DB에 검사시 존재한다면 Gold Upate 해주기
 	updateContext := `user_gold=?`
 	updateQuery := `UPDATE user_data ` + updateContext + `WHERE user_id=? and user_name=?`
@@ -94,7 +95,7 @@ func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 		reqData.UserId,
 		reqData.UserName,
 	)
-	
+
 	if updateErr != nil {
 		println("----------------------------------------")
 		println("[User] Error :: SetUserInfo - update DB\n", updateErr.Error())
@@ -102,7 +103,7 @@ func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 		jsonData, _ := json.Marshal(reqData)
 		return string(jsonData), nil
 	}
-	
+
 	println("----------------------------------------")
 	println("[User] 탈출 :: SetUserInfo")
 	println("========================================")
@@ -159,7 +160,7 @@ func RemoveUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk r
 	println("----------------------------------------")
 	println("[User] 진입 :: RemoveUserInfo")
 	println("----------------------------------------")
-	
+
 	hugh_db_rul := db_url
 	hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
 	if hugh_db_err != nil {

@@ -5,16 +5,23 @@ using UnityEngine;
 using UnityEngine.UI;
 using HughUtility;
 using HughUtility.Observer;
+using Cysharp.Threading.Tasks;
+using System;
+using System.Threading;
 
 public class SinglePlayCanvas : MonoBehaviour, GameObserver
 {
-    //about UI
+    //UI관련
     [SerializeField] private TMP_Text playerScoreTxt;
-
     [SerializeField] private TMP_Text playerHPTxt;
+
+    [SerializeField] private GameObject bloodEffectPanel;
 
     private int playerHp = 0;
     private int playerScore = 0;
+
+    //Camera Shake관련 바인딩
+    private CameraShake cameraShake;
 
     private void Awake()
     {
@@ -38,6 +45,9 @@ public class SinglePlayCanvas : MonoBehaviour, GameObserver
         GameManager.GetInstance.GameStart();
         playerScore = 0;
         DisplayUpdate();
+        bloodEffectPanel.SetActive(false);
+
+        cameraShake = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<CameraShake>();
     }
 
     private void DisplayUpdate()
@@ -67,6 +77,22 @@ public class SinglePlayCanvas : MonoBehaviour, GameObserver
     {
         this.playerScore = score;
         DisplayUpdate();
+    }
+
+    public void UpdateAttackDamage()
+    {
+        BloodEffectTask().Forget();
+        if (cameraShake != null)
+        {
+            cameraShake.CameraShaking();
+        }
+    }
+
+    private async UniTaskVoid BloodEffectTask()
+    {
+        bloodEffectPanel.SetActive(true);
+        await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: this.GetCancellationTokenOnDestroy());
+        bloodEffectPanel.SetActive(false);
     }
     #endregion
 }

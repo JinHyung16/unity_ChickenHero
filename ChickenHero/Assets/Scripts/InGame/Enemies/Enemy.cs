@@ -90,7 +90,6 @@ public class Enemy : MonoBehaviour
             anim.SetTrigger("IsHurt");
             var damage = collision.gameObject.GetComponent<Egg>().EggPower;
             DamagedToEgg(damage);
-
         }
     }
 
@@ -111,6 +110,7 @@ public class Enemy : MonoBehaviour
 
     /// <summary>
     /// Enemy 생성 후, 죽지 않으면 자동으로 특정 시간 지난 후 사라지게 해주는 함수
+    /// 사라지면서 Player를 때린다. 따라서 Player에게 데미지를 주는 함수들 호출해줘야 한다
     /// </summary>
     private async UniTaskVoid AutoDespawnEnemy()
     {

@@ -16,4 +16,4 @@ MonoBehaviour:
   powerCardName: B
   powerCardDescription: +1
   cardPower: 1
-  cardWeighted: 65
+  cardWeighted: 80
