@@ -2,9 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using HughUtility.Observer;
-using System;
 using UnityEngine.UI;
 using TMPro;
+using Cysharp.Threading.Tasks;
+using System;
 
 public class RandomSelect : MonoBehaviour, LobbySubject
 {
@@ -22,9 +23,6 @@ public class RandomSelect : MonoBehaviour, LobbySubject
     private Dictionary<string, GameObject> PowerCardDictionary = new Dictionary<string, GameObject>();
 
     private PowerCardData powerCardData; //뽑은 PowerCardData 담을 변수
-
-
-    private IEnumerator DisplayPickableIEnum;
 
     //Random Pick을 위해 필요한 비용
     private int pickCost = 0;
@@ -61,8 +59,6 @@ public class RandomSelect : MonoBehaviour, LobbySubject
         pickCost = LocalData.GetInstance.PickCost;
 
         radomPickBtn.onClick.AddListener(RandomCardOpen);
-
-        DisplayPickableIEnum = DisplaPickableCoroutine();
     }
 
     /// <summary>
@@ -79,9 +75,6 @@ public class RandomSelect : MonoBehaviour, LobbySubject
 
         powerCardDataWeightedTotal = 0;
         radomPickBtn.onClick.RemoveListener(RandomCardOpen);
-
-        StopCoroutine(DisplayPickableIEnum);
-        DisplayPickableIEnum = null;
     }
 
     /// <summary>
@@ -138,14 +131,14 @@ public class RandomSelect : MonoBehaviour, LobbySubject
         }
         else
         {
-            StartCoroutine(DisplayPickableIEnum);
+            DisplayPowerCardPickable().Forget();
         }
     }
 
-    private IEnumerator DisplaPickableCoroutine()
+    private async UniTaskVoid DisplayPowerCardPickable()
     {
         DisplaPickable(false);
-        yield return HughUtility.Cashing.YieldInstruction.WaitForSeconds(0.5f);
+        await UniTask.Delay(TimeSpan.FromSeconds(0.5f), cancellationToken: this.GetCancellationTokenOnDestroy());
         DisplaPickable(true);
     }
 
@@ -155,8 +148,6 @@ public class RandomSelect : MonoBehaviour, LobbySubject
         {
             randomPickTxt.text = "파워 뽑기\n" + pickCost;
             radomPickBtn.interactable = true;
-
-            DisplayPickableIEnum = DisplaPickableCoroutine();
         }
         else
         {

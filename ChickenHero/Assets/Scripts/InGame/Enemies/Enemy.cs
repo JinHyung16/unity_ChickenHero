@@ -43,7 +43,7 @@ public class Enemy : MonoBehaviour
         AutoDespawnEnemy().Forget();
         TinkMoveDirection().Forget();
 
-        enemyHP = 4;
+        enemyHP = 100;
 
         IsRelease = false;
     }
@@ -88,8 +88,7 @@ public class Enemy : MonoBehaviour
         if (collision.gameObject.CompareTag("Egg"))
         {
             anim.SetTrigger("IsHurt");
-            var damage = collision.gameObject.GetComponent<Egg>().EggPower;
-            DamagedToEgg(damage);
+            DamagedToEgg(LocalData.GetInstance.Power);
         }
     }
 
@@ -114,7 +113,7 @@ public class Enemy : MonoBehaviour
     /// </summary>
     private async UniTaskVoid AutoDespawnEnemy()
     {
-        await UniTask.Delay(TimeSpan.FromSeconds(5), cancellationToken: tokenSource.Token);
+        await UniTask.Delay(TimeSpan.FromSeconds(15.0f), cancellationToken: tokenSource.Token);
         GameManager.GetInstance.UpdateHPInGame(10);
         DestroyEnemy();
     }

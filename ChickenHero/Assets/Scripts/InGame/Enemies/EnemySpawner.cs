@@ -22,7 +22,6 @@ public class EnemySpawner : MonoBehaviour
 
     //기본 enemy pooling
     [SerializeField] private GameObject enemyPrefab;
-    [SerializeField] private float enemySpawnTime = 0;
     private IObjectPool<Enemy> enemyPool;
 
     //UniTask 관련
@@ -42,10 +41,9 @@ public class EnemySpawner : MonoBehaviour
         }
         tokenSource = new CancellationTokenSource();
 
-        enemySpawnTime = 1.5f;
         enemyPool = new ObjectPool<Enemy>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, true, 10, maxSize: 20);
 
-        EnemySpawnCoroutine().Forget();
+        EnemySpawn().Forget();
     }
 
     public void StopEnemySpawnerPooling()
@@ -53,7 +51,7 @@ public class EnemySpawner : MonoBehaviour
         tokenSource.Cancel();
     }
 
-    private async UniTaskVoid EnemySpawnCoroutine()
+    private async UniTaskVoid EnemySpawn()
     {
         while (true)
         {
@@ -63,7 +61,9 @@ public class EnemySpawner : MonoBehaviour
 
             var enemy = enemyPool.Get();
             enemy.transform.position = posVec;
-            await UniTask.Delay(TimeSpan.FromSeconds(enemySpawnTime), cancellationToken: tokenSource.Token);
+
+            float spawnTime = UnityEngine.Random.Range(5.0f, 10.0f);
+            await UniTask.Delay(TimeSpan.FromSeconds(spawnTime), cancellationToken: tokenSource.Token);
         }
     }
 

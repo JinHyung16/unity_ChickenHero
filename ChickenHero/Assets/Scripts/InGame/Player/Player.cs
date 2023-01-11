@@ -1,3 +1,4 @@
+using HughUtility.Observer;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -42,7 +43,7 @@ public class Player : MonoBehaviour
 
         playerHP = chickenData.chickenHP;
         GameManager.GetInstance.PlayerHP = this.playerHP;
-        GameManager.GetInstance.NotifyObservers();
+        GameManager.GetInstance.NotifyObservers(GameNotifyType.None);
     }
 
     /// <summary>

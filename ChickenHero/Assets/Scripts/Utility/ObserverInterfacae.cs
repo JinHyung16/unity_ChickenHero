@@ -32,7 +32,14 @@ namespace HughUtility.Observer
     {
         void RegisterObserver(GameObserver observer);
         void RemoveObserver(GameObserver observer);
-        void NotifyObservers();
+        void NotifyObservers(GameNotifyType notifyType);
+    }
+
+    public enum GameNotifyType
+    {
+        None = 0,
+        HPDown,
+        ScoreUp,
     }
     #endregion
 

@@ -5,7 +5,7 @@ using HughGeneric;
 using System;
 using HughUtility.Observer;
 
-sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
+sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
 {
     public bool IsGameStart { get; set; }
 
@@ -39,9 +39,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
     public void GameStart()
     {
         playerScore = 0;
-
         IsGameStart = true;
-
         enemySpawner.StartEnemySpawnerPooling();
 
         if (!GameServer.GetInstance.GetIsServerConnect())
@@ -79,12 +77,17 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
         int gold = playerScore;
         LocalData.GetInstance.Gold += gold;
         SceneController.GetInstance.GoToScene("Lobby").Forget();
+
+        if (!GameServer.GetInstance.GetIsServerConnect())
+        {
+            Dispose();
+        }
     }
     
     public void UpdateHPInGame(int damange)
     {
         this.playerHP -= damange;
-        NotifyObservers();
+        NotifyObservers(GameNotifyType.HPDown);
         if (this.playerHP <= 0)
         {
             GameClear();
@@ -94,7 +97,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
     public void UpdateScoreInGame()
     {
         this.playerScore += 1;
-        NotifyObservers();
+        NotifyObservers(GameNotifyType.ScoreUp);
     }
 
     /// <summary>
@@ -102,7 +105,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
     /// </summary>
     public void Dispose()
     {
-        offlinePlayer.SetActive(false);
+        Destroy(offlinePlayer);
         GC.SuppressFinalize(offlinePlayer);
     }
 
@@ -119,13 +122,24 @@ sealed class GameManager : Singleton<GameManager>, IDisposable, GameSubject
         GameObserverList.Remove(observer);
     }
 
-    public void NotifyObservers()
+    public void NotifyObservers(GameNotifyType notifyType)
     {
         foreach (var observer in GameObserverList)
         {
-            observer.UpdateHPText(playerHP);
-            observer.UpdateScoreText(playerScore);
-            observer.UpdateAttackDamage();
+            switch (notifyType)
+            {
+                case GameNotifyType.HPDown:
+                    observer.UpdateHPText(playerHP);
+                    observer.UpdateAttackDamage();
+                    break;
+                case GameNotifyType.ScoreUp:
+                    observer.UpdateScoreText(playerScore);
+                    break;
+                default:
+                    observer.UpdateScoreText(playerScore);
+                    observer.UpdateHPText(playerHP);
+                    break;
+            }
         }
     }
     #endregion
