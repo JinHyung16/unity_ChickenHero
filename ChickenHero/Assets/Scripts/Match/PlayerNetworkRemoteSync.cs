@@ -33,18 +33,10 @@ public class PlayerNetworkRemoteSync : MonoBehaviour
         // Decide what to do based on the Operation Code of the incoming state data as defined in OpCodes.
         switch (matchState.OpCode)
         {
-            case OpCodes.TimeDone:
+            case OpCodes.IsDie:
                 break;
             default:
                 break;
         }
     }
-
-    /*
-    private IDictionary<string, string> GetStateAsDictionary(byte[] state)
-    {
-        return Encoding.UTF8.GetString(state).FromJson<Dictionary<string, string>>();
-    }
-    */
-
 }

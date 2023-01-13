@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6835665905182480956}
   - component: {fileID: 1659320472104745266}
+  - component: {fileID: 7824589852482632081}
   m_Layer: 0
   m_Name: Remote Player
   m_TagString: Player
@@ -45,6 +46,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 657e9634e9e4d484891618e26df043fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7824589852482632081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2086069329814629313}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58a4aac2da4970c4c98c3d49eb38c394, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  chickenData: {fileID: 11400000, guid: 8302a3cec531ef14388b7ab83754dea1, type: 2}
+  playerTrans: {fileID: 31230632938525868}
+  IsThrow: 0
+  eggPrefab: {fileID: 1087430154396225430, guid: 37548a7c99c075e40899aba4717722fc, type: 3}
 --- !u!1 &8518060441450326359
 GameObject:
   m_ObjectHideFlags: 0
@@ -118,14 +135,14 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -1099318510, guid: 4c1ffcdd41f439246b1485ff79d52f15, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.31, y: 0.45}
+  m_Size: {x: 2.6357143, y: 3.6142857}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0

@@ -22,6 +22,8 @@ public class MultiPlayCanvas : MonoBehaviour
     /// </summary>
     private void InitMultiPlayCanvas()
     {
+        GameManager.GetInstance.GameStart();
+
         localScore = 0;
         remoteScore = 0;
         localScoreText.text = localScore.ToString();

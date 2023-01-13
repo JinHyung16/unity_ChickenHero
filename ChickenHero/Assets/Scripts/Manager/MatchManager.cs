@@ -2,10 +2,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using Nakama;
 using System.Threading.Tasks;
-using UnityEngine.UI;
 using HughGeneric;
 using Nakama.TinyJson;
 using Packet.GameServer;
+using Cysharp.Threading.Tasks;
+using TMPro;
+using static UnityEditor.Experimental.GraphView.GraphView;
+using System.Linq;
 
 sealed class MatchManager : Singleton<MatchManager>
 {
@@ -22,18 +25,27 @@ sealed class MatchManager : Singleton<MatchManager>
 
     [SerializeField] private GameObject SpawnPoint;
 
+    //Winning Display 관련 UI들
+    [SerializeField] private GameObject displayWinPanel;
+    [SerializeField] private TMP_Text winningPlayerText;
+    private string localDisplayName;
+
+    private void Start()
+    {
+        displayWinPanel.SetActive(false);
+    }
 
     /// <summary>
     /// 매칭 시작시 Match관련 SetUp을 진행하고 매칭을 시작하도록 한다.
     /// </summary>
-    public async Task MatchSetup()
+    public async UniTask InitMatchManager()
     {
         if (GameServer.GetInstance.GetIsServerConnect())
         {
             //about nakama match
             playerDictionary = new Dictionary<string, GameObject>();
 
-            var mainThread = new UnityMainThreadDispatcher();
+            var mainThread = UnityMainThreadDispatcher.Instance();
             GameServer.GetInstance.Socket.ReceivedMatchmakerMatched += m => mainThread.Enqueue(() => OnRecivedMatchMakerMatched(m));
             GameServer.GetInstance.Socket.ReceivedMatchPresence += m => mainThread.Enqueue(() => OnReceivedMatchPresence(m));
             GameServer.GetInstance.Socket.ReceivedMatchState += m => mainThread.Enqueue(async () => await OnReceivedMatchState(m));
@@ -78,7 +90,7 @@ sealed class MatchManager : Singleton<MatchManager>
     /// </summary>
     /// <param name="minPlayer"> 최소 플레이어 인원을 설정한다. 기본은 2명 </param>
     /// <param name="maxPlayer"> 최대 플레이어 인원을 설정한다. 기본은 2명 </param>
-    private async Task JoinMatch(int minPlayer = 2, int maxPlayer = 2)
+    private async UniTask JoinMatch(int minPlayer = 2, int maxPlayer = 2)
     {
         var matchMakingTicket = await GameServer.GetInstance.Socket.AddMatchmakerAsync("*", minPlayer, maxPlayer);
         ticket = matchMakingTicket.Ticket;
@@ -87,7 +99,7 @@ sealed class MatchManager : Singleton<MatchManager>
 #endif
     }
 
-    public async Task QuickMatch()
+    public async UniTask QuickMatch()
     {
         await GameServer.GetInstance.Socket.LeaveMatchAsync(currentMatch);
 
@@ -119,12 +131,11 @@ sealed class MatchManager : Singleton<MatchManager>
         {
             return;
         }
-
         var isLocalPlayer = user.SessionId == localUser.SessionId;
         var playerPrefab = isLocalPlayer ? LocalPlayer : RemotePlayer;
 
+        //그냥 본인 캐릭만 생성시켜서 게임하면 되니깐, 상대방의 캐릭터는 화면에 보여줄게 아니므로
         var player = Instantiate(LocalPlayer, SpawnPoint.transform.position, Quaternion.identity);
-
         if (!isLocalPlayer)
         {
             playerPrefab.GetComponent<PlayerNetworkRemoteSync>().networkData = new RemotePlayerNetworkData
@@ -134,9 +145,7 @@ sealed class MatchManager : Singleton<MatchManager>
             };
             
         }
-
         playerDictionary.Add(user.SessionId, player);
-
         if (isLocalPlayer) 
         { 
             localPlayer = player;
@@ -144,21 +153,49 @@ sealed class MatchManager : Singleton<MatchManager>
     }
 
     /// <summary>
-    /// Match가 끝나고 나면 IDictionary에 있는 player 지워주는 함수
+    /// Sends a network message that indicates a player has won and a new round is being started.
     /// </summary>
-    /// <param name="player">local player를 받는다</param>
-    private async void OnLocalPlayerDied(GameObject player)
+    /// <returns></returns>
+    public async void AnnounceWinner()
     {
-        // Send a network message telling everyone that we died.
-        await SendMatchStateAsync(OpCodes.TimeDone, MatchDataJson.TimeDone(true));
+        var winningPlayerName = localDisplayName;
 
-        // Remove ourself from the players array and destroy our GameObject after 0.5 seconds.
+        await AnnounceWinner(winningPlayerName);
+    }
+
+    /// <summary>
+    /// 이긴 사람의 이름을 띄어준다.
+    /// </summary>
+    /// <param name="winningPlayerName">The name of the winning player.</param>
+    private async UniTask AnnounceWinner(string winningPlayerName)
+    {
+        displayWinPanel.SetActive(true);
+        // Set the winning player text label.
+        winningPlayerText.text = string.Format("{0} 이겼다", winningPlayerName);
+
+        // Wait for 2 seconds.
+        await UniTask.Delay(2000);
+
+        // Reset the winner player text label.
+        winningPlayerText.text = "";
+        displayWinPanel.SetActive(false);
+
+        // Remove ourself from the players array and destroy our player.
         playerDictionary.Remove(localUser.SessionId);
-        Destroy(player, 0.5f);
+        Destroy(localPlayer);
+    }
+
+    /// <summary>
+    /// Sets the local user's display name.
+    /// </summary>
+    /// <param name="displayName">The new display name for the local user</param>
+    public void SetDisplayName(string displayName)
+    {
+        localDisplayName = displayName;
     }
 
     #region Nakama Match State Function
-    public async Task SendMatchStateAsync(long opCode, string state)
+    public async UniTask SendMatchStateAsync(long opCode, string state)
     {
         await GameServer.GetInstance.Socket.SendMatchStateAsync(currentMatch.Id, opCode, state);
     }
@@ -207,8 +244,13 @@ sealed class MatchManager : Singleton<MatchManager>
         }
     }
 
-    // 함수 내에서 await 사용 안해서 뜨는 노란 줄
-    private async Task OnReceivedMatchState(IMatchState matchState)
+    /// <summary>
+    /// 매치 전체 게임 상태(흐름)에 대한걸 관리한다
+    /// ex)라운드 변경, 상대가 죽었는지 아닌지 등등
+    /// </summary>
+    /// <param name="matchState"> 매치 상태를 전달 </param>
+    /// <returns></returns>
+    private async UniTask OnReceivedMatchState(IMatchState matchState)
     {
         // local 유저의 session id 가져오기
         var userSessionId = matchState.UserPresence.SessionId;
@@ -219,13 +261,18 @@ sealed class MatchManager : Singleton<MatchManager>
         // OpCodes에 따라 Match 상태 변경
         switch (matchState.OpCode)
         {
-            case OpCodes.SpawnPlayer:
+            case OpCodes.Spawn:
                 SpawnPlayer(currentMatch.Id, matchState.UserPresence);
                 break;
-            case OpCodes.TimeDone:
+            case OpCodes.IsDie:
                 var player = playerDictionary[userSessionId];
                 Destroy(player, 0.5f);
                 playerDictionary.Remove(userSessionId);
+                if (playerDictionary.Count == 1 && playerDictionary.First().Key == localUser.SessionId)
+                {
+                    AnnounceWinner();
+                    await QuickMatch();
+                }
                 break;
             default:
                 break;

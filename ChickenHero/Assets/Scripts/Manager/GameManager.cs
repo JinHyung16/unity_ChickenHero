@@ -24,6 +24,7 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
     [SerializeField] private EnemySpawner enemySpawner;
 
     private GameObject offlinePlayer = null;
+    public bool IsSinglePlay { get; set; } = false; //false로 default value 초기화
 
     private void Start()
     {
@@ -42,7 +43,7 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
         IsGameStart = true;
         enemySpawner.StartEnemySpawnerPooling();
 
-        if (!GameServer.GetInstance.GetIsServerConnect())
+        if (IsSinglePlay)
         {
             offlinePlayer = Instantiate(playerPrefab);
             offlinePlayer.transform.SetParent(this.gameObject.transform);
@@ -59,7 +60,7 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
         IsGameStart = false;
         enemySpawner.StopEnemySpawnerPooling();
 
-        if (!GameServer.GetInstance.GetIsServerConnect())
+        if (IsSinglePlay)
         {
             Dispose();
         }
@@ -78,7 +79,7 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
         LocalData.GetInstance.Gold += gold;
         SceneController.GetInstance.GoToScene("Lobby").Forget();
 
-        if (!GameServer.GetInstance.GetIsServerConnect())
+        if (IsSinglePlay)
         {
             Dispose();
         }
@@ -90,6 +91,10 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
         NotifyObservers(GameNotifyType.HPDown);
         if (this.playerHP <= 0)
         {
+            if (!IsSinglePlay)
+            {
+                MatchManager.GetInstance.SendMatchState(OpCodes.IsDie, MatchDataJson.Died(true));
+            }
             GameClear();
         }
     }
@@ -98,6 +103,11 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
     {
         this.playerScore += 1;
         NotifyObservers(GameNotifyType.ScoreUp);
+
+        if (!IsSinglePlay)
+        {
+            MatchManager.GetInstance.SendMatchState(OpCodes.Score, MatchDataJson.Score(PlayerScore));
+        }
     }
 
     /// <summary>

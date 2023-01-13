@@ -31,6 +31,7 @@ public class Player : MonoBehaviour
     private void Update()
     {
         Attack();
+        AttackTestWindows();
     }
 
     /// <summary>
@@ -56,7 +57,6 @@ public class Player : MonoBehaviour
 
     /// <summary>
     /// Play Mode에서 게임 진행 시 화면 터치하면 실행되는 함수
-    /// 추후 Enemy를 타겟했을 때 뿐만 아니라 해당 위치에 걍 달걀 던지도록 수정할수도 있음
     /// </summary>
     private void Attack()
     {
@@ -79,6 +79,27 @@ public class Player : MonoBehaviour
             }
         }
     }
+    private void AttackTestWindows()
+    {
+        if (GameManager.GetInstance.IsGameStart)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                targetVec = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                RaycastHit2D hit2D = Physics2D.Raycast(targetVec, targetVec);
+                if (hit2D.collider != null)
+                {
+                    IsThrow = true;
+                    ThrowEgg();
+                }
+            }
+            else
+            {
+                IsThrow = false;
+            }
+        }
+    }
+
 
     /// <summary>
     /// 달걀을 던지는 함수

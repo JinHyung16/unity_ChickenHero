@@ -4,6 +4,7 @@ using UnityEngine.Pool;
 using System;
 using Cysharp.Threading.Tasks;
 using System.Threading;
+using Nakama;
 
 public class Enemy : MonoBehaviour
 {
@@ -91,6 +92,7 @@ public class Enemy : MonoBehaviour
             DamagedToEgg(LocalData.GetInstance.Power);
         }
     }
+
 
     /// <summary>
     /// Egg.cs에서 Enemy와 충돌시 호출한다.

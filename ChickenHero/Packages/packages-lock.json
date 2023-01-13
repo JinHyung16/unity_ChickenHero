@@ -140,17 +140,8 @@
         "com.unity.2d.tilemap.extras": "2.2.3"
       }
     },
-    "com.unity.ide.rider": {
-      "version": "3.0.16",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.ext.nunit": "1.0.6"
-      },
-      "url": "https://packages.unity.com"
-    },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.16",
+      "version": "2.0.17",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -267,6 +258,13 @@
         "com.unity.modules.ui": "1.0.0",
         "com.unity.modules.imgui": "1.0.0"
       }
+    },
+    "com.veriorpies.parrelsync": {
+      "version": "https://github.com/VeriorPies/ParrelSync.git?path=/ParrelSync",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "f45424822189ebd875d864a17d7f03b72eafbff7"
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",

@@ -12,7 +12,6 @@ using HughUtility.Observer;
 
 public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
 {
-    [Tooltip("TopPanel에 붙는 UI들")]
     [SerializeField] private TMP_Text nameTxt;
     [SerializeField] private TMP_Text goldTxt;
 
@@ -38,13 +37,6 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
         nameTxt.text = LocalData.GetInstance.Name.ToString();
         goldTxt.text = LocalData.GetInstance.Gold.ToString();
     }
-
-    #region Observer Pattern - IObserver interface 구현
-    public void UpdateOpenPowerCard(PowerCardData cardData)
-    {
-        LoadUserInfo();
-    }
-    #endregion
 
     #region Panel Open하는 Button관련 함수들
     /// <summary>
@@ -93,9 +85,9 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     {
         if (GameServer.GetInstance.GetIsServerConnect())
         {
-            //GameManager.GetInstance.GameStart();
+            GameManager.GetInstance.IsSinglePlay = false;
             SceneController.GetInstance.GoToScene("MultiPlay").Forget();
-            await MatchManager.GetInstance.MatchSetup();
+            await MatchManager.GetInstance.InitMatchManager();
         }
     }
 
@@ -105,6 +97,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     /// </summary>
     public void GoToSinglePlay()
     {
+        GameManager.GetInstance.IsSinglePlay = true;
         SceneController.GetInstance.GoToScene("SinglePlay").Forget();
     }
 
@@ -223,5 +216,12 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
         }
     }
 
+    #endregion
+
+    #region Observer Pattern - PowerCardObserver interface 구현
+    public void UpdateOpenPowerCard(PowerCardData cardData)
+    {
+        LoadUserInfo();
+    }
     #endregion
 }
