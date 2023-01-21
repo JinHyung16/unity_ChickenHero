@@ -20,12 +20,21 @@ namespace HughUtility.Observer
     #endregion
 
     #region GamePlayer Observer - Single Play or Multi Play
-    public interface GameObserver
+    public class GameObserver : MonoBehaviour
     {
-        void UpdateHPText(int playerHP);
-        void UpdateScoreText(int score);
+        public virtual void UpdateHPText(int playerHP)
+        {
+        }
+        public virtual void UpdateScoreText(int score)
+        {
+        }
+        public virtual void UpdateAttackDamage()
+        {
+        }
 
-        void UpdateAttackDamage();
+        public virtual void UpdateRetmoeScoreText(int score)
+        {
+        }
     }
 
     public interface GameSubject
@@ -40,6 +49,7 @@ namespace HughUtility.Observer
         None = 0,
         HPDown,
         ScoreUp,
+        RemoteUp,
     }
     #endregion
 

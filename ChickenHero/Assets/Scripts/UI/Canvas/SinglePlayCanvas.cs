@@ -9,7 +9,7 @@ using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
 
-public class SinglePlayCanvas : MonoBehaviour, GameObserver
+public class SinglePlayCanvas : GameObserver
 {
     //UI관련
     [SerializeField] private TMP_Text playerScoreTxt;
@@ -52,8 +52,8 @@ public class SinglePlayCanvas : MonoBehaviour, GameObserver
 
     private void DisplayUpdate()
     {
-        playerHPTxt.text = playerHp.ToString();
-        playerScoreTxt.text = playerScore.ToString();
+        playerHPTxt.text = "HP: " + playerHp.ToString();
+        playerScoreTxt.text = "점수: " + playerScore.ToString();
     }
 
     /// <summary>
@@ -67,19 +67,19 @@ public class SinglePlayCanvas : MonoBehaviour, GameObserver
     }
 
     #region Observer 패턴 구현 - GameObserver
-    public void UpdateHPText(int playerHP)
+    public override void UpdateHPText(int playerHP)
     {
         this.playerHp = playerHP;
         DisplayUpdate();
     }
 
-    public void UpdateScoreText(int score)
+    public override void UpdateScoreText(int score)
     {
         this.playerScore = score;
         DisplayUpdate();
     }
 
-    public void UpdateAttackDamage()
+    public override void UpdateAttackDamage()
     {
         BloodEffectTask().Forget();
         if (cameraShake != null)

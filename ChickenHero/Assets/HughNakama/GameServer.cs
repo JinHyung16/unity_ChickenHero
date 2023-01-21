@@ -4,13 +4,14 @@ using UnityEngine;
 using Nakama;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Packet.GameServer;
 using HughGeneric;
 using Cysharp.Threading.Tasks;
 
 public partial class GameServer : LazySingleton<GameServer>
 {
     protected string Scheme = "http";
-    //protected string Host = "34.168.88.153"; // @GCP hugh-server VM 외부 ip
+    //protected string Host = "35.203.143.68"; // @GCP hugh-server VM 외부 ip
     protected string Host = "localhost"; //Local Host
     protected int Port = 7350;
     protected string ServerKey = "defaultkey";
@@ -20,7 +21,9 @@ public partial class GameServer : LazySingleton<GameServer>
 
     protected IClient Client;
     protected ISession Session;
-    public ISocket Socket; //socket의 경우 GameManager에서 Match관련 코드 작성중이라 필요해서 public으로 열어야함
+    protected ISocket Socket; //socket의 경우 GameManager에서 Match관련 코드 작성중이라 필요해서 public으로 열어야함
+
+    public ISocket GetSocket() { return Socket; }
 
     //protected UnityMainThreadDispatcher mainThread;
 
@@ -29,6 +32,7 @@ public partial class GameServer : LazySingleton<GameServer>
 
     public async UniTask LoginToDevice()
     {
+        PlayerPrefs.DeleteAll();
 #if UNITY_EDITOR
         Debug.LogFormat("<color=orange><b>[Game-Server]</b> DeviceLogin : Host : {0}, Port : {1} </color>", Host, Port);
 #endif
@@ -109,6 +113,37 @@ public partial class GameServer : LazySingleton<GameServer>
 #if UNITY_EDITOR
         Debug.LogFormat("<color=orange><b>[Login-Server]</b> Disconnect : Host : {0}, Port : {1} </color>", this.Host, this.Port);
 #endif
+    }
+
+    /// <summary>
+    /// 서버의 연결되어 있는 경우, DB 서버에 User의 정보를 전달한다.
+    /// </summary>
+    /// <param name="level">유저의 레벨 전달</param>
+    /// <param name="name">유저의 닉네임 전달</param>
+    /// <param name="gold">유저의 재화량 전달</param>
+    public async void SaveUserInfoServer(string name, int gold)
+    {
+        if (GetIsServerConnect())
+        {
+            ReqSetUserPacket reqData = new ReqSetUserPacket
+            {
+                userId = userid,
+                userName = name,
+                userGold = gold,
+            };
+
+            await SetUserInfo(reqData);
+        }
+    }
+
+    public async void RemoveUserInfoServer(string _userId)
+    {
+        ReqUserInfoPacket reqData = new ReqUserInfoPacket
+        {
+            userId = _userId,
+        };
+
+        await RemoveUserInfo(reqData);
     }
 
     public bool GetIsServerConnect()

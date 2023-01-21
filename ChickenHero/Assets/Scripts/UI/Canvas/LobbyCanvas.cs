@@ -81,13 +81,12 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     /// PlayMode Panel 밑 MultiPlay Button에 직접 연결중
     /// MultiPlay Button을 누르면 매칭을 진행한다.
     /// </summary>
-    public async void GoToMultiPlay()
+    public void GoToMultiPlay()
     {
         if (GameServer.GetInstance.GetIsServerConnect())
         {
             GameManager.GetInstance.IsSinglePlay = false;
             SceneController.GetInstance.GoToScene("MultiPlay").Forget();
-            await MatchManager.GetInstance.InitMatchManager();
         }
     }
 
@@ -116,7 +115,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
 
         if (GameServer.GetInstance.GetIsServerConnect())
         {
-            MatchManager.GetInstance.SaveUserInfoServer(name, gold);
+            GameServer.GetInstance.SaveUserInfoServer(name, gold);
         }
     }
 

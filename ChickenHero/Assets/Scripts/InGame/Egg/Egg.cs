@@ -31,7 +31,9 @@ public class Egg : MonoBehaviour
         {
             if (collision.gameObject.CompareTag("Enemy"))
             {
+#if UNITY_ANDROID
                 HughUtility.Vibration.Vibrate(50);
+#endif
             }
             DestroyEggCoroutine().Forget();
         }

@@ -4,27 +4,23 @@ using UnityEngine;
 using HughGeneric;
 using System;
 using HughUtility.Observer;
+using Nakama;
+using Nakama.TinyJson;
+using System.Text;
+using Cysharp.Threading.Tasks;
 
 sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
 {
-    public bool IsGameStart { get; set; }
-
-    private int playerScore;
-    public int PlayerScore
-    {
-        get { return playerScore; }
-    }
-
-    private int playerHP;
-    public int PlayerHP { set { this.playerHP = value; } }
+    public bool IsSinglePlay { get; set; } = false; //false로 default value 초기화
+    public int Score{ get; private set;}
+    public int RemoteScore { get; private set; }
+    public bool canSendScoreToServer { get; set; } = false;
+    public int PlayerHP { private get; set; }
 
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private Transform playerSpawnPoint;
 
-    [SerializeField] private EnemySpawner enemySpawner;
-
     private GameObject offlinePlayer = null;
-    public bool IsSinglePlay { get; set; } = false; //false로 default value 초기화
 
     private void Start()
     {
@@ -37,18 +33,22 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
     /// <summary>
     /// OffLine일 땐 OffLinePlayer 생성만 따로 if문으로 처리해서 게임 시작했음을 알린다
     /// </summary>
-    public void GameStart()
+    public async void GameStart()
     {
-        playerScore = 0;
-        IsGameStart = true;
-        enemySpawner.StartEnemySpawnerPooling();
-
+        Score = 0;
         if (IsSinglePlay)
         {
             offlinePlayer = Instantiate(playerPrefab);
             offlinePlayer.transform.SetParent(this.gameObject.transform);
             offlinePlayer.SetActive(true);
             offlinePlayer.transform.position = playerSpawnPoint.position;
+
+            EnemySpawnManager.GetInstance.StartEnemySpawnerPooling();
+        }
+        else
+        {
+            await MatchManager.GetInstance.FindMatch();
+            EnemySpawnManager.GetInstance.StartEnemySpawnerPooling();
         }
     }
 
@@ -57,8 +57,7 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
     /// </summary>
     public void GameExit()
     {
-        IsGameStart = false;
-        enemySpawner.StopEnemySpawnerPooling();
+        EnemySpawnManager.GetInstance.StopEnemySpawnerPooling();
 
         if (IsSinglePlay)
         {
@@ -71,11 +70,10 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
     /// </summary>
     public void GameClear()
     {
-        IsGameStart = false;
-        enemySpawner.StopEnemySpawnerPooling();
+        EnemySpawnManager.GetInstance.StopEnemySpawnerPooling();
 
-        playerScore /= 5;
-        int gold = playerScore;
+        Score /= 5;
+        int gold = Score;
         LocalData.GetInstance.Gold += gold;
         SceneController.GetInstance.GoToScene("Lobby").Forget();
 
@@ -87,27 +85,29 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
     
     public void UpdateHPInGame(int damange)
     {
-        this.playerHP -= damange;
+        this.PlayerHP -= damange;
         NotifyObservers(GameNotifyType.HPDown);
-        if (this.playerHP <= 0)
+        if (this.PlayerHP <= 0)
         {
-            if (!IsSinglePlay)
-            {
-                MatchManager.GetInstance.SendMatchState(OpCodes.IsDie, MatchDataJson.Died(true));
-            }
             GameClear();
         }
     }
 
-    public void UpdateScoreInGame()
+    public async void UpdateScoreInGame()
     {
-        this.playerScore += 1;
+        this.Score += 1;
         NotifyObservers(GameNotifyType.ScoreUp);
-
         if (!IsSinglePlay)
         {
-            MatchManager.GetInstance.SendMatchState(OpCodes.Score, MatchDataJson.Score(PlayerScore));
+            string jsonData = MatchDataJson.Score(this.Score);
+            await MatchManager.GetInstance.SendMatchStateAsync(OpCodes.Score, jsonData);
         }
+    }
+
+    public void UpdateRemoteScore(int score)
+    {
+        this.RemoteScore = score;
+        NotifyObservers(GameNotifyType.RemoteUp);
     }
 
     /// <summary>
@@ -139,15 +139,18 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
             switch (notifyType)
             {
                 case GameNotifyType.HPDown:
-                    observer.UpdateHPText(playerHP);
+                    observer.UpdateHPText(PlayerHP);
                     observer.UpdateAttackDamage();
                     break;
                 case GameNotifyType.ScoreUp:
-                    observer.UpdateScoreText(playerScore);
+                    observer.UpdateScoreText(Score);
                     break;
-                default:
-                    observer.UpdateScoreText(playerScore);
-                    observer.UpdateHPText(playerHP);
+                case GameNotifyType.RemoteUp:
+                    observer.UpdateRetmoeScoreText(RemoteScore);
+                    break;
+                default: //GameNotifyTpye.None을 의미
+                    observer.UpdateScoreText(Score);
+                    observer.UpdateHPText(PlayerHP);
                     break;
             }
         }

@@ -2,19 +2,35 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using HughUtility.Observer;
+using Cysharp.Threading.Tasks;
+using System;
 
-public class MultiPlayCanvas : MonoBehaviour
+public class MultiPlayCanvas : GameObserver
 {
+    [SerializeField] private TMP_Text localHPText;
     [SerializeField] private TMP_Text localScoreText;
     [SerializeField] private TMP_Text remoteScoreText;
-    [SerializeField] private TMP_Text timerText;
 
+    [SerializeField] private GameObject bloodEffectPanel;
+
+    private int localHP = 0;
     private int localScore = 0;
-    private int remoteScore = 0;
 
+    //Camera Shake관련 바인딩
+    private CameraShake cameraShake;
+
+    private void Awake()
+    {
+        GameManager.GetInstance.RegisterObserver(this);
+    }
     private void Start()
     {
         InitMultiPlayCanvas();
+    }
+    private void OnDisable()
+    {
+        GameManager.GetInstance.RemoveObserver(this);
     }
 
     /// <summary>
@@ -25,19 +41,56 @@ public class MultiPlayCanvas : MonoBehaviour
         GameManager.GetInstance.GameStart();
 
         localScore = 0;
-        remoteScore = 0;
+
+        DisplayUpdate();
+
         localScoreText.text = localScore.ToString();
-        remoteScoreText.text = remoteScore.ToString();
+        remoteScoreText.text = 0.ToString();
+
+        cameraShake = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<CameraShake>();
     }
 
     /// <summary>
     /// Score Update해서 UI로 화면에 보여준다
     /// </summary>
-    private void UpdateScoreMultiPlay()
+    private void DisplayUpdate()
     {
-        localScore = GameManager.GetInstance.PlayerScore;
-
-        localScoreText.text = localScore.ToString();
-        remoteScoreText.text = remoteScore.ToString();
+        localHPText.text = "HP: " + localHP.ToString();
+        localScoreText.text = "나: " + localScore.ToString();
     }
+
+    #region Observer 패턴 구현 - GameObserver
+    public override void UpdateHPText(int playerHP)
+    {
+        this.localHP = playerHP;
+        DisplayUpdate();
+    }
+
+    public override void UpdateScoreText(int score)
+    {
+        this.localScore = score;
+        DisplayUpdate();
+    }
+
+    public override void UpdateRetmoeScoreText(int score)
+    {
+        remoteScoreText.text = "상대: " + score.ToString();
+    }
+
+    public override void UpdateAttackDamage()
+    {
+        BloodEffectTask().Forget();
+        if (cameraShake != null)
+        {
+            cameraShake.CameraShaking();
+        }
+    }
+
+    private async UniTaskVoid BloodEffectTask()
+    {
+        bloodEffectPanel.SetActive(true);
+        await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: this.GetCancellationTokenOnDestroy());
+        bloodEffectPanel.SetActive(false);
+    }
+    #endregion
 }

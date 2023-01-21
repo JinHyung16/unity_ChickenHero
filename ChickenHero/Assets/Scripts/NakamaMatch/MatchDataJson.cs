@@ -12,7 +12,7 @@ public class MatchDataJson
     {
         var values = new Dictionary<string, string>
         {
-            {"Point", score.ToString() }
+            {"Score", score.ToString() }
         };
 
         return values.ToJson();

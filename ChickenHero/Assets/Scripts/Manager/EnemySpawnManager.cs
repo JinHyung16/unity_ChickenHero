@@ -5,8 +5,9 @@ using UnityEngine.Pool;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
+using HughGeneric;
 
-public class EnemySpawner : MonoBehaviour
+public class EnemySpawnManager : Singleton<EnemySpawnManager>
 {
     /// <summary>
     /// EnemySpanwer의 경우, GameManager하위에 붙여놓고 사용한다.
@@ -27,9 +28,16 @@ public class EnemySpawner : MonoBehaviour
     //UniTask 관련
     private CancellationTokenSource tokenSource;
 
-    public void StartEnemySpawnerPooling()
+    private bool isSpawnStart = false;
+
+    private void Start()
     {
-        xPosRight = 2.0f; 
+        InitEnemySpawnManager();
+    }
+
+    private void InitEnemySpawnManager()
+    {
+        xPosRight = 2.0f;
         xPosLeft = -2.0f;
         yPosUp = 3.0f;
         yPosDown = -3.0f;
@@ -42,18 +50,32 @@ public class EnemySpawner : MonoBehaviour
         tokenSource = new CancellationTokenSource();
 
         enemyPool = new ObjectPool<Enemy>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, true, 10, maxSize: 20);
+    }
+
+    public void StartEnemySpawnerPooling()
+    {
+        isSpawnStart = true;
+
+        if (tokenSource != null)
+        {
+            tokenSource.Dispose();
+        }
+        tokenSource = new CancellationTokenSource();
 
         EnemySpawn().Forget();
     }
 
     public void StopEnemySpawnerPooling()
     {
+        isSpawnStart = false;
+
         tokenSource.Cancel();
+        tokenSource.Dispose();
     }
 
     private async UniTaskVoid EnemySpawn()
     {
-        while (true)
+        while (isSpawnStart)
         {
             var posX = UnityEngine.Random.Range(xPosLeft, xPosRight);
             var posY = UnityEngine.Random.Range(yPosUp, yPosDown);

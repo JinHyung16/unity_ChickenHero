@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace HughUtility
 {
+    
     public static class Vibration
     {
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -44,6 +45,6 @@ namespace HughUtility
             AndroidVibrator.Call("cancel");
 #endif
         }
-
     }
+    
 }

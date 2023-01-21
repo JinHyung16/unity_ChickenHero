@@ -14,6 +14,10 @@ public class LocalData : Singleton<LocalData>
     private void Start()
     {
         ReadCSVData();
+    }
+
+    private void OnDestroy()
+    {
         PlayerPrefs.DeleteAll();
     }
 
@@ -76,13 +80,12 @@ public class LocalData : Singleton<LocalData>
     /// </summary>
     public void ClearAllUserInfo()
     {
-        PlayerPrefs.DeleteAll();
-
         if (GameServer.GetInstance.GetIsServerConnect())
         {
-            MatchManager.GetInstance.RemoveUserInfoServer(GameServer.GetInstance.userid);
+            GameServer.GetInstance.RemoveUserInfoServer(GameServer.GetInstance.userid);
         }
 
+        PlayerPrefs.DeleteAll();
 #if UNITY_EDITOR
         Debug.Log("<color=black><br> Delete All User Info PlayerPrefs </br></color>");
 #endif

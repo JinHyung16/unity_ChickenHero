@@ -3,8 +3,6 @@ using UnityEngine;
 using UnityEngine.Pool;
 using System;
 using Cysharp.Threading.Tasks;
-using System.Threading;
-using Nakama;
 
 public class Enemy : MonoBehaviour
 {
@@ -24,19 +22,8 @@ public class Enemy : MonoBehaviour
     //Enemy HP 관련
     private int enemyHP;
 
-    //UniTask 관련
-    private CancellationTokenSource tokenSource;
-
     private void OnEnable()
     {
-        //tokenSource가 이미 할당되어 있다면 해제하고 다시 생성하자
-        if (tokenSource != null)
-        {
-            tokenSource.Dispose();
-        }
-        tokenSource = new CancellationTokenSource();
-
-
         spriteRenderer.sortingOrder = -2;
 
         moveSpeed = 4.0f;
@@ -47,17 +34,6 @@ public class Enemy : MonoBehaviour
         enemyHP = 100;
 
         IsRelease = false;
-    }
-
-    private void OnDisable()
-    {
-        tokenSource.Cancel();
-    }
-
-    private void OnDestroy()
-    {
-        tokenSource.Cancel();
-        tokenSource.Dispose();
     }
 
     private void FixedUpdate()
@@ -104,7 +80,6 @@ public class Enemy : MonoBehaviour
         if (enemyHP <= 0)
         {
             GameManager.GetInstance.UpdateScoreInGame();
-            tokenSource.Cancel();
             DestroyEnemy();
         }
     }
@@ -115,7 +90,7 @@ public class Enemy : MonoBehaviour
     /// </summary>
     private async UniTaskVoid AutoDespawnEnemy()
     {
-        await UniTask.Delay(TimeSpan.FromSeconds(15.0f), cancellationToken: tokenSource.Token);
+        await UniTask.Delay(TimeSpan.FromSeconds(15.0f), cancellationToken: this.GetCancellationTokenOnDestroy());
         GameManager.GetInstance.UpdateHPInGame(10);
         DestroyEnemy();
     }
@@ -139,7 +114,7 @@ public class Enemy : MonoBehaviour
             float y = UnityEngine.Random.Range(-1.0f, 1.0f);
 
             direction = new Vector2(x, y);
-            await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: tokenSource.Token);
+            await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: this.GetCancellationTokenOnDestroy());
         }
     }
 

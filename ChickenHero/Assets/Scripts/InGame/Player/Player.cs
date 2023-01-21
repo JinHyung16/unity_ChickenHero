@@ -60,7 +60,7 @@ public class Player : MonoBehaviour
     /// </summary>
     private void Attack()
     {
-        if (Input.touchCount > 0 && GameManager.GetInstance.IsGameStart)
+        if (Input.touchCount > 0)
         {
             Touch myTouch = Input.GetTouch(0);
             if (myTouch.phase == TouchPhase.Began)
@@ -81,22 +81,19 @@ public class Player : MonoBehaviour
     }
     private void AttackTestWindows()
     {
-        if (GameManager.GetInstance.IsGameStart)
+        if (Input.GetMouseButtonDown(0))
         {
-            if (Input.GetMouseButtonDown(0))
+            targetVec = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            RaycastHit2D hit2D = Physics2D.Raycast(targetVec, targetVec);
+            if (hit2D.collider != null)
             {
-                targetVec = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                RaycastHit2D hit2D = Physics2D.Raycast(targetVec, targetVec);
-                if (hit2D.collider != null)
-                {
-                    IsThrow = true;
-                    ThrowEgg();
-                }
+                IsThrow = true;
+                ThrowEgg();
             }
-            else
-            {
-                IsThrow = false;
-            }
+        }
+        else
+        {
+            IsThrow = false;
         }
     }
 

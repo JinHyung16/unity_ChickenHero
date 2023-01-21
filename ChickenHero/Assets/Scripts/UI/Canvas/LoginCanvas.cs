@@ -10,39 +10,16 @@ using System.Threading;
 public class LoginCanvas : MonoBehaviour
 {
     [SerializeField] private GameObject LoginCheckPanel; //서버 연결이 안되어있을 때, 띄울 공지창
-    private CancellationTokenSource tokenSource;
 
     [SerializeField] private TMP_InputField NameInputField;
     private string nickName = string.Empty;
 
-    private void Awake()
+    private async void Awake()
     {
         LoginCheckPanel.SetActive(false);
-        if (tokenSource != null)
-        {
-            tokenSource.Dispose();
-        }
-        tokenSource = new CancellationTokenSource();
-
-        LoginToServer();
-    }
-
-    private void OnDisable()
-    {
-        tokenSource.Cancel();
-    }
-    private void OnDestroy()
-    {
-        tokenSource.Cancel();
-        tokenSource.Dispose();
-    }
-
-    private async void LoginToServer()
-    {
         await GameServer.GetInstance.LoginToDevice();
     }
 
-    //public async void OnLineStart()
     public void OnLineStart()
     {
         if (CheckInputName)
@@ -50,6 +27,7 @@ public class LoginCanvas : MonoBehaviour
             if (GameServer.GetInstance.GetIsServerConnect())
             {
                 UserInfoSetting();
+                MatchManager.GetInstance.InitMatchManager();
                 SceneController.GetInstance.GoToScene("Lobby").Forget();
             }
             else
@@ -62,7 +40,7 @@ public class LoginCanvas : MonoBehaviour
     private async UniTaskVoid LoginCheckPanelUpdate()
     {
         LoginCheckPanel.SetActive(true);
-        await UniTask.Delay(TimeSpan.FromSeconds(1.0f), cancellationToken: tokenSource.Token);
+        await UniTask.Delay(TimeSpan.FromSeconds(1.0f), cancellationToken: this.GetCancellationTokenOnDestroy());
         LoginCheckPanel.SetActive(false);
     }
 
@@ -111,13 +89,16 @@ public class LoginCanvas : MonoBehaviour
     {
         if (LocalData.GetInstance.CheckForUserInfo(nickName))
         {
+#if UNITY_EDITOR
+            Debug.Log("UserInfoSetting - User가 이미 있습니다.");
+#endif
             return;
         }
         else
         {
             LocalData.GetInstance.Name = nickName;
-            LocalData.GetInstance.Gold = 99999;
-            LocalData.GetInstance.Power = 1;
+            LocalData.GetInstance.Gold = 999;
+            LocalData.GetInstance.Power = 100;
             LocalData.GetInstance.UpgradeLevel = 1;
         }
     }
