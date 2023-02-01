@@ -56,6 +56,7 @@ public class SinglePlayCanvas : GameObserver
         playerScoreTxt.text = "점수: " + playerScore.ToString();
     }
 
+    #region Exit Button - Sinplay Scene
     /// <summary>
     /// Exit Yes Button 을 누르면 다시 로그인 화면으로 보낸다.
     /// 이때, 게임하면서 모았던 골드나 이름은 저장되지 않는다.
@@ -65,6 +66,7 @@ public class SinglePlayCanvas : GameObserver
         GameManager.GetInstance.GameExit();
         SceneController.GetInstance.GoToScene("Lobby").Forget();
     }
+    #endregion
 
     #region Observer 패턴 구현 - GameObserver
     public override void UpdateHPText(int playerHP)

@@ -84,7 +84,7 @@ public class EnemySpawnManager : Singleton<EnemySpawnManager>
             var enemy = enemyPool.Get();
             enemy.transform.position = posVec;
 
-            float spawnTime = UnityEngine.Random.Range(5.0f, 10.0f);
+            float spawnTime = UnityEngine.Random.Range(1.0f, 5.0f);
             await UniTask.Delay(TimeSpan.FromSeconds(spawnTime), cancellationToken: tokenSource.Token);
         }
     }

@@ -33,6 +33,7 @@ public class MultiPlayCanvas : GameObserver
         GameManager.GetInstance.RemoveObserver(this);
     }
 
+
     /// <summary>
     /// 초기 MultiPlay Scene UI 설정
     /// </summary>
@@ -58,6 +59,19 @@ public class MultiPlayCanvas : GameObserver
         localHPText.text = "HP: " + localHP.ToString();
         localScoreText.text = "나: " + localScore.ToString();
     }
+
+    #region Exit Button - Multiplay Scene
+    /// <summary>
+    /// Exit Yes Button 을 누르면 다시 로그인 화면으로 보낸다.
+    /// 이때, 게임하면서 모았던 골드나 이름은 저장되지 않는다.
+    /// </summary>
+    public async void ExitMultiplayGame()
+    {
+        await MatchManager.GetInstance.QuickMatch();
+        GameManager.GetInstance.GameExit();
+        SceneController.GetInstance.GoToScene("Lobby").Forget();
+    }
+    #endregion
 
     #region Observer 패턴 구현 - GameObserver
     public override void UpdateHPText(int playerHP)

@@ -11,8 +11,8 @@ using Cysharp.Threading.Tasks;
 public partial class GameServer : LazySingleton<GameServer>
 {
     protected string Scheme = "http";
-    //protected string Host = "35.203.143.68"; // @GCP hugh-server VM 외부 ip
-    protected string Host = "localhost"; //Local Host
+    protected string Host = "34.145.39.102"; // @GCP hugh-server VM 외부 ip
+    //protected string Host = "localhost"; //Local Host
     protected int Port = 7350;
     protected string ServerKey = "defaultkey";
 
@@ -58,6 +58,9 @@ public partial class GameServer : LazySingleton<GameServer>
             if (PlayerPrefs.HasKey(deviceIdentifierPrefName))
             {
                 deviceId = PlayerPrefs.GetString(deviceIdentifierPrefName);
+#if UNITY_EDITOR
+                Debug.LogFormat("<color=green><b>[Game-Server]</b> PlayerPrefs에 deviceIdentifierPrefName이 이미 있어서 사용 </color>");
+#endif
             }
             else
             {
@@ -70,6 +73,9 @@ public partial class GameServer : LazySingleton<GameServer>
 
                 // Store the device identifier to ensure we use the same one each time from now on.
                 PlayerPrefs.SetString(deviceIdentifierPrefName, deviceId);
+#if UNITY_EDITOR
+                Debug.LogFormat("<color=red><b>[Game-Server]</b> PlayerPrefs에 deviceIdentifierPrefName 없어서 저장함 </color>");
+#endif
             }
 #if UNITY_EDITOR
             Debug.LogFormat("<color=orange><b>[Game-Server]</b> deviceId : {0} </color>", deviceId);
@@ -89,8 +95,8 @@ public partial class GameServer : LazySingleton<GameServer>
             PlayerPrefs.SetString(sessionPrefName, Session.AuthToken);
         }
 
-        Socket = Client.NewSocket(false);
-        await Socket.ConnectAsync(Session, true, 15); // Socket connect timeout is 15
+        Socket = Client.NewSocket();
+        await Socket.ConnectAsync(Session, true, 10); // Socket connect timeout is 15
 
 #if UNITY_EDITOR
         Debug.Log("<color=orange><b>[Game-Server]</b> Socekt Connect : {0} </color>");

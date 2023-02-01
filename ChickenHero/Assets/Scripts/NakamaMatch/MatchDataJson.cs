@@ -23,14 +23,28 @@ public class MatchDataJson
     /// </summary>
     /// <param name="isDied"> true면 게임 시간이 다 끝난것으로 게임을 종료한다 </param>
     /// <returns> Dictionary의 값을 json형태로 리턴한다 </returns>
-    public static string Died(bool isDied)
+    public static string Died(string userSessionID)
     {
         var values = new Dictionary<string, string>
         {
-            {"Died", isDied.ToString() },
+            {"DieUser", userSessionID.ToString() },
         };
 
         return values.ToJson();
     }
 
+    /// <summary>
+    /// 서버 매칭 후 maxTasks만큼 기다린 후 게임을 시작하도록 한다.
+    /// </summary>
+    /// <param name="maxTasks"></param>
+    /// <returns> Dictionary의 값을 json형태로 리턴한다</returns>
+    public static string SetStartGame(int maxTasks)
+    {
+        var values = new Dictionary<string, string>
+        {
+            { "maxTasks", maxTasks.ToString() },
+        };
+
+        return values.ToJson();
+    }
 }

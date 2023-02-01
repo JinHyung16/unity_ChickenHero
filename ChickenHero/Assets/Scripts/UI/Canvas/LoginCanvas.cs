@@ -27,7 +27,6 @@ public class LoginCanvas : MonoBehaviour
             if (GameServer.GetInstance.GetIsServerConnect())
             {
                 UserInfoSetting();
-                MatchManager.GetInstance.InitMatchManager();
                 SceneController.GetInstance.GoToScene("Lobby").Forget();
             }
             else
@@ -87,6 +86,11 @@ public class LoginCanvas : MonoBehaviour
     /// </summary>
     private void UserInfoSetting()
     {
+        LocalData.GetInstance.Name = nickName;
+        LocalData.GetInstance.Gold = 999;
+        LocalData.GetInstance.Power = 100;
+        LocalData.GetInstance.UpgradeLevel = 1;
+        /*
         if (LocalData.GetInstance.CheckForUserInfo(nickName))
         {
 #if UNITY_EDITOR
@@ -101,5 +105,6 @@ public class LoginCanvas : MonoBehaviour
             LocalData.GetInstance.Power = 100;
             LocalData.GetInstance.UpgradeLevel = 1;
         }
+        */
     }
 }

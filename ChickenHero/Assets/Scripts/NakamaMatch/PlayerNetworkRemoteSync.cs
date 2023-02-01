@@ -8,9 +8,10 @@ using UnityEngine.SocialPlatforms.Impl;
 public class PlayerNetworkRemoteSync : MonoBehaviour
 {
     public RemotePlayerNetworkData networkData;
+}
 
-    public void SetRemoteScore(Dictionary<string, string> state)
-    {
-        //GameManager.GetInstance.UpdateRemoteScore(int.Parse(state["Score"]));
-    }
+public class RemotePlayerNetworkData
+{
+    public string MatchId;
+    public IUserPresence User;
 }

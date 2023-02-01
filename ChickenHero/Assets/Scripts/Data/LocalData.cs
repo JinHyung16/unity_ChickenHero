@@ -16,23 +16,19 @@ public class LocalData : Singleton<LocalData>
         ReadCSVData();
     }
 
-    private void OnDestroy()
-    {
-        PlayerPrefs.DeleteAll();
-    }
-
     #region PlayerPrefs Save Data Property
     private string userName = string.Empty;
     public string Name
     {
         get
         {
-            return PlayerPrefs.GetString("Name");
+            return PlayerPrefs.GetString(userName);
         }
         set
         {
             userName = value;
-            PlayerPrefs.SetString("Name", value);
+            PlayerPrefs.SetString(userName, value);
+            PlayerPrefs.Save();
         }
     }
 
@@ -45,6 +41,7 @@ public class LocalData : Singleton<LocalData>
         set
         {
             PlayerPrefs.SetInt(userName + "Gold", value);
+            PlayerPrefs.Save();
         }
     }
 
@@ -57,6 +54,7 @@ public class LocalData : Singleton<LocalData>
         set
         {
             PlayerPrefs.SetInt(userName + "Power", value);
+            PlayerPrefs.Save();
         }
     }
 
@@ -69,7 +67,17 @@ public class LocalData : Singleton<LocalData>
         set
         {
             PlayerPrefs.SetInt(userName + "UpgradeLevel", value);
+            PlayerPrefs.Save();
         }
+    }
+
+    private void PlayerPrefsClear()
+    {
+        var name = PlayerPrefs.GetString(Name);
+        PlayerPrefs.DeleteKey(name);
+        PlayerPrefs.DeleteKey(name + "Gold");
+        PlayerPrefs.DeleteKey(name + "Power");
+        PlayerPrefs.DeleteKey(name + "UpgradeLevel");
     }
     #endregion
 
@@ -85,7 +93,7 @@ public class LocalData : Singleton<LocalData>
             GameServer.GetInstance.RemoveUserInfoServer(GameServer.GetInstance.userid);
         }
 
-        PlayerPrefs.DeleteAll();
+        PlayerPrefsClear();
 #if UNITY_EDITOR
         Debug.Log("<color=black><br> Delete All User Info PlayerPrefs </br></color>");
 #endif
@@ -139,16 +147,54 @@ public class LocalData : Singleton<LocalData>
         UpgradeCostDictionary.Add(level, cost);
     }
 
+    /// <summary>
+    /// level을 10으로 나눠 몫을 통해 구간 파악
+    /// 0이면 1~10, 1이면 11~20 etc...
+    /// </summary>
+    /// <param name="level"> 현재 유저의 업그레이드 레벨을 받는다</param>
+    /// <returns>해당 업그레이드 구간에 맞는 업그레이드 비용을 리턴</returns>
     public int GetUpgradeCost(string level)
     {
-        if (UpgradeCostDictionary.TryGetValue(level, out int value))
+        int upgradeCost = UpgradeCostDictionary["1"];
+        switch (int.Parse(level) / 10)
         {
-            return value;
+            case 0:
+                upgradeCost = UpgradeCostDictionary["1"];
+                break;
+            case 1:
+                upgradeCost = UpgradeCostDictionary["11"];
+                break;
+            case 2:
+                upgradeCost = UpgradeCostDictionary["21"];
+                break;
+            case 3:
+                upgradeCost = UpgradeCostDictionary["31"];
+                break;
+            case 4:
+                upgradeCost = UpgradeCostDictionary["41"];
+                break;
+            case 5:
+                upgradeCost = UpgradeCostDictionary["51"];
+                break;
+            case 6:
+                upgradeCost = UpgradeCostDictionary["61"];
+                break;
+            case 7:
+                upgradeCost = UpgradeCostDictionary["71"];
+                break;
+            case 8:
+                upgradeCost = UpgradeCostDictionary["81"];
+                break;
+            case 9:
+                upgradeCost = UpgradeCostDictionary["91"];
+                break;
+            case 10:
+                upgradeCost = UpgradeCostDictionary["101"];
+                break;
+
         }
-        else
-        {
-            return 0;
-        }
+
+        return upgradeCost;
     }
     #endregion
 }

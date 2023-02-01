@@ -17,37 +17,43 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
     public bool canSendScoreToServer { get; set; } = false;
     public int PlayerHP { private get; set; }
 
-    [SerializeField] private GameObject playerPrefab;
+    [SerializeField] private GameObject offLinePlayerPrefab;
     [SerializeField] private Transform playerSpawnPoint;
 
     private GameObject offlinePlayer = null;
 
     private void Start()
     {
-        if (playerPrefab == null)
+        if (offLinePlayerPrefab == null)
         {
-            playerPrefab = Resources.Load("Player/Offline Player") as GameObject;
+            offLinePlayerPrefab = Resources.Load("Player/Offline Player") as GameObject;
         }
     }
+
+    #region IDisposable Interface 구현
+    /// <summary>
+    /// offlinePlayer 파괴전 미리 할당 해제하고 파괴하기
+    /// </summary>
+    public void Dispose()
+    {
+        Destroy(offlinePlayer);
+        GC.SuppressFinalize(offlinePlayer);
+    }
+    #endregion
 
     /// <summary>
     /// OffLine일 땐 OffLinePlayer 생성만 따로 if문으로 처리해서 게임 시작했음을 알린다
     /// </summary>
-    public async void GameStart()
+    public void GameStart()
     {
         Score = 0;
         if (IsSinglePlay)
         {
-            offlinePlayer = Instantiate(playerPrefab);
+            offlinePlayer = Instantiate(offLinePlayerPrefab);
             offlinePlayer.transform.SetParent(this.gameObject.transform);
             offlinePlayer.SetActive(true);
             offlinePlayer.transform.position = playerSpawnPoint.position;
 
-            EnemySpawnManager.GetInstance.StartEnemySpawnerPooling();
-        }
-        else
-        {
-            await MatchManager.GetInstance.FindMatch();
             EnemySpawnManager.GetInstance.StartEnemySpawnerPooling();
         }
     }
@@ -97,6 +103,7 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
     {
         this.Score += 1;
         NotifyObservers(GameNotifyType.ScoreUp);
+
         if (!IsSinglePlay)
         {
             string jsonData = MatchDataJson.Score(this.Score);
@@ -108,15 +115,6 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
     {
         this.RemoteScore = score;
         NotifyObservers(GameNotifyType.RemoteUp);
-    }
-
-    /// <summary>
-    /// offlinePlayer 파괴전 미리 할당 해제하고 파괴하기
-    /// </summary>
-    public void Dispose()
-    {
-        Destroy(offlinePlayer);
-        GC.SuppressFinalize(offlinePlayer);
     }
 
     #region Observer 패턴 구현 - GameSubject

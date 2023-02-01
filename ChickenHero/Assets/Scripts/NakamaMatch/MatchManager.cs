@@ -6,10 +6,31 @@ using HughGeneric;
 using Nakama.TinyJson;
 using Cysharp.Threading.Tasks;
 using System.Linq;
-using System.Net.Sockets;
 
-sealed class MatchManager : Singleton<MatchManager>
+sealed class MatchManager : MonoBehaviour
 {
+    #region Singleton
+    private static MatchManager instance;
+    public static MatchManager GetInstance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                return null;
+            }
+            return instance;
+        }
+    }
+
+    private void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+        }
+    }
+    #endregion
     private string ticket;
 
     private IMatch currentMatch;
@@ -24,34 +45,60 @@ sealed class MatchManager : Singleton<MatchManager>
     [SerializeField] private Transform LocalSpawnPoint;
     [SerializeField] private Transform RemoteSpawnPoint;
 
+    //Match Making UI Canvas
+    [SerializeField] private GameObject matchCanvas;
+
+    private void Start()
+    {
+        matchCanvas.SetActive(true);
+
+        playerDictionary = new Dictionary<string, GameObject>();
+        InitMatchManager();
+    }
 
     /// <summary>
     /// 매칭 시작시 Match관련 SetUp을 진행하고 매칭을 시작하도록 한다.
     /// </summary>
     public void InitMatchManager()
     {
-        if (GameServer.GetInstance.GetIsServerConnect())
-        {
-            //about nakama match
-            playerDictionary = new Dictionary<string, GameObject>();
+        UnityMainThreadDispatcher mainThread = UnityMainThreadDispatcher.Instance();
+        GameServer.GetInstance.GetSocket().ReceivedMatchmakerMatched += T => mainThread.Enqueue(() => OnRecivedMatchMakerMatched(T));
+        GameServer.GetInstance.GetSocket().ReceivedMatchPresence += T => mainThread.Enqueue(() => OnReceivedMatchPresence(T));
+        GameServer.GetInstance.GetSocket().ReceivedMatchState += T => mainThread.Enqueue(async () => await OnReceivedMatchState(T));
 
-            UnityMainThreadDispatcher mainThread = UnityMainThreadDispatcher.Instance();
-            GameServer.GetInstance.GetSocket().ReceivedMatchmakerMatched += T => mainThread.Enqueue(() => OnRecivedMatchMakerMatched(T));
-            GameServer.GetInstance.GetSocket().ReceivedMatchPresence += T => mainThread.Enqueue(() => OnReceivedMatchPresence(T));
-            GameServer.GetInstance.GetSocket().ReceivedMatchState += T => mainThread.Enqueue(async () => await OnReceivedMatchState(T));
-        }
+        Debug.Log("매치 관련하여 함수들 연결 완료");
     }
 
-    #region Match 찾기, 취소, 나가기 함수
-    public async UniTask FindMatch(int minPlayer = 2)
+    #region Match 찾기, 취소, 나가기 함수 & Button 연결 함수
+    /// <summary>
+    /// MatchCanvas의 FindMatch Button의 연결할 함수
+    /// </summary>
+    public async void FindMatch()
+    {
+        await FindMatchmaking();
+        matchCanvas.SetActive(false);
+    }
+
+    /// <summary>
+    /// MatchCanvas의 CancelMatch의 연결할 함수
+    /// </summary>
+    public async void CancelMatch()
+    {
+        await CancelMatchmaking();
+        matchCanvas.SetActive(true);
+    }
+
+
+    private async UniTask FindMatchmaking(int minPlayer = 2)
     {
         var matchMakingTicket = await GameServer.GetInstance.GetSocket().AddMatchmakerAsync("*", minPlayer);
         ticket = matchMakingTicket.Ticket;
     }
 
-    public async Task CancelMatchmaking()
+    private async Task CancelMatchmaking()
     {
         await GameServer.GetInstance.GetSocket().RemoveMatchmakerAsync(ticket);
+        matchCanvas.SetActive(true);
     }
 
     public async UniTask QuickMatch()
@@ -117,6 +164,9 @@ sealed class MatchManager : Singleton<MatchManager>
         foreach (IUserPresence user in match.Presences)
         {
             SpawnPlayer(match.Id, user);
+
+            string json = MatchDataJson.SetStartGame(5);
+            await SendMatchStateAsync(OpCodes.StartGame, json);
         }
 
         currentMatch = match;
@@ -156,9 +206,6 @@ sealed class MatchManager : Singleton<MatchManager>
         // OpCodes에 따라 Match 상태 변경
         switch (matchState.OpCode)
         {
-            case OpCodes.Spawn:
-                SpawnPlayer(currentMatch.Id, matchState.UserPresence);
-                break;
             case OpCodes.IsDie:
                 var player = playerDictionary[userSessionId];
                 Destroy(player, 0.5f);
@@ -170,6 +217,9 @@ sealed class MatchManager : Singleton<MatchManager>
                 break;
             case OpCodes.Score:
                 GameManager.GetInstance.UpdateRemoteScore(int.Parse(state["Score"]));
+                break;
+            case OpCodes.StartGame:
+                EnemySpawnManager.GetInstance.StartEnemySpawnerPooling();
                 break;
         }
     }

@@ -36,10 +36,6 @@ public class ShopPanel : MonoBehaviour, LobbyObserver
             upgradeGold = LocalData.GetInstance.GetUpgradeCost(LocalData.GetInstance.UpgradeLevel.ToString());
             DisplayUpdate();
         }
-        else
-        {
-            return;
-        }
     }
 
     private void DisplayUpdate()
