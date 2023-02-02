@@ -9,6 +9,8 @@ using System;
 
 public class RandomSelect : MonoBehaviour, LobbySubject
 {
+    [SerializeField] private ShopPanel ShopPanelScript;
+
     [SerializeField] private Button radomPickBtn;
     [SerializeField] private TMP_Text randomPickTxt;
 
@@ -125,9 +127,9 @@ public class RandomSelect : MonoBehaviour, LobbySubject
                 obj.SetActive(true);
             }
 
-            LocalData.GetInstance.Power = powerCardData.cardPower;
             LocalData.GetInstance.Gold -= pickCost;
-            NotifyObservers();
+            ShopPanelScript.SetUpgradeLevel(name);
+            NotifyObservers(LobbyNotifyType.OpenCard);
         }
         else
         {
@@ -159,7 +161,6 @@ public class RandomSelect : MonoBehaviour, LobbySubject
     #region Observer Pattern - ISubject interface 구현
 
     [SerializeField] private LobbyCanvas LobbyCanvasObserver;
-    [SerializeField] private ShopPanel ShopPanelObserver;
     private List<LobbyObserver> ObserverList = new List<LobbyObserver>(); //Objserver들 저장할 List
 
     /// <summary>
@@ -172,12 +173,10 @@ public class RandomSelect : MonoBehaviour, LobbySubject
         if (register)
         {
             RegisterObserver(LobbyCanvasObserver);
-            RegisterObserver(ShopPanelObserver);
         }
         else
         {
             RemoveObserver(LobbyCanvasObserver);
-            RemoveObserver(ShopPanelObserver);
         }
     }
 
@@ -192,11 +191,14 @@ public class RandomSelect : MonoBehaviour, LobbySubject
         this.ObserverList.Remove(observer);
     }
 
-    public void NotifyObservers()
+    public void NotifyObservers(LobbyNotifyType lobbyNotifyType)
     {
-        foreach (var observer in ObserverList)
+        if (lobbyNotifyType == LobbyNotifyType.OpenCard)
         {
-            observer.UpdateOpenPowerCard(powerCardData);
+            foreach (var observer in ObserverList)
+            {
+                observer.UpdateOpenPowerCard(powerCardData);
+            }
         }
     }
     #endregion

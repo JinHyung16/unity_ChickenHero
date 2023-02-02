@@ -14,6 +14,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
 {
     [SerializeField] private TMP_Text nameTxt;
     [SerializeField] private TMP_Text goldTxt;
+    [SerializeField] private TMP_Text powerTxt;
 
     //특수 Panel관련 바인딩 -> 특수 패널은 오로지 1개만 열려야 하는 패널이다 (해당 특수끼린 열리는게 독립적이다)
     [SerializeField] private List<GameObject> PanelList; //패널을 담은 list
@@ -21,10 +22,21 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     private Dictionary<UIType, GameObject> PanelDictionary = new Dictionary<UIType, GameObject>(); //패널의 key를 부여해 저장
     private Queue<GameObject> PanelActiveQueue = new Queue<GameObject>(); //SetActive시 Queue에 넣고 맨 앞은 지우고 오로지 1개만 열리게 저장
 
+    //PlayMode Button UI
+    [SerializeField] private Button singlePlayBtn;
+    [SerializeField] private Button multiPlayBtn;
+
     private void Start()
     {
         InitaDictionary();
-        LoadUserInfo();
+        LoadUserInfoDisplay();
+
+        singlePlayBtn.onClick.AddListener(GoToSinglePlay);
+        multiPlayBtn.onClick.AddListener(GoToMultiPlay);
+        if (GameManager.GetInstance.IsOfflinePlay)
+        {
+            multiPlayBtn.interactable = false;
+        }
     }
 
     /// <summary>
@@ -32,10 +44,11 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     /// Login시 PlayerPrefs와 Server에 저장했으니 둘이 같은 정보로
     /// PlayerPrefs에서 user의 정보를 꺼내와서 붙여준다.
     /// </summary>
-    private void LoadUserInfo()
+    private void LoadUserInfoDisplay()
     {
         nameTxt.text = LocalData.GetInstance.Name.ToString();
-        goldTxt.text = LocalData.GetInstance.Gold.ToString();
+        goldTxt.text = "G: " + LocalData.GetInstance.Gold.ToString();
+        powerTxt.text = "P: " + LocalData.GetInstance.Power.ToString();
     }
 
     #region Panel Open하는 Button관련 함수들
@@ -220,7 +233,21 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     #region Observer Pattern - PowerCardObserver interface 구현
     public void UpdateOpenPowerCard(PowerCardData cardData)
     {
-        LoadUserInfo();
+        switch (cardData.powerCardName)
+        {
+            case "F":
+                LocalData.GetInstance.Power = cardData.cardPower;
+                break;
+            default:
+                LocalData.GetInstance.Power += cardData.cardPower;
+                break;
+        }
+        LoadUserInfoDisplay();
+    }
+
+    public void UpdatePowerUp()
+    {
+        LoadUserInfoDisplay();
     }
     #endregion
 }

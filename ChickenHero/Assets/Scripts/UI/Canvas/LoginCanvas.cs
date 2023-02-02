@@ -27,11 +27,11 @@ public class LoginCanvas : MonoBehaviour
             if (GameServer.GetInstance.GetIsServerConnect())
             {
                 UserInfoSetting();
+                GameManager.GetInstance.IsOfflinePlay = false;
                 SceneController.GetInstance.GoToScene("Lobby").Forget();
             }
             else
             {
-
                 LoginCheckPanelUpdate().Forget();
             }
         }
@@ -48,6 +48,7 @@ public class LoginCanvas : MonoBehaviour
         if (CheckInputName)
         {
             UserInfoSetting();
+            GameManager.GetInstance.IsOfflinePlay = true;
             SceneController.GetInstance.GoToScene("Lobby").Forget();
         }
     }
@@ -87,7 +88,7 @@ public class LoginCanvas : MonoBehaviour
     private void UserInfoSetting()
     {
         LocalData.GetInstance.Name = nickName;
-        LocalData.GetInstance.Gold = 999;
+        LocalData.GetInstance.Gold = 99999999;
         LocalData.GetInstance.Power = 100;
         LocalData.GetInstance.UpgradeLevel = 1;
         /*

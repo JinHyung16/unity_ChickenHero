@@ -45,6 +45,7 @@ public class SinglePlayCanvas : GameObserver
         GameManager.GetInstance.GameStart();
         playerScore = 0;
         DisplayUpdate();
+
         bloodEffectPanel.SetActive(false);
 
         cameraShake = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<CameraShake>();

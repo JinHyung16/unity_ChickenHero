@@ -11,6 +11,7 @@ using Cysharp.Threading.Tasks;
 
 sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
 {
+    public bool IsOfflinePlay { get; set; } = false; //false로 default value 초기화
     public bool IsSinglePlay { get; set; } = false; //false로 default value 초기화
     public int Score{ get; private set;}
     public int RemoteScore { get; private set; }
@@ -136,6 +137,10 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
         {
             switch (notifyType)
             {
+                case GameNotifyType.None:
+                    observer.UpdateScoreText(Score);
+                    observer.UpdateHPText(PlayerHP);
+                    break;
                 case GameNotifyType.HPDown:
                     observer.UpdateHPText(PlayerHP);
                     observer.UpdateAttackDamage();
@@ -147,8 +152,6 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
                     observer.UpdateRetmoeScoreText(RemoteScore);
                     break;
                 default: //GameNotifyTpye.None을 의미
-                    observer.UpdateScoreText(Score);
-                    observer.UpdateHPText(PlayerHP);
                     break;
             }
         }
