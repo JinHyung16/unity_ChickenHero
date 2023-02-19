@@ -9,14 +9,10 @@ using Nakama.TinyJson;
 using System.Text;
 using Cysharp.Threading.Tasks;
 
-sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
+sealed class GameManager : Singleton<GameManager>, IDisposable
 {
-    public bool IsOfflinePlay { get; set; } = false; //false로 default value 초기화
     public bool IsSinglePlay { get; set; } = false; //false로 default value 초기화
-    public int Score{ get; private set;}
-    public int RemoteScore { get; private set; }
-    public bool canSendScoreToServer { get; set; } = false;
-    public int PlayerHP { private get; set; }
+    public int Score { get; set; } = 0;
 
     [SerializeField] private GameObject offLinePlayerPrefab;
     [SerializeField] private Transform playerSpawnPoint;
@@ -89,72 +85,4 @@ sealed class GameManager : Singleton<GameManager>, GameSubject, IDisposable
             Dispose();
         }
     }
-    
-    public void UpdateHPInGame(int damange)
-    {
-        this.PlayerHP -= damange;
-        NotifyObservers(GameNotifyType.HPDown);
-        if (this.PlayerHP <= 0)
-        {
-            GameClear();
-        }
-    }
-
-    public async void UpdateScoreInGame()
-    {
-        this.Score += 1;
-        NotifyObservers(GameNotifyType.ScoreUp);
-
-        if (!IsSinglePlay)
-        {
-            string jsonData = MatchDataJson.Score(this.Score);
-            await MatchManager.GetInstance.SendMatchStateAsync(OpCodes.Score, jsonData);
-        }
-    }
-
-    public void UpdateRemoteScore(int score)
-    {
-        this.RemoteScore = score;
-        NotifyObservers(GameNotifyType.RemoteUp);
-    }
-
-    #region Observer 패턴 구현 - GameSubject
-    private List<GameObserver> GameObserverList = new List<GameObserver>();
-
-    public void RegisterObserver(GameObserver observer)
-    {
-        GameObserverList.Add(observer);
-    }
-
-    public void RemoveObserver(GameObserver observer)
-    {
-        GameObserverList.Remove(observer);
-    }
-
-    public void NotifyObservers(GameNotifyType notifyType)
-    {
-        foreach (var observer in GameObserverList)
-        {
-            switch (notifyType)
-            {
-                case GameNotifyType.None:
-                    observer.UpdateScoreText(Score);
-                    observer.UpdateHPText(PlayerHP);
-                    break;
-                case GameNotifyType.HPDown:
-                    observer.UpdateHPText(PlayerHP);
-                    observer.UpdateAttackDamage();
-                    break;
-                case GameNotifyType.ScoreUp:
-                    observer.UpdateScoreText(Score);
-                    break;
-                case GameNotifyType.RemoteUp:
-                    observer.UpdateRetmoeScoreText(RemoteScore);
-                    break;
-                default: //GameNotifyTpye.None을 의미
-                    break;
-            }
-        }
-    }
-    #endregion
 }

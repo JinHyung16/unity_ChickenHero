@@ -9,6 +9,7 @@ using System;
 using UnityEngine.EventSystems;
 using HughUI; //UIType 사용을 위해
 using HughUtility.Observer;
+using Cysharp.Threading.Tasks;
 
 public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
 {
@@ -26,17 +27,15 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     [SerializeField] private Button singlePlayBtn;
     [SerializeField] private Button multiPlayBtn;
 
+    [SerializeField] private GameObject ServerConnectCheckPanel; //서버 연결이 안되어있을 때, 띄울 공지창
     private void Start()
     {
         InitaDictionary();
         LoadUserInfoDisplay();
 
+        ///off-line, on-line 접속에 따른 multiplay button 활성화 설정하기
         singlePlayBtn.onClick.AddListener(GoToSinglePlay);
         multiPlayBtn.onClick.AddListener(GoToMultiPlay);
-        if (GameManager.GetInstance.IsOfflinePlay)
-        {
-            multiPlayBtn.interactable = false;
-        }
     }
 
     /// <summary>
@@ -101,6 +100,16 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
             GameManager.GetInstance.IsSinglePlay = false;
             SceneController.GetInstance.GoToScene("MultiPlay").Forget();
         }
+        else
+        {
+            LoginCheckPanelUpdate().Forget();
+        }
+    }
+    private async UniTaskVoid LoginCheckPanelUpdate()
+    {
+        ServerConnectCheckPanel.SetActive(true);
+        await UniTask.Delay(TimeSpan.FromSeconds(1.0f), cancellationToken: this.GetCancellationTokenOnDestroy());
+        ServerConnectCheckPanel.SetActive(false);
     }
 
     /// <summary>

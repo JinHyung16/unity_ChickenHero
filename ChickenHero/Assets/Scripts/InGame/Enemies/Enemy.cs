@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using System;
 using Cysharp.Threading.Tasks;
+using System.Threading;
 
 public class Enemy : MonoBehaviour
 {
@@ -17,13 +18,22 @@ public class Enemy : MonoBehaviour
 
     //object pooy
     private IObjectPool<Enemy> ManageEnemyPool; //기본 enemy관리하는 pool
-    private bool IsRelease = false;
+    private bool isPoolRelease = false;
 
     //Enemy HP 관련
     private int enemyHP;
 
+    //UniTask 관련
+    private CancellationTokenSource tokenSource;
+
     private void OnEnable()
     {
+        if (tokenSource != null)
+        {
+            tokenSource.Dispose();
+        }
+        tokenSource = new CancellationTokenSource();
+
         spriteRenderer.sortingOrder = -2;
 
         moveSpeed = 4.0f;
@@ -33,7 +43,18 @@ public class Enemy : MonoBehaviour
 
         enemyHP = 100;
 
-        IsRelease = false;
+        isPoolRelease = false;
+    }
+
+    private void OnDisable()
+    {
+        tokenSource.Cancel();
+    }
+
+    private void OnDestroy()
+    {
+        tokenSource.Cancel();
+        tokenSource.Dispose();
     }
 
     private void FixedUpdate()
@@ -79,7 +100,16 @@ public class Enemy : MonoBehaviour
         this.enemyHP -= damage;
         if (enemyHP <= 0)
         {
-            GameManager.GetInstance.UpdateScoreInGame();
+            if (GameManager.GetInstance.IsSinglePlay)
+            {
+                SingleplayManager.GetInstance.UpdateScoreInSingleplay();
+                Debug.Log("싱글 플레이 적 죽어서 점수 업데이트중");
+            }
+            else
+            {
+                MultiplayManager.GetInstance.UpdateLocalScoreInMultiplay();
+                Debug.Log("멀티 플레이 적 죽어서 점수 업데이트중");
+            }
             DestroyEnemy();
         }
     }
@@ -90,8 +120,15 @@ public class Enemy : MonoBehaviour
     /// </summary>
     private async UniTaskVoid AutoDespawnEnemy()
     {
-        await UniTask.Delay(TimeSpan.FromSeconds(15.0f), cancellationToken: this.GetCancellationTokenOnDestroy());
-        GameManager.GetInstance.UpdateHPInGame(10);
+        await UniTask.Delay(TimeSpan.FromSeconds(15.0f), cancellationToken: tokenSource.Token);
+        if (GameManager.GetInstance.IsSinglePlay)
+        {
+            SingleplayManager.GetInstance.UpdateHPInSingleplay(10);
+        }
+        else
+        {
+            MultiplayManager.GetInstance.UpdateHPInMultiplay(10);
+        }
         DestroyEnemy();
     }
 
@@ -114,7 +151,7 @@ public class Enemy : MonoBehaviour
             float y = UnityEngine.Random.Range(-1.0f, 1.0f);
 
             direction = new Vector2(x, y);
-            await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: this.GetCancellationTokenOnDestroy());
+            await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: tokenSource.Token);
         }
     }
 
@@ -136,10 +173,10 @@ public class Enemy : MonoBehaviour
     /// </summary>
     private void DestroyEnemy()
     {
-        if (!IsRelease)
+        if (!isPoolRelease)
         {
             ManageEnemyPool.Release(this);
-            IsRelease = true;
+            isPoolRelease = true;
         }
     }
     #endregion

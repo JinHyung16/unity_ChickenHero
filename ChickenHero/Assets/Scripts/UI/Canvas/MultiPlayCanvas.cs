@@ -5,8 +5,9 @@ using TMPro;
 using HughUtility.Observer;
 using Cysharp.Threading.Tasks;
 using System;
+using UnityEngine.SocialPlatforms.Impl;
 
-public class MultiPlayCanvas : GameObserver
+public class MultiPlayCanvas : MonoBehaviour, MultiplayObserver
 {
     [SerializeField] private TMP_Text localHPText;
     [SerializeField] private TMP_Text localScoreText;
@@ -16,21 +17,19 @@ public class MultiPlayCanvas : GameObserver
 
     private int localHP = 0;
     private int localScore = 0;
+    private int remoteScore = 0;
 
     //Camera Shake관련 바인딩
     private CameraShake cameraShake;
 
-    private void Awake()
-    {
-        GameManager.GetInstance.RegisterObserver(this);
-    }
     private void Start()
     {
+        MultiplayManager.GetInstance.RegisterObserver(this);
         InitMultiPlayCanvas();
     }
-    private void OnDisable()
+    private void OnDestroy()
     {
-        GameManager.GetInstance.RemoveObserver(this);
+        MultiplayManager.GetInstance.RemoveObserver(this);
     }
 
 
@@ -39,8 +38,6 @@ public class MultiPlayCanvas : GameObserver
     /// </summary>
     private void InitMultiPlayCanvas()
     {
-        GameManager.GetInstance.GameStart();
-
         localScore = 0;
 
         DisplayUpdate();
@@ -68,30 +65,40 @@ public class MultiPlayCanvas : GameObserver
     public async void ExitMultiplayGame()
     {
         await MatchManager.GetInstance.QuickMatch();
+        GameManager.GetInstance.Score = this.localScore;
         GameManager.GetInstance.GameExit();
         SceneController.GetInstance.GoToScene("Lobby").Forget();
     }
     #endregion
 
+    private void SendLocalScoreToServer()
+    {
+        string jsonData = MatchDataJson.Score(this.localScore);
+        //await MatchManager.GetInstance.SendMatchStateAsync(OpCodes.Score, jsonData);
+        MatchManager.GetInstance.SendMatchState(OpCodes.Score, jsonData);
+    }
+
     #region Observer 패턴 구현 - GameObserver
-    public override void UpdateHPText(int playerHP)
+    public void UpdateHPText(int playerHP)
     {
         this.localHP = playerHP;
         DisplayUpdate();
     }
 
-    public override void UpdateScoreText(int score)
+    public void UpdateLocalScoreText(int score)
     {
         this.localScore = score;
+        SendLocalScoreToServer();
         DisplayUpdate();
     }
 
-    public override void UpdateRetmoeScoreText(int score)
+    public void UpdateRemoteScoreText(int score)
     {
-        remoteScoreText.text = "상대: " + score.ToString();
+        this.remoteScore = score;
+        remoteScoreText.text = "상대: " + remoteScore.ToString();
     }
 
-    public override void UpdateAttackDamage()
+    public void GetDamaged()
     {
         BloodEffectTask().Forget();
         if (cameraShake != null)

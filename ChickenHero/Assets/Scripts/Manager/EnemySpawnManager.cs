@@ -49,7 +49,7 @@ public class EnemySpawnManager : Singleton<EnemySpawnManager>
         }
         tokenSource = new CancellationTokenSource();
 
-        enemyPool = new ObjectPool<Enemy>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, true, 10, maxSize: 20);
+        enemyPool = new ObjectPool<Enemy>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, maxSize: 10);
     }
 
     public void StartEnemySpawnerPooling()

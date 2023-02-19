@@ -9,46 +9,19 @@ using System.Threading;
 
 public class LoginCanvas : MonoBehaviour
 {
-    [SerializeField] private GameObject LoginCheckPanel; //서버 연결이 안되어있을 때, 띄울 공지창
-
     [SerializeField] private TMP_InputField NameInputField;
     private string nickName = string.Empty;
 
     private async void Awake()
     {
-        LoginCheckPanel.SetActive(false);
         await GameServer.GetInstance.LoginToDevice();
     }
 
-    public void OnLineStart()
-    {
-        if (CheckInputName)
-        {
-            if (GameServer.GetInstance.GetIsServerConnect())
-            {
-                UserInfoSetting();
-                GameManager.GetInstance.IsOfflinePlay = false;
-                SceneController.GetInstance.GoToScene("Lobby").Forget();
-            }
-            else
-            {
-                LoginCheckPanelUpdate().Forget();
-            }
-        }
-    }
-    private async UniTaskVoid LoginCheckPanelUpdate()
-    {
-        LoginCheckPanel.SetActive(true);
-        await UniTask.Delay(TimeSpan.FromSeconds(1.0f), cancellationToken: this.GetCancellationTokenOnDestroy());
-        LoginCheckPanel.SetActive(false);
-    }
-
-    public void OffLineStart()
+    public void LoginToStart()
     {
         if (CheckInputName)
         {
             UserInfoSetting();
-            GameManager.GetInstance.IsOfflinePlay = true;
             SceneController.GetInstance.GoToScene("Lobby").Forget();
         }
     }
@@ -91,6 +64,7 @@ public class LoginCanvas : MonoBehaviour
         LocalData.GetInstance.Gold = 99999999;
         LocalData.GetInstance.Power = 100;
         LocalData.GetInstance.UpgradeLevel = 1;
+
         /*
         if (LocalData.GetInstance.CheckForUserInfo(nickName))
         {

@@ -8,7 +8,8 @@ using System;
 
 sealed class SceneController : Singleton<SceneController>
 {
-    [SerializeField] private GameObject loadingCanvas;
+    [SerializeField] private GameObject loadingCanvasObj;
+    private Canvas loadingCanvas;
     private CanvasGroup loadingCanvasGroup;
 
     [SerializeField] private TMP_Text loadingGaugeTxt;
@@ -25,10 +26,11 @@ sealed class SceneController : Singleton<SceneController>
 
     private void Start()
     {
-        loadingCanvasGroup = loadingCanvas.GetComponent<CanvasGroup>();
+        loadingCanvas = loadingCanvasObj.GetComponent<Canvas>();
+        loadingCanvasGroup = loadingCanvasObj.GetComponent<CanvasGroup>();
         loadingCanvasGroup.alpha = 1.0f;
 
-        loadingCanvas.SetActive(false);
+        loadingCanvas.enabled = false;
     }
 
     /// <summary>
@@ -39,7 +41,7 @@ sealed class SceneController : Singleton<SceneController>
     /// <returns> UniTaskVoid를 리턴하는데 이는 async void와 동일 그러나 성능면 우위 </returns>
     public async UniTaskVoid GoToScene(string sceneName)
     {
-        loadingCanvas.SetActive(true);
+        loadingCanvas.enabled = true;
 
         AsyncOperation loadSceneAsync = SceneManager.LoadSceneAsync(sceneName);
         if (loadSceneAsync == null)
@@ -62,7 +64,7 @@ sealed class SceneController : Singleton<SceneController>
             if (loadRatio >= 1.0f)
             {
                 loadingCanvasGroup.DOFade(1, 1.0f);
-                loadingCanvas.SetActive(false);
+                loadingCanvasObj.SetActive(false);
                 break;
             }
 
@@ -71,4 +73,5 @@ sealed class SceneController : Singleton<SceneController>
 
         loadSceneAsync.allowSceneActivation = true;
     }
+
 }

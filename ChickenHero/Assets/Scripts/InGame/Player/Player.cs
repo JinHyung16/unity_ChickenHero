@@ -28,10 +28,24 @@ public class Player : MonoBehaviour
         InitPlayerPooling();
     }
 
+    private void Start()
+    {
+        if (GameManager.GetInstance.IsSinglePlay)
+        {
+            SingleplayManager.GetInstance.PlayerHP = this.playerHP;
+            SingleplayManager.GetInstance.NotifyObservers(SingleplayNotifyType.None);
+        }
+        else
+        {
+            MultiplayManager.GetInstance.PlayerHP = this.playerHP;
+            MultiplayManager.GetInstance.NotifyObservers(MultiplayNotifyType.None);
+        }
+    }
+
     private void Update()
     {
         Attack();
-        AttackTestWindows();
+        //AttackTestWindows();
     }
 
     /// <summary>
@@ -43,8 +57,6 @@ public class Player : MonoBehaviour
         spriteRenderer.sprite = chickenData.playerSprite;
 
         playerHP = chickenData.chickenHP;
-        GameManager.GetInstance.PlayerHP = this.playerHP;
-        GameManager.GetInstance.NotifyObservers(GameNotifyType.None);
     }
 
     /// <summary>
@@ -52,7 +64,7 @@ public class Player : MonoBehaviour
     /// </summary>
     private void InitPlayerPooling()
     {
-        eggPool = new ObjectPool<Egg>(CreateEgg, OnGetEgg, OnReleaseEgg, OnDestroyEgg, true, 20, maxSize: 10000);
+        eggPool = new ObjectPool<Egg>(CreateEgg, OnGetEgg, OnReleaseEgg, OnDestroyEgg, maxSize: 100);
     }
 
     /// <summary>
@@ -79,6 +91,12 @@ public class Player : MonoBehaviour
             }
         }
     }
+
+    /// <summary>
+    /// Windows환경에서 테스트하고자 사용한 함수로
+    /// 모바일 빌드시 꼭 제외해주자. 안그러면 한번에 2번 던져진걸로 판단해서
+    /// Egg와 Enemy의 충돌이 2번씩 일어난다.
+    /// </summary>
     private void AttackTestWindows()
     {
         if (Input.GetMouseButtonDown(0))
@@ -107,7 +125,7 @@ public class Player : MonoBehaviour
         egg.transform.position = targetVec;
     }
 
-    #region Object Pool Function
+#region Object Pool Function
     /// <summary>
     /// Egg Object를 생성한다.
     /// 생성된 후 Egg Object에 자신이 등록되어야 할 Pool을 알려주고 반환한다.
@@ -146,5 +164,5 @@ public class Player : MonoBehaviour
     {
         Destroy(egg.gameObject);
     }
-    #endregion
+#endregion
 }

@@ -26,38 +26,52 @@ namespace HughUtility.Observer
     }
     #endregion
 
-    #region GamePlayer Observer - Single Play or Multi Play
-    public class GameObserver : MonoBehaviour
+    #region Singleplay Observer
+    public interface SingleplayObserver
     {
-        public virtual void UpdateHPText(int playerHP)
-        {
-        }
-        public virtual void UpdateScoreText(int score)
-        {
-        }
-        public virtual void UpdateAttackDamage()
-        {
-        }
-
-        public virtual void UpdateRetmoeScoreText(int score)
-        {
-        }
+        void UpdateHPText(int playerHP);
+        void GetDamaged();
+        void UpdateScoreText(int score);
     }
 
-    public interface GameSubject
+    public interface SingleplaySubject
     {
-        void RegisterObserver(GameObserver observer);
-        void RemoveObserver(GameObserver observer);
-        void NotifyObservers(GameNotifyType notifyType);
+        void RegisterObserver(SingleplayObserver observer);
+        void RemoveObserver(SingleplayObserver observer);
+        void NotifyObservers(SingleplayNotifyType notifyType);
     }
 
-    public enum GameNotifyType
+    public enum SingleplayNotifyType
     {
         None = 0,
-        HPDown,
-        ScoreUp,
-        RemoteUp,
+        HP,
+        Score,
     }
     #endregion
 
+    #region Multiplay Observer
+    public interface MultiplayObserver
+    {
+        void UpdateHPText(int playerHP);
+        void GetDamaged();
+        void UpdateLocalScoreText(int score);
+
+        void UpdateRemoteScoreText(int score);
+    }
+
+    public interface MultiplaySubject
+    {
+        void RegisterObserver(MultiplayObserver observer);
+        void RemoveObserver(MultiplayObserver observer);
+        void NotifyObservers(MultiplayNotifyType notifyType);
+    }
+
+    public enum MultiplayNotifyType
+    {
+        None = 0,
+        HP,
+        LocalScore,
+        RemoteScore,
+    }
+    #endregion
 }

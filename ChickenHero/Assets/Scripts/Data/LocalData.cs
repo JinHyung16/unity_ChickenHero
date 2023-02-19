@@ -28,7 +28,6 @@ public class LocalData : Singleton<LocalData>
         {
             userName = value;
             PlayerPrefs.SetString(userName, value);
-            PlayerPrefs.Save();
         }
     }
 
@@ -41,7 +40,6 @@ public class LocalData : Singleton<LocalData>
         set
         {
             PlayerPrefs.SetInt(userName + "Gold", value);
-            PlayerPrefs.Save();
         }
     }
 
@@ -54,7 +52,6 @@ public class LocalData : Singleton<LocalData>
         set
         {
             PlayerPrefs.SetInt(userName + "Power", value);
-            PlayerPrefs.Save();
         }
     }
 
@@ -67,7 +64,6 @@ public class LocalData : Singleton<LocalData>
         set
         {
             PlayerPrefs.SetInt(userName + "UpgradeLevel", value);
-            PlayerPrefs.Save();
         }
     }
 

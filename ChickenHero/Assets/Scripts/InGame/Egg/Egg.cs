@@ -15,14 +15,34 @@ public class Egg : MonoBehaviour
 
     //object pool 관련
     private IObjectPool<Egg> ManageEggPool;
-    private bool IsPoolRelease = false;
+    private bool isPoolRelease = false;
+
+    //UniTask 관련
+    private CancellationTokenSource tokenSource;
 
     private void OnEnable()
     {
+        if (tokenSource != null)
+        {
+            tokenSource.Dispose();
+        }
+        tokenSource = new CancellationTokenSource();
+
         spriteRenderer.sortingOrder = 0;
-        IsPoolRelease = false;
+        isPoolRelease = false;
 
         anim.SetInteger("IsBreak", 0);
+    }
+
+    private void OnDisable()
+    {
+        tokenSource.Cancel();
+    }
+
+    private void OnDestroy()
+    {
+        tokenSource.Cancel();
+        tokenSource.Dispose();
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -43,7 +63,7 @@ public class Egg : MonoBehaviour
     private async UniTaskVoid DestroyEggCoroutine()
     {
         anim.SetInteger("IsBreak", 1);
-        await UniTask.Delay(TimeSpan.FromSeconds(0.1f), cancellationToken: this.GetCancellationTokenOnDestroy());
+        await UniTask.Delay(TimeSpan.FromSeconds(0.1f), cancellationToken: tokenSource.Token);
         DestroyEgg();
     }
 
@@ -63,10 +83,10 @@ public class Egg : MonoBehaviour
     /// </summary>
     private void DestroyEgg()
     {   
-        if (!IsPoolRelease)
+        if (!isPoolRelease)
         {
             ManageEggPool.Release(this);
-            IsPoolRelease = true;
+            isPoolRelease = true;
         }     
     }
     #endregion

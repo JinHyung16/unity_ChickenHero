@@ -114,13 +114,20 @@ public class UnityMainThreadDispatcher : MonoBehaviour
 		return _instance;
 	}
 
-
 	void Awake()
 	{
-		if (_instance == null)
+		var obj = FindObjectsOfType<UnityMainThreadDispatcher>();
+        if (_instance == null)
+        {
+            _instance = this;
+        }
+		if (obj.Length == 1)
 		{
-			_instance = this;
 			DontDestroyOnLoad(this.gameObject);
+		}
+		else
+		{
+			Destroy(this.gameObject);
 		}
 	}
 
@@ -128,6 +135,4 @@ public class UnityMainThreadDispatcher : MonoBehaviour
 	{
 		_instance = null;
 	}
-
-
 }

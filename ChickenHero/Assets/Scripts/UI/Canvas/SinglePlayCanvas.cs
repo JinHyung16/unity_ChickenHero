@@ -1,15 +1,12 @@
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using HughUtility;
 using HughUtility.Observer;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
 
-public class SinglePlayCanvas : GameObserver
+public class SinglePlayCanvas : MonoBehaviour ,SingleplayObserver
 {
     //UI관련
     [SerializeField] private TMP_Text playerScoreTxt;
@@ -23,18 +20,15 @@ public class SinglePlayCanvas : GameObserver
     //Camera Shake관련 바인딩
     private CameraShake cameraShake;
 
-    private void Awake()
-    {
-        GameManager.GetInstance.RegisterObserver(this);
-    }
     private void Start()
     {
+        SingleplayManager.GetInstance.RegisterObserver(this);
         InitSinglePlayCanvas();
     }
 
     private void OnDisable()
     {
-        GameManager.GetInstance.RemoveObserver(this);
+        SingleplayManager.GetInstance.RemoveObserver(this);
     }
 
     /// <summary>
@@ -64,25 +58,26 @@ public class SinglePlayCanvas : GameObserver
     /// </summary>
     public void ExitSingleGame()
     {
+        GameManager.GetInstance.Score = this.playerScore;
         GameManager.GetInstance.GameExit();
         SceneController.GetInstance.GoToScene("Lobby").Forget();
     }
     #endregion
 
     #region Observer 패턴 구현 - GameObserver
-    public override void UpdateHPText(int playerHP)
+    public void UpdateHPText(int playerHP)
     {
         this.playerHp = playerHP;
         DisplayUpdate();
     }
 
-    public override void UpdateScoreText(int score)
+    public void UpdateScoreText(int score)
     {
         this.playerScore = score;
         DisplayUpdate();
     }
 
-    public override void UpdateAttackDamage()
+    public void GetDamaged()
     {
         BloodEffectTask().Forget();
         if (cameraShake != null)

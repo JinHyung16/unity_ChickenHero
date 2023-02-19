@@ -11,8 +11,8 @@ using Cysharp.Threading.Tasks;
 public partial class GameServer : LazySingleton<GameServer>
 {
     protected string Scheme = "http";
-    protected string Host = "34.145.39.102"; // @GCP hugh-server VM 외부 ip
-    //protected string Host = "localhost"; //Local Host
+    //protected string Host = "34.145.39.102"; // @GCP hugh-server VM 외부 ip
+    protected string Host = "localhost"; //Local Host
     protected int Port = 7350;
     protected string ServerKey = "defaultkey";
 
@@ -23,7 +23,7 @@ public partial class GameServer : LazySingleton<GameServer>
     protected ISession Session;
     protected ISocket Socket; //socket의 경우 GameManager에서 Match관련 코드 작성중이라 필요해서 public으로 열어야함
 
-    public ISocket GetSocket() { return Socket; }
+    public ISocket GetSocket() { return this.Socket; }
 
     //protected UnityMainThreadDispatcher mainThread;
 
@@ -58,9 +58,6 @@ public partial class GameServer : LazySingleton<GameServer>
             if (PlayerPrefs.HasKey(deviceIdentifierPrefName))
             {
                 deviceId = PlayerPrefs.GetString(deviceIdentifierPrefName);
-#if UNITY_EDITOR
-                Debug.LogFormat("<color=green><b>[Game-Server]</b> PlayerPrefs에 deviceIdentifierPrefName이 이미 있어서 사용 </color>");
-#endif
             }
             else
             {
@@ -73,9 +70,6 @@ public partial class GameServer : LazySingleton<GameServer>
 
                 // Store the device identifier to ensure we use the same one each time from now on.
                 PlayerPrefs.SetString(deviceIdentifierPrefName, deviceId);
-#if UNITY_EDITOR
-                Debug.LogFormat("<color=red><b>[Game-Server]</b> PlayerPrefs에 deviceIdentifierPrefName 없어서 저장함 </color>");
-#endif
             }
 #if UNITY_EDITOR
             Debug.LogFormat("<color=orange><b>[Game-Server]</b> deviceId : {0} </color>", deviceId);
@@ -96,7 +90,7 @@ public partial class GameServer : LazySingleton<GameServer>
         }
 
         Socket = Client.NewSocket();
-        await Socket.ConnectAsync(Session, true, 10); // Socket connect timeout is 15
+        await Socket.ConnectAsync(Session, true); // Socket connect timeout is 15
 
 #if UNITY_EDITOR
         Debug.Log("<color=orange><b>[Game-Server]</b> Socekt Connect : {0} </color>");
@@ -124,7 +118,6 @@ public partial class GameServer : LazySingleton<GameServer>
     /// <summary>
     /// 서버의 연결되어 있는 경우, DB 서버에 User의 정보를 전달한다.
     /// </summary>
-    /// <param name="level">유저의 레벨 전달</param>
     /// <param name="name">유저의 닉네임 전달</param>
     /// <param name="gold">유저의 재화량 전달</param>
     public async void SaveUserInfoServer(string name, int gold)
@@ -142,6 +135,10 @@ public partial class GameServer : LazySingleton<GameServer>
         }
     }
 
+    /// <summary>
+    /// 서버의 연결되어 있는 경우, DB 서버에 userId로 검색해 해당 유저의 정보를 지운다.
+    /// </summary>
+    /// <param name="_userId"> userId를 받는다 </param>
     public async void RemoveUserInfoServer(string _userId)
     {
         ReqUserInfoPacket reqData = new ReqUserInfoPacket
