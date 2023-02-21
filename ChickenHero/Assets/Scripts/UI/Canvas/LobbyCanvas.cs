@@ -28,12 +28,19 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     [SerializeField] private Button multiPlayBtn;
 
     [SerializeField] private GameObject ServerConnectCheckPanel; //서버 연결이 안되어있을 때, 띄울 공지창
+
+    private void Awake()
+    {
+        if (LocalData.GetInstance.Name == null)
+        {
+            LocalData.GetInstance.Name = GameManager.GetInstance.CurUserName;
+        }
+    }
     private void Start()
     {
         InitaDictionary();
         LoadUserInfoDisplay();
 
-        ///off-line, on-line 접속에 따른 multiplay button 활성화 설정하기
         singlePlayBtn.onClick.AddListener(GoToSinglePlay);
         multiPlayBtn.onClick.AddListener(GoToMultiPlay);
     }

@@ -11,6 +11,7 @@ using Cysharp.Threading.Tasks;
 
 sealed class GameManager : Singleton<GameManager>, IDisposable
 {
+    public string CurUserName { get; set; } //User의 이름을 가지고 있다가 Lobby로 이동할때마다 이걸로 데이터를 읽어온다.
     public bool IsSinglePlay { get; set; } = false; //false로 default value 초기화
     public int Score { get; set; } = 0;
 

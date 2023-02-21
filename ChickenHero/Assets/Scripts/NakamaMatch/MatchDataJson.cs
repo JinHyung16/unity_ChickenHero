@@ -1,5 +1,6 @@
 using Nakama.TinyJson;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class MatchDataJson
 {
@@ -23,11 +24,12 @@ public class MatchDataJson
     /// </summary>
     /// <param name="isDied"> true면 게임 시간이 다 끝난것으로 게임을 종료한다 </param>
     /// <returns> Dictionary의 값을 json형태로 리턴한다 </returns>
-    public static string Died(string userSessionID)
+    public static string Died(UnityEngine.Vector3 position)
     {
         var values = new Dictionary<string, string>
         {
-            {"DieUser", userSessionID.ToString() },
+            {"DiePos_x", position.x.ToString() },
+            {"DiePos_y", position.y.ToString() },
         };
 
         return values.ToJson();

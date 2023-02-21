@@ -65,6 +65,8 @@ public class LoginCanvas : MonoBehaviour
         LocalData.GetInstance.Power = 100;
         LocalData.GetInstance.UpgradeLevel = 1;
 
+        GameManager.GetInstance.CurUserName = nickName;
+
         /*
         if (LocalData.GetInstance.CheckForUserInfo(nickName))
         {

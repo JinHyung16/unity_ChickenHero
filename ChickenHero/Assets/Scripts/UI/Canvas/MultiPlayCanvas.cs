@@ -27,7 +27,8 @@ public class MultiPlayCanvas : MonoBehaviour, MultiplayObserver
         MultiplayManager.GetInstance.RegisterObserver(this);
         InitMultiPlayCanvas();
     }
-    private void OnDestroy()
+
+    private void OnDisable()
     {
         MultiplayManager.GetInstance.RemoveObserver(this);
     }

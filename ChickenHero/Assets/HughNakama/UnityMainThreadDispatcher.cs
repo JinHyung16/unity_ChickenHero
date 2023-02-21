@@ -18,14 +18,17 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
+using HughGeneric;
 
 /// Author: Pim de Witte (pimdewitte.com) and contributors, https://github.com/PimDeWitte/UnityMainThreadDispatcher
 /// <summary>
 /// A thread-safe class which holds a queue with actions to execute on the next Update() method. It can be used to make calls to the main thread for
 /// things such as UI Manipulation in Unity. It was developed for use in combination with the Firebase Unity plugin, which uses separate threads for event handling
 /// </summary>
-public class UnityMainThreadDispatcher : MonoBehaviour
+
+//modified by Hugh 2023.02.22
+public class UnityMainThreadDispatcher : Singleton<UnityMainThreadDispatcher>
 {
 
 	private static readonly Queue<Action> _executionQueue = new Queue<Action>();
@@ -64,14 +67,17 @@ public class UnityMainThreadDispatcher : MonoBehaviour
 		Enqueue(ActionWrapper(action));
 	}
 
-	/// <summary>
-	/// Locks the queue and adds the Action to the queue, returning a Task which is completed when the action completes
-	/// </summary>
-	/// <param name="action">function that will be executed from the main thread.</param>
-	/// <returns>A Task that can be awaited until the action completes</returns>
-	public Task EnqueueAsync(Action action)
+    /// <summary>
+    /// Locks the queue and adds the Action to the queue, returning a Task which is completed when the action completes
+    /// modified by Hugh 2023.02.22
+    /// </summary>
+    /// <param name="action">function that will be executed from the main thread.</param>
+    /// <returns>A Task that can be awaited until the action completes</returns>
+    public UniTask EnqueueAsync(Action action)
 	{
-		var tcs = new TaskCompletionSource<bool>();
+		var tcs = new UniTaskCompletionSource<bool>();
+
+        //var tcs = new TaskCompletionSource<bool>();
 
 		void WrappedAction()
 		{
@@ -98,6 +104,8 @@ public class UnityMainThreadDispatcher : MonoBehaviour
 	}
 
 
+    //modified by Hugh 2023.02.22
+    /*
 	private static UnityMainThreadDispatcher _instance = null;
 
 	public static bool Exists()
@@ -116,23 +124,16 @@ public class UnityMainThreadDispatcher : MonoBehaviour
 
 	void Awake()
 	{
-		var obj = FindObjectsOfType<UnityMainThreadDispatcher>();
         if (_instance == null)
         {
             _instance = this;
         }
-		if (obj.Length == 1)
-		{
-			DontDestroyOnLoad(this.gameObject);
-		}
-		else
-		{
-			Destroy(this.gameObject);
-		}
+        DontDestroyOnLoad(this.gameObject);
 	}
 
 	void OnDestroy()
 	{
 		_instance = null;
 	}
+	*/
 }

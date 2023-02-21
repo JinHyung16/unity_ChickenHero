@@ -33,8 +33,9 @@ sealed class MatchManager : MonoBehaviour
         }
 
         matchCanvasObj.SetActive(true);
+        matchCanvas = matchCanvasObj.GetComponent<Canvas>();
+        matchCanvas.enabled = true;
 
-        playerDictionary = new Dictionary<string, GameObject>();
         InitMatchManager();
     }
     #endregion
@@ -50,7 +51,9 @@ sealed class MatchManager : MonoBehaviour
 
     [SerializeField] private GameObject LocalPlayer;
     [SerializeField] private GameObject RemotePlayer;
+    private GameObject localPlayer;
 
+    public GameObject SpawnPoints;
     [SerializeField] private Transform LocalSpawnPoint;
     [SerializeField] private Transform RemoteSpawnPoint;
 
@@ -60,28 +63,23 @@ sealed class MatchManager : MonoBehaviour
 
     private int startTime = 0;
 
-    private void OnDestroy()
-    {
-        GameServer.GetInstance.GetSocket().ReceivedMatchmakerMatched -= T => mainThread.Enqueue(() => OnRecivedMatchMakerMatched(T));
-        GameServer.GetInstance.GetSocket().ReceivedMatchPresence -= T => mainThread.Enqueue(() => OnReceivedMatchPresence(T));
-        GameServer.GetInstance.GetSocket().ReceivedMatchState -= T => mainThread.Enqueue(async () => await OnReceivedMatchState(T));
-
-        playerDictionary.Clear();
-    }
-    private void Start()
-    {
-        matchCanvas = matchCanvasObj.GetComponent<Canvas>();
-        matchCanvas.enabled = true;
-    }
     /// <summary>
     /// 매칭 시작시 Match관련 SetUp을 진행하고 매칭을 시작하도록 한다.
     /// </summary>
     public void InitMatchManager()
     {
+        playerDictionary = new Dictionary<string, GameObject>();
+
+        GameServer.GetInstance.GetSocket().ReceivedMatchmakerMatched += T => UnityMainThreadDispatcher.GetInstance.Enqueue(() => OnRecivedMatchMakerMatched(T));
+        GameServer.GetInstance.GetSocket().ReceivedMatchPresence += T => UnityMainThreadDispatcher.GetInstance.Enqueue(() => OnReceivedMatchPresence(T));
+        GameServer.GetInstance.GetSocket().ReceivedMatchState += T => UnityMainThreadDispatcher.GetInstance.Enqueue(async () => await OnReceivedMatchState(T));
+
+        /*
         mainThread = UnityMainThreadDispatcher.Instance();
         GameServer.GetInstance.GetSocket().ReceivedMatchmakerMatched += T => mainThread.Enqueue(() => OnRecivedMatchMakerMatched(T));
         GameServer.GetInstance.GetSocket().ReceivedMatchPresence += T => mainThread.Enqueue(() => OnReceivedMatchPresence(T));
         GameServer.GetInstance.GetSocket().ReceivedMatchState += T => mainThread.Enqueue(async () => await OnReceivedMatchState(T));
+        */
     }
 
     #region Match 찾기, 취소, 나가기 함수 & Button 연결 함수
@@ -128,27 +126,30 @@ sealed class MatchManager : MonoBehaviour
         }
 
         playerDictionary.Clear();
-
         await GameServer.GetInstance.GetSocket().LeaveMatchAsync(currentMatch.Id);
         currentMatch = null;
     }
     #endregion
 
 
-    public void SpawnPlayer(string matchId, IUserPresence user)
+    public void SpawnPlayer(string matchId, IUserPresence user, int spawnIndex = -1)
     {
         if (playerDictionary.ContainsKey(user.SessionId))
         {
             return;
         }
+
+        //spawn Point도 local인지 아닌지에 따라 다르게 주기
+        var spawnPoint = spawnIndex == -1 ?
+            SpawnPoints.transform.GetChild(UnityEngine.Random.Range(0, SpawnPoints.transform.childCount - 1)) :
+            SpawnPoints.transform.GetChild(spawnIndex);
+
         var isLocalPlayer = user.SessionId == localUser.SessionId;
         var playerPrefab = isLocalPlayer ? LocalPlayer : RemotePlayer;
 
-        //spawn Point도 local인지 아닌지에 따라 다르게 주기
-        var spawnPoint = playerPrefab == isLocalPlayer ? LocalSpawnPoint : RemoteSpawnPoint;
-
         //local과 remote의 스폰 위치는 다르다. remote의 경우는 화면에 보이지 않는 곳에 생성시킨다
-        var player = Instantiate(playerPrefab, spawnPoint.position, Quaternion.identity);
+        var player = Instantiate(playerPrefab, spawnPoint.transform.position, Quaternion.identity);
+
         if (!isLocalPlayer)
         {
             playerPrefab.GetComponent<PlayerNetworkRemoteSync>().NetworkData = new RemotePlayerNetworkData
@@ -159,6 +160,13 @@ sealed class MatchManager : MonoBehaviour
         }
 
         playerDictionary.Add(user.SessionId, player);
+
+        if (isLocalPlayer)
+        {
+            localPlayer = player;
+            MultiplayManager.GetInstance.SetOnLocalPlayer(player);
+            player.GetComponent<PlayerNetworkLocalSync>().playerDieEvent.AddListener(OnLocalPlayerDied);
+        }
 
         //match UI Active false로 설정
         matchCanvas.enabled = false;
@@ -249,6 +257,13 @@ sealed class MatchManager : MonoBehaviour
         }
     }
 
+    private async void OnLocalPlayerDied(GameObject player)
+    {
+        await SendMatchStateAsync(OpCodes.IsDie, MatchDataJson.Died(player.transform.position));
+
+        playerDictionary.Remove(localUser.SessionId);
+        Destroy(player, 0.5f);
+    }
     private async UniTaskVoid EnemySpawnCall()
     {
         await UniTask.Delay(TimeSpan.FromSeconds(startTime), cancellationToken: this.GetCancellationTokenOnDestroy());

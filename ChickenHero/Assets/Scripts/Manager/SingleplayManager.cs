@@ -39,6 +39,11 @@ public class SingleplayManager : MonoBehaviour, SingleplaySubject
     {
         PlayerHP -= hp;
         NotifyObservers(SingleplayNotifyType.HP);
+
+        if (PlayerHP <= 0)
+        {
+            GameManager.GetInstance.GameClear();
+        }
     }
 
     public void UpdateScoreInSingleplay()

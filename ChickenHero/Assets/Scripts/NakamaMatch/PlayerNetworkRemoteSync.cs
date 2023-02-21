@@ -22,8 +22,8 @@ public class PlayerNetworkRemoteSync : MonoBehaviour
 
     private void EnqueueOnReceivedMatchState(IMatchState matchState)
     {
-        var mainThread = UnityMainThreadDispatcher.Instance();
-        mainThread.Enqueue(() => OnReceivedMatchState(matchState));
+        //mainThread.Enqueue(() => OnReceivedMatchState(matchState));
+        UnityMainThreadDispatcher.GetInstance.Enqueue(() => OnReceivedMatchState(matchState));
     }
 
     private void OnReceivedMatchState(IMatchState matchState)

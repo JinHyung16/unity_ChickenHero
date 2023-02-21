@@ -29,21 +29,36 @@ public class MultiplayManager : MonoBehaviour, MultiplaySubject
     }
     #endregion
 
+    
     public int PlayerHP { get; set; }
 
     public int LocalScore { get; private set; } = 0;
 
     public int RemoteScore { get; private set; } = 0;
 
+    private GameObject localPlayer;
+
     private void Start()
     {
         LocalScore = 0;
         RemoteScore = 0;
     }
+
+    public void SetOnLocalPlayer(GameObject player)
+    {
+        this.localPlayer = player;
+    }
+
     public void UpdateHPInMultiplay(int hp)
     {
         PlayerHP -= hp;
         NotifyObservers(MultiplayNotifyType.HP);
+
+        if (PlayerHP <= 0)
+        {
+            localPlayer.GetComponent<PlayerNetworkLocalSync>().Died();
+            GameManager.GetInstance.GameClear();
+        }
     }
 
     public void UpdateLocalScoreInMultiplay()
