@@ -70,7 +70,6 @@ public class EnemySpawnManager : Singleton<EnemySpawnManager>
         isSpawnStart = false;
 
         tokenSource.Cancel();
-        tokenSource.Dispose();
     }
 
     private async UniTaskVoid EnemySpawn()
@@ -84,7 +83,7 @@ public class EnemySpawnManager : Singleton<EnemySpawnManager>
             var enemy = enemyPool.Get();
             enemy.transform.position = posVec;
 
-            float spawnTime = UnityEngine.Random.Range(1.0f, 5.0f);
+            float spawnTime = UnityEngine.Random.Range(0.5f, 2.0f);
             await UniTask.Delay(TimeSpan.FromSeconds(spawnTime), cancellationToken: tokenSource.Token);
         }
     }

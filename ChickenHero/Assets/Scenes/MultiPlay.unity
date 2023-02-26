@@ -980,8 +980,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localUserSessionID: 
-  LocalPlayer: {fileID: 2086069329814629313, guid: 8b4be749159f97d409910fdc7b01caa6, type: 3}
-  RemotePlayer: {fileID: 2086069329814629313, guid: 261c9427deaf25d4c8f9197ee34040e2, type: 3}
+  LocalPlayer: {fileID: 8482713299650216128, guid: 8b4be749159f97d409910fdc7b01caa6, type: 3}
+  RemotePlayer: {fileID: 8998010019201778176, guid: 261c9427deaf25d4c8f9197ee34040e2, type: 3}
   SpawnPoints: {fileID: 1664472826}
   LocalSpawnPoint: {fileID: 360093537}
   RemoteSpawnPoint: {fileID: 302871784}

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using HughGeneric;
 using HughUtility;
+using Mono.Cecil;
 
 public class LocalData : Singleton<LocalData>
 {
@@ -13,7 +14,8 @@ public class LocalData : Singleton<LocalData>
 
     private void Start()
     {
-        ReadCSVData();
+        ReadShopCSVData();
+        ReadEndGameRuleCSVData();
     }
 
     #region PlayerPrefs Save Data Property
@@ -114,13 +116,14 @@ public class LocalData : Singleton<LocalData>
     }
     #endregion
 
-    #region CSV Data Contorller Functions
+    #region CSV Shop Data Contorller Functions
 
+    //게임 시작시 최초로 현재 업그레이드 코스트가 어딘지 가져올때 사용
     public int PickCost { get; private set; }
 
     private Dictionary<string, int> UpgradeCostDictionary = new Dictionary<string, int>();
     
-    private void ReadCSVData()
+    private void ReadShopCSVData()
     {
         string shopFile = "CSVData/ShopData";
         List<Dictionary<string, string>> csvDataList = CSVReader.ReadFile(shopFile);
@@ -134,13 +137,8 @@ public class LocalData : Singleton<LocalData>
             {
                 PickCost = pickGold;
             }
-            AddDictinary(level, cost);
+            UpgradeCostDictionary.Add(level, cost);
         }
-    }
-
-    private void AddDictinary(string level, int cost)
-    {
-        UpgradeCostDictionary.Add(level, cost);
     }
 
     /// <summary>
@@ -191,6 +189,36 @@ public class LocalData : Singleton<LocalData>
         }
 
         return upgradeCost;
+    }
+    #endregion
+
+    #region CSV End Rule Data Controller Functions;
+    private Dictionary<int, int> EndGameRuleDictionary = new Dictionary<int, int>();
+
+    public int isEndStageNum { get; private set; } = 0;
+    private int endGameRuleEnemyCnt;
+    private void ReadEndGameRuleCSVData()
+    {
+        string endGameRuleFile = "CSVData/EndGameRuleData";
+        List<Dictionary<string, string>> csvDataList = CSVReader.ReadFile(endGameRuleFile);
+
+        for (int i = 0; i < csvDataList.Count; i++)
+        {
+            int stage = int.Parse(csvDataList[i]["Stage"].ToString(), System.Globalization.NumberStyles.Integer);
+            int endRuleCnt = int.Parse(csvDataList[i]["EndRule"].ToString(), System.Globalization.NumberStyles.Integer);
+            int endStage = int.Parse(csvDataList[i]["EndStage"].ToString(), System.Globalization.NumberStyles.Integer);
+            if (endStage == 1)
+            {
+                isEndStageNum = stage;
+            }
+            EndGameRuleDictionary.Add(stage, endRuleCnt);
+        }
+    }
+
+    public int GetEndGameRuleEnemyCount(int curStage)
+    {
+        endGameRuleEnemyCnt = EndGameRuleDictionary[curStage];
+        return endGameRuleEnemyCnt;
     }
     #endregion
 }

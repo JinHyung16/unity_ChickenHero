@@ -100,16 +100,16 @@ public class Enemy : MonoBehaviour
         this.enemyHP -= damage;
         if (enemyHP <= 0)
         {
-            if (GameManager.GetInstance.IsSinglePlay)
+            if (GameManager.GetInstance.isSingleplay)
             {
+                SingleplayManager.GetInstance.UpdateEnemyDown();
                 SingleplayManager.GetInstance.UpdateScoreInSingleplay();
-                Debug.Log("싱글 플레이 적 죽어서 점수 업데이트중");
             }
             else
             {
                 MultiplayManager.GetInstance.UpdateLocalScoreInMultiplay();
-                Debug.Log("멀티 플레이 적 죽어서 점수 업데이트중");
             }
+
             DestroyEnemy();
         }
     }
@@ -121,7 +121,7 @@ public class Enemy : MonoBehaviour
     private async UniTaskVoid AutoDespawnEnemy()
     {
         await UniTask.Delay(TimeSpan.FromSeconds(15.0f), cancellationToken: tokenSource.Token);
-        if (GameManager.GetInstance.IsSinglePlay)
+        if (GameManager.GetInstance.isSingleplay)
         {
             SingleplayManager.GetInstance.UpdateHPInSingleplay(10);
         }

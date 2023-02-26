@@ -90,7 +90,7 @@ public partial class GameServer : LazySingleton<GameServer>
         }
 
         Socket = Client.NewSocket();
-        await Socket.ConnectAsync(Session, true); // Socket connect timeout is 15
+        await Socket.ConnectAsync(Session, true, 10); // Socket connect timeout is 15
 
 #if UNITY_EDITOR
         Debug.Log("<color=orange><b>[Game-Server]</b> Socekt Connect : {0} </color>");

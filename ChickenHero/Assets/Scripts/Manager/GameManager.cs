@@ -3,20 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using HughGeneric;
 using System;
-using HughUtility.Observer;
-using Nakama;
-using Nakama.TinyJson;
-using System.Text;
 using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Triggers;
 
 sealed class GameManager : Singleton<GameManager>, IDisposable
 {
-    public string CurUserName { get; set; } //User의 이름을 가지고 있다가 Lobby로 이동할때마다 이걸로 데이터를 읽어온다.
-    public bool IsSinglePlay { get; set; } = false; //false로 default value 초기화
-    public int Score { get; set; } = 0;
+    public string curUserName { get; set; } //User의 이름을 가지고 있다가 Lobby로 이동할때마다 이걸로 데이터를 읽어온다.
+    public bool isSingleplay { get; set; } = false; //false로 default value 초기화
 
     [SerializeField] private GameObject offLinePlayerPrefab;
-    [SerializeField] private Transform playerSpawnPoint;
+    [SerializeField] private Vector3 playerSpawnPoint;
 
     private GameObject offlinePlayer = null;
 
@@ -26,6 +22,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
         {
             offLinePlayerPrefab = Resources.Load("Player/Offline Player") as GameObject;
         }
+        playerSpawnPoint = new Vector3(0, -5.5f, 0);
     }
 
     #region IDisposable Interface 구현
@@ -44,46 +41,35 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
     /// </summary>
     public void GameStart()
     {
-        Score = 0;
-        if (IsSinglePlay)
+        if (isSingleplay)
         {
             offlinePlayer = Instantiate(offLinePlayerPrefab);
             offlinePlayer.transform.SetParent(this.gameObject.transform);
             offlinePlayer.SetActive(true);
-            offlinePlayer.transform.position = playerSpawnPoint.position;
+            offlinePlayer.transform.position = playerSpawnPoint;
 
             EnemySpawnManager.GetInstance.StartEnemySpawnerPooling();
         }
     }
 
     /// <summary>
-    /// OffLine일 땐 OffLinePlayer 생성만 따로 if문으로 처리해서 게임 끝났음을 알린다
-    /// </summary>
-    public void GameExit()
-    {
-        EnemySpawnManager.GetInstance.StopEnemySpawnerPooling();
-
-        if (IsSinglePlay)
-        {
-            Dispose();
-        }
-    }
-
-    /// <summary>
     /// 중간에 Game을 나가지 않고 다 플레이 했을 경우 실행되는 함수
     /// </summary>
-    public void GameClear()
+    public void GameEnd()
     {
         EnemySpawnManager.GetInstance.StopEnemySpawnerPooling();
 
-        Score /= 5;
-        int gold = Score;
-        LocalData.GetInstance.Gold += gold;
-        SceneController.GetInstance.GoToScene("Lobby").Forget();
-
-        if (IsSinglePlay)
+        if (isSingleplay)
         {
+
+            SingleplayManager.GetInstance.UpdateGameResultWhenEnd();
+
+            //off-line player를 지운다.
             Dispose();
+        }
+        else
+        {
+            SceneController.GetInstance.GoToScene("Lobby").Forget();
         }
     }
 }

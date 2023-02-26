@@ -33,7 +33,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     {
         if (LocalData.GetInstance.Name == null)
         {
-            LocalData.GetInstance.Name = GameManager.GetInstance.CurUserName;
+            LocalData.GetInstance.Name = GameManager.GetInstance.curUserName;
         }
     }
     private void Start()
@@ -104,7 +104,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     {
         if (GameServer.GetInstance.GetIsServerConnect())
         {
-            GameManager.GetInstance.IsSinglePlay = false;
+            GameManager.GetInstance.isSingleplay = false;
             SceneController.GetInstance.GoToScene("MultiPlay").Forget();
         }
         else
@@ -125,7 +125,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     /// </summary>
     public void GoToSinglePlay()
     {
-        GameManager.GetInstance.IsSinglePlay = true;
+        GameManager.GetInstance.isSingleplay = true;
         SceneController.GetInstance.GoToScene("SinglePlay").Forget();
     }
 

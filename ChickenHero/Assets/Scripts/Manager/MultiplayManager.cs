@@ -38,6 +38,10 @@ public class MultiplayManager : MonoBehaviour, MultiplaySubject
 
     private GameObject localPlayer;
 
+    private void OnDisable()
+    {
+        RemoveAllObserver();
+    }
     private void Start()
     {
         LocalScore = 0;
@@ -56,8 +60,7 @@ public class MultiplayManager : MonoBehaviour, MultiplaySubject
 
         if (PlayerHP <= 0)
         {
-            localPlayer.GetComponent<PlayerNetworkLocalSync>().Died();
-            GameManager.GetInstance.GameClear();
+            localPlayer.GetComponentInChildren<PlayerDataController>().Died();
         }
     }
 
@@ -81,9 +84,9 @@ public class MultiplayManager : MonoBehaviour, MultiplaySubject
         observerList.Add(observer);
     }
 
-    public void RemoveObserver(MultiplayObserver observer)
+    public void RemoveAllObserver()
     {
-        observerList.Remove(observer);
+        observerList.Clear();
     }
     public void NotifyObservers(MultiplayNotifyType notifyType)
     {

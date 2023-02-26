@@ -118,6 +118,9 @@ sealed class MatchManager : MonoBehaviour
 
     public async UniTask QuickMatch()
     {
+        await GameServer.GetInstance.GetSocket().LeaveMatchAsync(currentMatch.Id);
+
+        currentMatch = null;
         localUser = null;
 
         foreach (var player in playerDictionary.Values)
@@ -126,8 +129,8 @@ sealed class MatchManager : MonoBehaviour
         }
 
         playerDictionary.Clear();
-        await GameServer.GetInstance.GetSocket().LeaveMatchAsync(currentMatch.Id);
-        currentMatch = null;
+
+        GameManager.GetInstance.GameEnd();
     }
     #endregion
 
@@ -165,7 +168,7 @@ sealed class MatchManager : MonoBehaviour
         {
             localPlayer = player;
             MultiplayManager.GetInstance.SetOnLocalPlayer(player);
-            player.GetComponent<PlayerNetworkLocalSync>().playerDieEvent.AddListener(OnLocalPlayerDied);
+            player.GetComponentInChildren<PlayerDataController>().playerDieEvent.AddListener(OnLocalPlayerDied);
         }
 
         //match UI Active false로 설정
@@ -243,12 +246,12 @@ sealed class MatchManager : MonoBehaviour
                 playerDictionary.Remove(userSessionId);
                 if (playerDictionary.Count == 1 && playerDictionary.First().Key == localUser.SessionId)
                 {
+                    Debug.Log("죽었습니다");
                     await QuickMatch();
                 }
                 break;
             case OpCodes.Score:
                 MultiplayManager.GetInstance.UpdateRemoteScoreInMultiplay(int.Parse(state["Score"]));
-                Debug.Log("MatchManager에서 Score Update중");
                 break;
             case OpCodes.StartGame:
                 startTime = int.Parse(state["maxTasks"]);

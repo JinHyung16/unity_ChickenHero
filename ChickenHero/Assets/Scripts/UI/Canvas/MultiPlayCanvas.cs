@@ -7,7 +7,7 @@ using Cysharp.Threading.Tasks;
 using System;
 using UnityEngine.SocialPlatforms.Impl;
 
-public class MultiPlayCanvas : MonoBehaviour, MultiplayObserver
+public class MultiplayCanvas : MonoBehaviour, MultiplayObserver
 {
     [SerializeField] private TMP_Text localHPText;
     [SerializeField] private TMP_Text localScoreText;
@@ -26,11 +26,6 @@ public class MultiPlayCanvas : MonoBehaviour, MultiplayObserver
     {
         MultiplayManager.GetInstance.RegisterObserver(this);
         InitMultiPlayCanvas();
-    }
-
-    private void OnDisable()
-    {
-        MultiplayManager.GetInstance.RemoveObserver(this);
     }
 
 
@@ -66,8 +61,7 @@ public class MultiPlayCanvas : MonoBehaviour, MultiplayObserver
     public async void ExitMultiplayGame()
     {
         await MatchManager.GetInstance.QuickMatch();
-        GameManager.GetInstance.Score = this.localScore;
-        GameManager.GetInstance.GameExit();
+        GameManager.GetInstance.GameEnd();
         SceneController.GetInstance.GoToScene("Lobby").Forget();
     }
     #endregion

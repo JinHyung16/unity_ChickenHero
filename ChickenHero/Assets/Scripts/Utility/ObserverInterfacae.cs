@@ -32,12 +32,15 @@ namespace HughUtility.Observer
         void UpdateHPText(int playerHP);
         void GetDamaged();
         void UpdateScoreText(int score);
+        void UpdateEnemyDownCountAndStageText(bool isStageClear, int stage);
+
+        void ResultGameText(int stage, int score, int gold);
     }
 
     public interface SingleplaySubject
     {
         void RegisterObserver(SingleplayObserver observer);
-        void RemoveObserver(SingleplayObserver observer);
+        void RemoveAllObserver();
         void NotifyObservers(SingleplayNotifyType notifyType);
     }
 
@@ -46,6 +49,8 @@ namespace HughUtility.Observer
         None = 0,
         HP,
         Score,
+        EnemyDown,
+        GameEnd,
     }
     #endregion
 
@@ -62,7 +67,7 @@ namespace HughUtility.Observer
     public interface MultiplaySubject
     {
         void RegisterObserver(MultiplayObserver observer);
-        void RemoveObserver(MultiplayObserver observer);
+        void RemoveAllObserver();
         void NotifyObservers(MultiplayNotifyType notifyType);
     }
 
