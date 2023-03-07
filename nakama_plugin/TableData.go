@@ -23,7 +23,6 @@ type UserData struct {
 type ReqSetUserPacket struct {
 	UserId      string `json:"userId"`
 	UserName string `json:"userName"`
-	UserGold    int    `json:"userGold"`
 }
 
 type ReqUserInfoPacket struct {

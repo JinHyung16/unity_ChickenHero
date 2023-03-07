@@ -22,21 +22,21 @@ if hugh_db_err != nil {
 }
 */
 
-var db_ip = "34.145.19.90" //hugh_db VIM의 외부 IP
-var db_url = "root:jinhyung@tcp(" + db_ip + ")/"
+var db_ip = "34.168.1.26" //hugh_db VIM의 외부 IP
+var db_url = "root:jinhyung@tcp(" + db_ip + ":3307)/"
 
-//var db_url = "root:jinhyung@tcp(34.83.17.105:3307)/"
+// var db_url = "root:jinhyung@tcp(34.83.17.105:3307)/"
 
-func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
+func LogIn(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
 	println("----------------------------------------")
-	println("[User] 진입 :: SetUserInfo")
+	println("[User] 진입 :: LogIn")
 	println("----------------------------------------")
 
 	hugh_db_rul := db_url
 	hugh_db, hugh_db_err := sql.Open("mysql", hugh_db_rul+"nakama?parseTime=true")
 	if hugh_db_err != nil {
 		println("----------------------------------------")
-		println("[User] Error :: SetUserInfo\n", hugh_db_rul, "\n", hugh_db_err.Error())
+		println("[User] Error :: LogIn\n", hugh_db_rul, "\n", hugh_db_err.Error())
 		println("----------------------------------------")
 	}
 
@@ -45,73 +45,50 @@ func SetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 	if reqErr != nil {
 		jsonData, _ := json.Marshal(reqData)
 		println("----------------------------------------")
-		println("[User] Error :: SetUserInfo - request data\n", reqErr.Error())
+		println("[User] Error :: LogIn - request data\n", reqErr.Error())
 		println("----------------------------------------")
 		return string(jsonData), nil
 	}
 
-	//해당 DB에 유저의 정보가 있는지 검색하고 있으면 Update / 없으면 insert실행
-	var nameExist bool
-	checkQuery := `SELECT EXISTS (SELECT user_name FROM user_data where user_name=?)`
-	checkErr := hugh_db.QueryRow(checkQuery, reqData.UserId, reqData.UserName).Scan(&nameExist)
-	if checkErr != nil {
+	//	insertQuery := `INSERT INTO user_data user_id (user_id, user_name) VALUES (?, ?)`
+	//	_, insertErr := hugh_db.QueryContext(ctx, insertQuery, reqData.UserId, reqData.UserName)
+	//	if insertErr != nil {
+	//		println("----------------------------------------")
+	//		println("[User] Error :: SetUserInfo - insert data\n", insertErr.Error())
+	//		println("----------------------------------------")
+	//	}
+
+	userOldName, _ := ctx.Value(runtime.RUNTIME_CTX_USERNAME).(string) // 해당 닉네임 값은 올바르지 않은 경우가 있다.
+
+	selectQuery := `SELECT user_name FROM user_data where user_id=?`
+	selectDB, selectErr := hugh_db.QueryContext(ctx, selectQuery, reqData.UserId)
+	if selectErr != nil {
 		println("----------------------------------------")
-		println("[User] WARNING :: SetUserInfo - check DB\n", checkErr.Error())
+		println("[User] Error :: LogIn - select DB\n", selectErr.Error())
+		println("----------------------------------------")
+	}
+	selectDB.Scan(&userOldName)
+	println("----------------------------------------")
+	println("[User] DP에서 가져온 user name :\n", selectDB)
+	println("----------------------------------------")
+
+	insertQuery := `INSERT INTO user_data (user_id, user_name) VALUES(?, ?) ON DUPLICATE KEY UPDATE
+	user_name=?`
+	_, insertErr := hugh_db.QueryContext(ctx, insertQuery, reqData.UserId, userOldName, reqData.UserName)
+	if insertErr != nil {
+		println("----------------------------------------")
+		println("[User] Error :: LogIn - insert data\n", insertErr.Error())
 		println("----------------------------------------")
 	}
 
-	//DB에 검색시 존재하지 않으면 DB insert 해주기
-	if !nameExist {
-		println("----------------------------------------")
-		println("[User] Check DB STATE IS FALSE :: Insert DB Start")
-		println("----------------------------------------")
-
-		insertContext := `user_id, user_name, user_gold`
-		insertValues := `VALUES (?, ?, ?)`
-		insertQuery := `INSERT INTO user_data` + ` (` + insertContext + `) ` + insertValues
-		_, insertErr := hugh_db.QueryContext(ctx, insertQuery,
-			reqData.UserId,
-			reqData.UserName,
-			reqData.UserGold,
-		)
-
-		if insertErr != nil {
-			println("----------------------------------------")
-			println("[User] Error :: SetUserInfo - insert DB\n", insertErr.Error())
-			println("----------------------------------------")
-			jsonData, _ := json.Marshal(reqData)
-			return string(jsonData), nil
-		}
-	}
-
 	println("----------------------------------------")
-	println("[User] Check DB STATE IS TRUE :: Update DB Start")
-	println("----------------------------------------")
-	//DB에 검사시 존재한다면 Gold Upate 해주기
-	updateContext := `user_gold=?`
-	updateQuery := `UPDATE user_data ` + updateContext + `WHERE user_id=? and user_name=?`
-	_, updateErr := hugh_db.QueryContext(ctx, updateQuery,
-		reqData.UserGold,
-		reqData.UserId,
-		reqData.UserName,
-	)
-
-	if updateErr != nil {
-		println("----------------------------------------")
-		println("[User] Error :: SetUserInfo - update DB\n", updateErr.Error())
-		println("----------------------------------------")
-		jsonData, _ := json.Marshal(reqData)
-		return string(jsonData), nil
-	}
-
-	println("----------------------------------------")
-	println("[User] 탈출 :: SetUserInfo")
+	println("[User] 탈출 :: LogIn")
 	println("========================================")
 	jsonData, _ := json.Marshal(reqData)
 	return string(jsonData), nil
 }
 
-func GetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
+func GetUser(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
 	println("----------------------------------------")
 	println("[User] 진입 :: GetUserInfo")
 	println("----------------------------------------")
@@ -143,7 +120,7 @@ func GetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 	resData := UserData{}
 	for selectDB.Next() {
 		selectDB.Scan(
-			&resData.UserID, &resData.UserName, &resData.UserGold)
+			&resData.UserID, &resData.UserName)
 	}
 
 	resData.Message = "Success Select DB"
@@ -156,7 +133,7 @@ func GetUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runt
 	return string(jsonData), nil
 }
 
-func RemoveUserInfo(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
+func RemoveUser(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
 	println("----------------------------------------")
 	println("[User] 진입 :: RemoveUserInfo")
 	println("----------------------------------------")
