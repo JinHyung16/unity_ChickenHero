@@ -978,7 +978,7 @@ GameObject:
   - component: {fileID: 6227361611031346866}
   - component: {fileID: 6227361611031346865}
   - component: {fileID: 6227361611031346864}
-  - component: {fileID: 8829223502887025639}
+  - component: {fileID: 6309471311493434458}
   m_Layer: 5
   m_Name: SinglePlay Canvas
   m_TagString: Untagged
@@ -1072,7 +1072,7 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &8829223502887025639
+--- !u!114 &6309471311493434458
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1350,7 +1350,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 8829223502887025639}
+      - m_Target: {fileID: 6309471311493434458}
         m_TargetAssemblyTypeName: SinglePlayCanvas, Assembly-CSharp
         m_MethodName: ExitSingleGame
         m_Mode: 1

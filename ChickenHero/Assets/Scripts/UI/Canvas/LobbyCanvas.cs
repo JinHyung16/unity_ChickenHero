@@ -137,14 +137,10 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     public void SaveUserInfo()
     {
         string name = nameTxt.text;
-        int gold = int.Parse(goldTxt.text);
-
-        LocalData.GetInstance.Name = name;
-        LocalData.GetInstance.Gold = gold;
 
         if (GameServer.GetInstance.GetIsServerConnect())
         {
-            GameServer.GetInstance.SaveUserInfoServer(name, gold);
+            GameServer.GetInstance.SaveUserInfoServer(name);
         }
     }
 

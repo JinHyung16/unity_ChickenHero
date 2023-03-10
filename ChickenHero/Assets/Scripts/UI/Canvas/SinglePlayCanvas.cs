@@ -7,20 +7,20 @@ using System;
 using System.Threading;
 using UnityEditor.SceneManagement;
 
-public class SingleplayCanvas : MonoBehaviour, SingleplayObserver
+public class SinglePlayCanvas : MonoBehaviour, SingleplayObserver
 {
-    //UI°ü·Ã
+    //UIê´€ë ¨
     [SerializeField] private TMP_Text playerScoreTxt;
     [SerializeField] private TMP_Text playerHPTxt;
     [SerializeField] private TMP_Text stageInfoTxt;
 
-    //StageClear UI°ü·Ã
+    //StageClear UIê´€ë ¨
     [SerializeField] private GameObject stageClearPanel;
 
-    //Å¸°İ È¿°ú UI °ü·Ã
+    //íƒ€ê²© íš¨ê³¼ UI ê´€ë ¨
     [SerializeField] private GameObject bloodEffectPanel;
 
-    //ResultPanel UI °ü·Ã
+    //ResultPanel UI ê´€ë ¨
     [SerializeField] private GameObject resultPanel;
     [SerializeField] private TMP_Text resultStageTxt;
     [SerializeField] private TMP_Text resultScoreTxt;
@@ -30,7 +30,7 @@ public class SingleplayCanvas : MonoBehaviour, SingleplayObserver
     private int playerScore = 0;
     private int curStage = 1;
 
-    //Camera Shake°ü·Ã ¹ÙÀÎµù
+    //Camera Shakeê´€ë ¨ ë°”ì¸ë”©
     private CameraShake cameraShake;
 
     private void Start()
@@ -39,7 +39,7 @@ public class SingleplayCanvas : MonoBehaviour, SingleplayObserver
     }
 
     /// <summary>
-    /// ÃÊ±â SinglePlay Scene¿¡¼­ÀÇ UI ¼¼ÆÃ
+    /// ì´ˆê¸° SinglePlay Sceneì—ì„œì˜ UI ì„¸íŒ…
     /// </summary>
     private void InitSinglePlayCanvas()
     {
@@ -61,13 +61,13 @@ public class SingleplayCanvas : MonoBehaviour, SingleplayObserver
     private void DisplayUpdate()
     {
         playerHPTxt.text = "HP: " + playerHp.ToString();
-        playerScoreTxt.text = "Á¡¼ö: " + playerScore.ToString();
+        playerScoreTxt.text = "ì ìˆ˜: " + playerScore.ToString();
     }
 
     #region Exit Button - Sinplay Scene
     /// <summary>
-    /// Exit Yes Button À» ´©¸£¸é ´Ù½Ã ·Î±×ÀÎ È­¸éÀ¸·Î º¸³½´Ù.
-    /// ÀÌ¶§, °ÔÀÓÇÏ¸é¼­ ¸ğ¾Ò´ø °ñµå³ª ÀÌ¸§Àº ÀúÀåµÇÁö ¾Ê´Â´Ù.
+    /// Exit Yes Button ì„ ëˆ„ë¥´ë©´ ë‹¤ì‹œ ë¡œê·¸ì¸ í™”ë©´ìœ¼ë¡œ ë³´ë‚¸ë‹¤.
+    /// ì´ë•Œ, ê²Œì„í•˜ë©´ì„œ ëª¨ì•˜ë˜ ê³¨ë“œë‚˜ ì´ë¦„ì€ ì €ì¥ë˜ì§€ ì•ŠëŠ”ë‹¤.
     /// </summary>
     public void ExitSingleGame()
     {
@@ -75,7 +75,7 @@ public class SingleplayCanvas : MonoBehaviour, SingleplayObserver
     }
     #endregion
 
-    #region Observer ÆĞÅÏ ±¸Çö - GameObserver
+    #region Observer íŒ¨í„´ êµ¬í˜„ - GameObserver
     public void UpdateHPText(int playerHP)
     {
         this.playerHp = playerHP;
@@ -103,9 +103,9 @@ public class SingleplayCanvas : MonoBehaviour, SingleplayObserver
     }
 
     /// <summary>
-    /// Stage Clear½Ã Stage Up UI¸¦ Àá±ñ º¸¿©ÁÖ°í ´İ°Ô ÇÑ´Ù.
+    /// Stage Clearì‹œ Stage Up UIë¥¼ ì ê¹ ë³´ì—¬ì£¼ê³  ë‹«ê²Œ í•œë‹¤.
     /// </summary>
-    /// <returns> UniTaskVoid¸¦ Äİ¹éÇÑ´Ù </returns>
+    /// <returns> UniTaskVoidë¥¼ ì½œë°±í•œë‹¤ </returns>
     private async UniTaskVoid OpenStageClearPanel()
     {
         stageClearPanel.SetActive(true);
@@ -115,16 +115,16 @@ public class SingleplayCanvas : MonoBehaviour, SingleplayObserver
     }
 
     /// <summary>
-    /// GameÀ» ³ª°¡°Å³ª, Stage¸¦ ´Ù Å¬¸®¾î ÇßÀ»¶§ °ÔÀÓ °á°ú¸¦ º¸¿©ÁØ´Ù.
+    /// Gameì„ ë‚˜ê°€ê±°ë‚˜, Stageë¥¼ ë‹¤ í´ë¦¬ì–´ í–ˆì„ë•Œ ê²Œì„ ê²°ê³¼ë¥¼ ë³´ì—¬ì¤€ë‹¤.
     /// </summary>
-    /// <param name="stage">ÃÖÁ¾ Å¬¸®¾îÇÑ stage</param>
-    /// <param name="score">ÃÖÁ¾ È¹µæÇÔ Á¡¼ö</param>
-    /// <param name="gold">ÃÖÁ¾ È¹µæÇÑ °ñµå·®</param>
+    /// <param name="stage">ìµœì¢… í´ë¦¬ì–´í•œ stage</param>
+    /// <param name="score">ìµœì¢… íšë“í•¨ ì ìˆ˜</param>
+    /// <param name="gold">ìµœì¢… íšë“í•œ ê³¨ë“œëŸ‰</param>
     public void ResultGameText(int stage, int score, int gold)
     {
-        resultStageTxt.text = "Å¬¸®¾î ´Ü°è: " + stage.ToString();
-        resultScoreTxt.text = "È¹µæÇÑ Á¡¼ö: " + score.ToString();
-        resultGoldTxt.text = "È¹µæÇÑ °ñµå: " + gold.ToString();
+        resultStageTxt.text = "í´ë¦¬ì–´ ë‹¨ê³„: " + stage.ToString();
+        resultScoreTxt.text = "íšë“í•œ ì ìˆ˜: " + score.ToString();
+        resultGoldTxt.text = "íšë“í•œ ê³¨ë“œ: " + gold.ToString();
         ResultPanelAutoActiveMode().Forget();
 
     }
@@ -147,9 +147,9 @@ public class SingleplayCanvas : MonoBehaviour, SingleplayObserver
     }
 
     /// <summary>
-    /// GetDamaged()¿¡¼­ È£ÃâÇÏ´Â ÇÔ¼ö
+    /// GetDamaged()ì—ì„œ í˜¸ì¶œí•˜ëŠ” í•¨ìˆ˜
     /// </summary>
-    /// <returns> UniTaskVoid¸¦ ¹İÈ¯ÇØ¼­ Äİ¹éÇÑ´Ù </returns>
+    /// <returns> UniTaskVoidë¥¼ ë°˜í™˜í•´ì„œ ì½œë°±í•œë‹¤ </returns>
     private async UniTaskVoid BloodEffectTask()
     {
         bloodEffectPanel.SetActive(true);

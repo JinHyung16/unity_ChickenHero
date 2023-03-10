@@ -6,7 +6,6 @@ namespace HughUtility
     
     public static class Vibration
     {
-        /*
 #if UNITY_ANDROID && !UNITY_EDITOR
     public static AndroidJavaClass AndroidPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
     public static AndroidJavaObject AndroidcurrentActivity = AndroidPlayer.GetStatic<AndroidJavaObject>("currentActivity");
@@ -45,7 +44,6 @@ namespace HughUtility
 #if UNITY_ANDROID && !UNITY_EDITOR
             AndroidVibrator.Call("cancel");
 #endif
-        }
-        */
+        }  
     } 
 }

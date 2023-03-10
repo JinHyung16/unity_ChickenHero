@@ -1,5 +1,11 @@
 fileFormatVersion: 2
+<<<<<<<< Updated upstream:ChickenHero/Assets/Scripts/InGame/Player/PlayerDataController.cs.meta
 guid: e6bc473a404ea7047beae9f12c58f08e
+========
+guid: a6dfb529ed3bfc58ea80e1e100af33fd
+labels:
+- gvh
+>>>>>>>> Stashed changes:ChickenHero/Assets/GooglePlayGames/com.google.play.games/Runtime/Scripts/BasicApi/Player.cs.meta
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

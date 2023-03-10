@@ -19,7 +19,7 @@ public class MultiplayCanvas : MonoBehaviour, MultiplayObserver
     private int localScore = 0;
     private int remoteScore = 0;
 
-    //Camera Shake°ü·Ã ¹ÙÀÎµù
+    //Camera Shakeê´€ë ¨ ë°”ì¸ë”©
     private CameraShake cameraShake;
 
     private void Start()
@@ -30,7 +30,7 @@ public class MultiplayCanvas : MonoBehaviour, MultiplayObserver
 
 
     /// <summary>
-    /// ÃÊ±â MultiPlay Scene UI ¼³Á¤
+    /// ì´ˆê¸° MultiPlay Scene UI ì„¤ì •
     /// </summary>
     private void InitMultiPlayCanvas()
     {
@@ -45,18 +45,18 @@ public class MultiplayCanvas : MonoBehaviour, MultiplayObserver
     }
 
     /// <summary>
-    /// Score UpdateÇØ¼­ UI·Î È­¸é¿¡ º¸¿©ÁØ´Ù
+    /// Score Updateí•´ì„œ UIë¡œ í™”ë©´ì— ë³´ì—¬ì¤€ë‹¤
     /// </summary>
     private void DisplayUpdate()
     {
         localHPText.text = "HP: " + localHP.ToString();
-        localScoreText.text = "³ª: " + localScore.ToString();
+        localScoreText.text = "ë‚˜: " + localScore.ToString();
     }
 
     #region Exit Button - Multiplay Scene
     /// <summary>
-    /// Exit Yes Button À» ´©¸£¸é ´Ù½Ã ·Î±×ÀÎ È­¸éÀ¸·Î º¸³½´Ù.
-    /// ÀÌ¶§, °ÔÀÓÇÏ¸é¼­ ¸ğ¾Ò´ø °ñµå³ª ÀÌ¸§Àº ÀúÀåµÇÁö ¾Ê´Â´Ù.
+    /// Exit Yes Button ì„ ëˆ„ë¥´ë©´ ë‹¤ì‹œ ë¡œê·¸ì¸ í™”ë©´ìœ¼ë¡œ ë³´ë‚¸ë‹¤.
+    /// ì´ë•Œ, ê²Œì„í•˜ë©´ì„œ ëª¨ì•˜ë˜ ê³¨ë“œë‚˜ ì´ë¦„ì€ ì €ì¥ë˜ì§€ ì•ŠëŠ”ë‹¤.
     /// </summary>
     public async void ExitMultiplayGame()
     {
@@ -72,8 +72,8 @@ public class MultiplayCanvas : MonoBehaviour, MultiplayObserver
         //await MatchManager.GetInstance.SendMatchStateAsync(OpCodes.Score, jsonData);
         MatchManager.GetInstance.SendMatchState(OpCodes.Score, jsonData);
     }
-
-    #region Observer ÆĞÅÏ ±¸Çö - GameObserver
+    
+    #region Observer íŒ¨í„´ êµ¬í˜„ - GameObserver
     public void UpdateHPText(int playerHP)
     {
         this.localHP = playerHP;
@@ -90,7 +90,7 @@ public class MultiplayCanvas : MonoBehaviour, MultiplayObserver
     public void UpdateRemoteScoreText(int score)
     {
         this.remoteScore = score;
-        remoteScoreText.text = "»ó´ë: " + remoteScore.ToString();
+        remoteScoreText.text = "ìƒëŒ€: " + remoteScore.ToString();
     }
 
     public void GetDamaged()
