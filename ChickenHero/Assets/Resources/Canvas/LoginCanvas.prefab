@@ -147,7 +147,7 @@ GameObject:
   - component: {fileID: 2163456689814617548}
   - component: {fileID: 8331787443372912558}
   m_Layer: 5
-  m_Name: Login Canvas
+  m_Name: LoginCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -263,6 +263,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   googleLoginPanel: {fileID: 7011855288256382279}
+  loginButton: {fileID: 4871290729738961476}
   loginStateTxt: {fileID: 5931749354410544276}
 --- !u!1 &2163456690729454816
 GameObject:

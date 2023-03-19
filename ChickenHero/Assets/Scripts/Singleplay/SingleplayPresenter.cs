@@ -4,39 +4,25 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SingleplayManager : MonoBehaviour, SingleplaySubject
+public class SingleplayPresenter : MonoBehaviour, SingleplaySubject
 {
-    #region Singleton
-    private static SingleplayManager instance;
-    public static SingleplayManager GetInstance
-    {
-        get
-        {
-            if (instance == null)
-            {
-                return null;
-            }
-            return instance;
-        }
-    }
+    #region Static
+    public static SingleplayPresenter GetInstance;
     private void Awake()
     {
-        if (instance == null)
-        {
-            instance = this;
-        }
+        GetInstance = this;
     }
     #endregion
 
     public int playerHP { get; set; }
 
-    private int score; //ÀûÀ» ÀâÀ»¶§ ¸¶´Ù ¾ò´Â Score
+    private int score; //ì ì„ ì¡ì„ë•Œ ë§ˆë‹¤ ì–»ëŠ” Score
 
     private int curStage = 1;
     private bool isStageClear = false;
 
     private int clearEnemyCount = 25;
-    private int enemyDiedCntInStage = 0; //Stage¸¶´Ù Á×ÀÎ ÀûÀÌ ¸î¸¶¸®ÀÎÁö
+    private int enemyDiedCntInStage = 0; //Stageë§ˆë‹¤ ì£½ì¸ ì ì´ ëª‡ë§ˆë¦¬ì¸ì§€
 
     private int earnAmountOfGold = 0;
     private void OnDisable()
@@ -46,14 +32,14 @@ public class SingleplayManager : MonoBehaviour, SingleplaySubject
     private void Start()
     {
         score = 0;
-        clearEnemyCount = LocalData.GetInstance.GetEndGameRuleEnemyCount(curStage);
+        clearEnemyCount = LocalDataManager.GetInstance.GetEndGameRuleEnemyCount(curStage);
     }
 
     /// <summary>
-    /// ÀûÀ» ÀâÁö ¸øÇØ ÀÚµ¿À¸·Î ÀûÀÌ »ç¶óÁö¸é¼­ PlayerÀÇ HP¸¦ °¨¼Ò½ÃÅ³ ¶§ È£ÃâµÈ´Ù.
-    /// SinglePlayCanvas¿¡°Ô UI¸¦ UpdateÇÏ¶ó°í ¾Ë¸°´Ù.
+    /// ì ì„ ì¡ì§€ ëª»í•´ ìë™ìœ¼ë¡œ ì ì´ ì‚¬ë¼ì§€ë©´ì„œ Playerì˜ HPë¥¼ ê°ì†Œì‹œí‚¬ ë•Œ í˜¸ì¶œëœë‹¤.
+    /// SinglePlayCanvasì—ê²Œ UIë¥¼ Updateí•˜ë¼ê³  ì•Œë¦°ë‹¤.
     /// </summary>
-    /// <param name="hp">ÁÙ¾î¾ß ÇÏ´Â hpÀÇ ¾çÀ» ÀÇ¹Ì</param>
+    /// <param name="hp">ì¤„ì–´ì•¼ í•˜ëŠ” hpì˜ ì–‘ì„ ì˜ë¯¸</param>
     public void UpdateHPInSingleplay(int hp)
     {
         playerHP -= hp;
@@ -66,8 +52,8 @@ public class SingleplayManager : MonoBehaviour, SingleplaySubject
     }
 
     /// <summary>
-    /// Enemy°¡ Egg¿¡ ¸Â¾Æ Á×À¸¸é¼­ Á¡¼ö¸¦ Update½ÃÅ³ ¶§ È£ÃâµÈ´Ù.
-    /// SinglePlayCanvas¿¡°Ô UI¸¦ UpdateÇÏ¶ó°í ¾Ë¸°´Ù.
+    /// Enemyê°€ Eggì— ë§ì•„ ì£½ìœ¼ë©´ì„œ ì ìˆ˜ë¥¼ Updateì‹œí‚¬ ë•Œ í˜¸ì¶œëœë‹¤.
+    /// SinglePlayCanvasì—ê²Œ UIë¥¼ Updateí•˜ë¼ê³  ì•Œë¦°ë‹¤.
     /// </summary>
     public void UpdateScoreInSingleplay()
     {
@@ -76,9 +62,9 @@ public class SingleplayManager : MonoBehaviour, SingleplaySubject
     }
 
     /// <summary>
-    /// Enemy°¡ Egg¿¡ ¸Â¾Æ Á×À¸¸é¼­ Á×ÀÎ EnemyÀÇ Count¸¦ Áõ°¡½ÃÅ³ ¶§ È£ÃâµÈ´Ù.
-    /// SinglePlayCanvas¿¡°Ô UI¸¦ UpdateÇÏ¶ó°í ¾Ë¸°´Ù.
-    /// ¸¸¾à Stage ClearÁ¶°ÇÀÌ ¸¸Á·µÇ¾ú´Ù¸é Clear UI¸¦ ¶ç¿ì°í StageÀÇ º¯°æµµ ¾Ë¸°´Ù.
+    /// Enemyê°€ Eggì— ë§ì•„ ì£½ìœ¼ë©´ì„œ ì£½ì¸ Enemyì˜ Countë¥¼ ì¦ê°€ì‹œí‚¬ ë•Œ í˜¸ì¶œëœë‹¤.
+    /// SinglePlayCanvasì—ê²Œ UIë¥¼ Updateí•˜ë¼ê³  ì•Œë¦°ë‹¤.
+    /// ë§Œì•½ Stage Clearì¡°ê±´ì´ ë§Œì¡±ë˜ì—ˆë‹¤ë©´ Clear UIë¥¼ ë„ìš°ê³  Stageì˜ ë³€ê²½ë„ ì•Œë¦°ë‹¤.
     /// </summary>
     public void UpdateEnemyDown()
     {
@@ -93,19 +79,19 @@ public class SingleplayManager : MonoBehaviour, SingleplaySubject
     }
 
     /// <summary>
-    /// Stage Clear¸¦ ¾Ë¸®°í, ÇöÀç Stage¸¦ up ½ÃÅ²´Ù.
-    /// ÀÌ¶§, ÇöÀç stage¿¡ µû¸¥ Àâ¾Æ¾ß ÇÏ´Â ¸ó½ºÅÍÀÇ ¼öµµ °¡Á®¿Í¼­ ¹Ù²ãÁØ´Ù.
+    /// Stage Clearë¥¼ ì•Œë¦¬ê³ , í˜„ì¬ Stageë¥¼ up ì‹œí‚¨ë‹¤.
+    /// ì´ë•Œ, í˜„ì¬ stageì— ë”°ë¥¸ ì¡ì•„ì•¼ í•˜ëŠ” ëª¬ìŠ¤í„°ì˜ ìˆ˜ë„ ê°€ì ¸ì™€ì„œ ë°”ê¿”ì¤€ë‹¤.
     /// </summary>
     private void StageClearAndStageUp()
     {
         curStage += 1;
-        if (LocalData.GetInstance.isEndStageNum < curStage)
+        if (LocalDataManager.GetInstance.isEndStageNum < curStage)
         {
             GameManager.GetInstance.GameEnd();
             return;
         }
         enemyDiedCntInStage = 0;
-        clearEnemyCount = LocalData.GetInstance.GetEndGameRuleEnemyCount(curStage);
+        clearEnemyCount = LocalDataManager.GetInstance.GetEndGameRuleEnemyCount(curStage);
     }
 
 
@@ -114,7 +100,7 @@ public class SingleplayManager : MonoBehaviour, SingleplaySubject
         earnAmountOfGold = curStage * (score / 5);
         NotifyObservers(SingleplayNotifyType.GameEnd);
     }
-    #region Observer pattern interface±¸Çö
+    #region Observer pattern interfaceêµ¬í˜„
     private List<SingleplayObserver> observerList = new List<SingleplayObserver>();
 
     public void RegisterObserver(SingleplayObserver observer)

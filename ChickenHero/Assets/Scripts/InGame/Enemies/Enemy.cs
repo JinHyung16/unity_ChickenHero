@@ -86,7 +86,7 @@ public class Enemy : MonoBehaviour
         if (collision.gameObject.CompareTag("Egg"))
         {
             anim.SetTrigger("IsHurt");
-            DamagedToEgg(LocalData.GetInstance.Power);
+            DamagedToEgg(LocalDataManager.GetInstance.Power);
         }
     }
 
@@ -102,12 +102,12 @@ public class Enemy : MonoBehaviour
         {
             if (GameManager.GetInstance.isSingleplay)
             {
-                SingleplayManager.GetInstance.UpdateEnemyDown();
-                SingleplayManager.GetInstance.UpdateScoreInSingleplay();
+                SingleplayPresenter.GetInstance.UpdateEnemyDown();
+                SingleplayPresenter.GetInstance.UpdateScoreInSingleplay();
             }
             else
             {
-                MultiplayManager.GetInstance.UpdateLocalScoreInMultiplay();
+                MultiplayPresenter.GetInstance.UpdateLocalScoreInMultiplay();
             }
 
             DestroyEnemy();
@@ -123,11 +123,11 @@ public class Enemy : MonoBehaviour
         await UniTask.Delay(TimeSpan.FromSeconds(15.0f), cancellationToken: tokenSource.Token);
         if (GameManager.GetInstance.isSingleplay)
         {
-            SingleplayManager.GetInstance.UpdateHPInSingleplay(10);
+            SingleplayPresenter.GetInstance.UpdateHPInSingleplay(10);
         }
         else
         {
-            MultiplayManager.GetInstance.UpdateHPInMultiplay(10);
+            MultiplayPresenter.GetInstance.UpdateHPInMultiplay(10);
         }
         DestroyEnemy();
     }

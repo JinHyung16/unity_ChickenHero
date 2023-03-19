@@ -62,7 +62,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
         if (isSingleplay)
         {
 
-            SingleplayManager.GetInstance.UpdateGameResultWhenEnd();
+            SingleplayPresenter.GetInstance.UpdateGameResultWhenEnd();
 
             //off-line player를 지운다.
             Dispose();

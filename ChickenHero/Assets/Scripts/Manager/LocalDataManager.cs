@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using HughGeneric;
 using HughUtility;
-using Mono.Cecil;
 
-public class LocalData : Singleton<LocalData>
+public class LocalDataManager : Singleton<LocalDataManager>
 {
     /// <summary>
-    /// PlayerPrefsÀ» ÀÌ¿ëÇØ OffLineÀÏ ¶§ »ç¿ëÇÒ Local Data
-    /// UserÀÇ ·¹º§, °ñµå·®¸¸À» ÀúÀåÇØµÎ°í Server¿¬µ¿µÇ¸é µ¿±âÈ­ ÇÒ ¸ñÀûµµ Æ÷ÇÔ
+    /// PlayerPrefsì„ ì´ìš©í•´ OffLineì¼ ë•Œ ì‚¬ìš©í•  Local Data
+    /// Userì˜ ë ˆë²¨, ê³¨ë“œëŸ‰ë§Œì„ ì €ì¥í•´ë‘ê³  Serverì—°ë™ë˜ë©´ ë™ê¸°í™” í•  ëª©ì ë„ í¬í•¨
     /// </summary>
 
     private void Start()
@@ -81,8 +80,8 @@ public class LocalData : Singleton<LocalData>
 
     #region PlayerPrefs Control Function
     /// <summary>
-    /// ·ÎÄÃ PlayerPrefsÃÊ±âÈ­ ½Ã »ç¿ëÇÒ ÇÔ¼ö
-    /// ·Î±×ÀÎ µÇ¾îÀÖ´Ù¸é ¼­¹öÀÇ µ¥ÀÌÅÍµµ Áö¿öÁØ´Ù.
+    /// ë¡œì»¬ PlayerPrefsì´ˆê¸°í™” ì‹œ ì‚¬ìš©í•  í•¨ìˆ˜
+    /// ë¡œê·¸ì¸ ë˜ì–´ìˆë‹¤ë©´ ì„œë²„ì˜ ë°ì´í„°ë„ ì§€ì›Œì¤€ë‹¤.
     /// </summary>
     public void ClearAllUserInfo()
     {
@@ -98,11 +97,11 @@ public class LocalData : Singleton<LocalData>
     }
 
     /// <summary>
-    /// PlayerPrefs¿¡ ÇØ´ç À¯Àú Á¤º¸°¡ ÀúÀåµÇ¾î ÀÖ´ÂÁö È®ÀÎÇÑ´Ù.
-    /// ¸ğµç key¿¡´Â UserÀÇ ÀÌ¸§ÀÌ Æ÷ÇÔµÇ¾î ÀÖ¾î¼­ ÀÌ¸§ ÇÏ³ª¸¸À¸·Î È®ÀÎ
+    /// PlayerPrefsì— í•´ë‹¹ ìœ ì € ì •ë³´ê°€ ì €ì¥ë˜ì–´ ìˆëŠ”ì§€ í™•ì¸í•œë‹¤.
+    /// ëª¨ë“  keyì—ëŠ” Userì˜ ì´ë¦„ì´ í¬í•¨ë˜ì–´ ìˆì–´ì„œ ì´ë¦„ í•˜ë‚˜ë§Œìœ¼ë¡œ í™•ì¸
     /// </summary>
-    /// <param name="name"> À¯ÀúÀÇ Nick NameÀ» ¹Ş´Â´Ù </param>
-    /// <returns> PlayerPrefs¿¡ ÇØ´ç Nick NameÀÌ ÀÖÀ¸¸é true¸¦ ¾øÀ¸¸é false¸¦ ¸®ÅÏ</returns>
+    /// <param name="name"> ìœ ì €ì˜ Nick Nameì„ ë°›ëŠ”ë‹¤ </param>
+    /// <returns> PlayerPrefsì— í•´ë‹¹ Nick Nameì´ ìˆìœ¼ë©´ trueë¥¼ ì—†ìœ¼ë©´ falseë¥¼ ë¦¬í„´</returns>
     public bool CheckForUserInfo(string name)
     {
         if (string.IsNullOrEmpty(PlayerPrefs.GetString(name)))
@@ -118,7 +117,7 @@ public class LocalData : Singleton<LocalData>
 
     #region CSV Shop Data Contorller Functions
 
-    //°ÔÀÓ ½ÃÀÛ½Ã ÃÖÃÊ·Î ÇöÀç ¾÷±×·¹ÀÌµå ÄÚ½ºÆ®°¡ ¾îµòÁö °¡Á®¿Ã¶§ »ç¿ë
+    //ê²Œì„ ì‹œì‘ì‹œ ìµœì´ˆë¡œ í˜„ì¬ ì—…ê·¸ë ˆì´ë“œ ì½”ìŠ¤íŠ¸ê°€ ì–´ë”˜ì§€ ê°€ì ¸ì˜¬ë•Œ ì‚¬ìš©
     public int PickCost { get; private set; }
 
     private Dictionary<string, int> UpgradeCostDictionary = new Dictionary<string, int>();
@@ -142,11 +141,11 @@ public class LocalData : Singleton<LocalData>
     }
 
     /// <summary>
-    /// levelÀ» 10À¸·Î ³ª´² ¸òÀ» ÅëÇØ ±¸°£ ÆÄ¾Ç
-    /// 0ÀÌ¸é 1~10, 1ÀÌ¸é 11~20 etc...
+    /// levelì„ 10ìœ¼ë¡œ ë‚˜ëˆ  ëª«ì„ í†µí•´ êµ¬ê°„ íŒŒì•…
+    /// 0ì´ë©´ 1~10, 1ì´ë©´ 11~20 etc...
     /// </summary>
-    /// <param name="level"> ÇöÀç À¯ÀúÀÇ ¾÷±×·¹ÀÌµå ·¹º§À» ¹Ş´Â´Ù</param>
-    /// <returns>ÇØ´ç ¾÷±×·¹ÀÌµå ±¸°£¿¡ ¸Â´Â ¾÷±×·¹ÀÌµå ºñ¿ëÀ» ¸®ÅÏ</returns>
+    /// <param name="level"> í˜„ì¬ ìœ ì €ì˜ ì—…ê·¸ë ˆì´ë“œ ë ˆë²¨ì„ ë°›ëŠ”ë‹¤</param>
+    /// <returns>í•´ë‹¹ ì—…ê·¸ë ˆì´ë“œ êµ¬ê°„ì— ë§ëŠ” ì—…ê·¸ë ˆì´ë“œ ë¹„ìš©ì„ ë¦¬í„´</returns>
     public int GetUpgradeCost(string level)
     {
         int upgradeCost = UpgradeCostDictionary["1"];

@@ -24,13 +24,13 @@ public class PlayerDataController : MonoBehaviour
     {
         if (GameManager.GetInstance.isSingleplay)
         {
-            SingleplayManager.GetInstance.playerHP = this.playerHP;
-            SingleplayManager.GetInstance.NotifyObservers(SingleplayNotifyType.None);
+            SingleplayPresenter.GetInstance.playerHP = this.playerHP;
+            SingleplayPresenter.GetInstance.NotifyObservers(SingleplayNotifyType.None);
         }
         else
         {
-            MultiplayManager.GetInstance.PlayerHP = this.playerHP;
-            MultiplayManager.GetInstance.NotifyObservers(MultiplayNotifyType.None);
+            MultiplayPresenter.GetInstance.PlayerHP = this.playerHP;
+            MultiplayPresenter.GetInstance.NotifyObservers(MultiplayNotifyType.None);
         }
 
         if (playerDieEvent == null)

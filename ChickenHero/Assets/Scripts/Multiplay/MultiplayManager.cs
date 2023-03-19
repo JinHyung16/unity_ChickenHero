@@ -4,28 +4,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SocialPlatforms.Impl;
 
-public class MultiplayManager : MonoBehaviour, MultiplaySubject
+public class MultiplayPresenter : MonoBehaviour, MultiplaySubject
 {
-    #region Singleton
-    private static MultiplayManager instance;
-    public static MultiplayManager GetInstance
-    {
-        get
-        {
-            if (instance == null)
-            {
-                return null;
-            }
-            return instance;
-        }
-    }
+    #region Static
+    public static MultiplayPresenter GetInstance;
 
     private void Awake()
     {
-        if (instance == null)
-        {
-            instance = this;
-        }
+        GetInstance = this;
     }
     #endregion
 
@@ -77,7 +63,7 @@ public class MultiplayManager : MonoBehaviour, MultiplaySubject
     }
 
 
-    #region Observer pattern interface±¸Çö
+    #region Observer pattern interfaceêµ¬í˜„
     private List<MultiplayObserver> observerList = new List<MultiplayObserver>();
     public void RegisterObserver(MultiplayObserver observer)
     {

@@ -5,9 +5,12 @@ using UnityEngine.EventSystems;
 
 namespace HughUI
 {
+    public class UITypeData
+    {
+    }
     /// <summary>
-    /// ¿À·ÎÁö 1°³¸¸ ¿­·Á¾ß ÇÏ´Â Panel ¸ğÀ½
-    /// Áï, ÇØ´ç PanelÀÌ ¿­¸®¸é ³ª¸ÓÁö PanelÀº ÀÚµ¿À¸·Î ´İÈ÷´Â ¼­·Î µ¶¸³ÀûÀÎ Panel ¸ğÀ½
+    /// ì˜¤ë¡œì§€ 1ê°œë§Œ ì—´ë ¤ì•¼ í•˜ëŠ” Panel ëª¨ìŒ
+    /// ì¦‰, í•´ë‹¹ Panelì´ ì—´ë¦¬ë©´ ë‚˜ë¨¸ì§€ Panelì€ ìë™ìœ¼ë¡œ ë‹«íˆëŠ” ì„œë¡œ ë…ë¦½ì ì¸ Panel ëª¨ìŒ
     /// </summary>
     public enum UIType
     {

@@ -31,9 +31,9 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
 
     private void Awake()
     {
-        if (LocalData.GetInstance.Name == null)
+        if (LocalDataManager.GetInstance.Name == null)
         {
-            LocalData.GetInstance.Name = GameManager.GetInstance.curUserName;
+            LocalDataManager.GetInstance.Name = GameManager.GetInstance.curUserName;
         }
     }
     private void Start()
@@ -52,9 +52,9 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     /// </summary>
     private void LoadUserInfoDisplay()
     {
-        nameTxt.text = LocalData.GetInstance.Name.ToString();
-        goldTxt.text = "G: " + LocalData.GetInstance.Gold.ToString();
-        powerTxt.text = "P: " + LocalData.GetInstance.Power.ToString();
+        nameTxt.text = LocalDataManager.GetInstance.Name.ToString();
+        goldTxt.text = "G: " + LocalDataManager.GetInstance.Gold.ToString();
+        powerTxt.text = "P: " + LocalDataManager.GetInstance.Power.ToString();
     }
 
     #region Panel Open하는 Button관련 함수들
@@ -150,7 +150,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     /// </summary>
     public void ClearUserInfo()
     {
-        LocalData.GetInstance.ClearAllUserInfo();
+        LocalDataManager.GetInstance.ClearAllUserInfo();
         SceneController.GetInstance.GoToScene("Login").Forget();
     }
     #endregion
@@ -248,10 +248,10 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
         switch (cardData.powerCardName)
         {
             case "F":
-                LocalData.GetInstance.Power = cardData.cardPower;
+                LocalDataManager.GetInstance.Power = cardData.cardPower;
                 break;
             default:
-                LocalData.GetInstance.Power += cardData.cardPower;
+                LocalDataManager.GetInstance.Power += cardData.cardPower;
                 break;
         }
         LoadUserInfoDisplay();

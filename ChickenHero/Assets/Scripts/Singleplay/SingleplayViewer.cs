@@ -5,9 +5,8 @@ using HughUtility.Observer;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
-using UnityEditor.SceneManagement;
 
-public class SinglePlayCanvas : MonoBehaviour, SingleplayObserver
+public class SingleplayViewer : MonoBehaviour, SingleplayObserver
 {
     //UI관련
     [SerializeField] private TMP_Text playerScoreTxt;
@@ -43,7 +42,7 @@ public class SinglePlayCanvas : MonoBehaviour, SingleplayObserver
     /// </summary>
     private void InitSinglePlayCanvas()
     {
-        SingleplayManager.GetInstance.RegisterObserver(this);
+        SingleplayPresenter.GetInstance.RegisterObserver(this);
 
         GameManager.GetInstance.GameStart();
         playerScore = 0;

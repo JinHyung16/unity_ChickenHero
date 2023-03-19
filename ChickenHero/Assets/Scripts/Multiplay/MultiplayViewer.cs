@@ -7,7 +7,7 @@ using Cysharp.Threading.Tasks;
 using System;
 using UnityEngine.SocialPlatforms.Impl;
 
-public class MultiplayCanvas : MonoBehaviour, MultiplayObserver
+public class MultiplayViewer : MonoBehaviour, MultiplayObserver
 {
     [SerializeField] private TMP_Text localHPText;
     [SerializeField] private TMP_Text localScoreText;
@@ -24,7 +24,7 @@ public class MultiplayCanvas : MonoBehaviour, MultiplayObserver
 
     private void Start()
     {
-        MultiplayManager.GetInstance.RegisterObserver(this);
+        MultiplayPresenter.GetInstance.RegisterObserver(this);
         InitMultiPlayCanvas();
     }
 

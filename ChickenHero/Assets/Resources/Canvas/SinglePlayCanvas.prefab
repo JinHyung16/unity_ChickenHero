@@ -980,7 +980,7 @@ GameObject:
   - component: {fileID: 6227361611031346864}
   - component: {fileID: 6309471311493434458}
   m_Layer: 5
-  m_Name: SinglePlay Canvas
+  m_Name: SinglePlayCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

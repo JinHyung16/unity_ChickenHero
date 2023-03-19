@@ -27,19 +27,19 @@ public class ShopPanel : MonoBehaviour
 
     private void InitShopPanel()
     {
-        ownUpgradePower = LocalData.GetInstance.UpgradeLevel;
-        upgradeGold = LocalData.GetInstance.GetUpgradeCost(LocalData.GetInstance.UpgradeLevel.ToString());
+        ownUpgradePower = LocalDataManager.GetInstance.UpgradeLevel;
+        upgradeGold = LocalDataManager.GetInstance.GetUpgradeCost(LocalDataManager.GetInstance.UpgradeLevel.ToString());
     }
 
     public void PowerUp()
     {
-        if (upgradeGold <= LocalData.GetInstance.Gold)
+        if (upgradeGold <= LocalDataManager.GetInstance.Gold)
         {
             upgradePowerLevel++;
-            LocalData.GetInstance.UpgradeLevel += 1;
+            LocalDataManager.GetInstance.UpgradeLevel += 1;
 
-            LocalData.GetInstance.Power += 1;
-            upgradeGold = LocalData.GetInstance.GetUpgradeCost(LocalData.GetInstance.UpgradeLevel.ToString());
+            LocalDataManager.GetInstance.Power += 1;
+            upgradeGold = LocalDataManager.GetInstance.GetUpgradeCost(LocalDataManager.GetInstance.UpgradeLevel.ToString());
 
             DisplayUpdate();
             NotifyObservers(LobbyNotifyType.UpgradePower);

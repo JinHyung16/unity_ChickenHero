@@ -3,16 +3,23 @@ using System.Collections.Generic;
 using UnityEngine;
 using GooglePlayGames;
 using TMPro;
+using UnityEngine.UI;
 
 public class GooglePlayLogin : MonoBehaviour
 {
     [SerializeField] private GameObject googleLoginPanel;
+    [SerializeField] private Button loginButton;
     [SerializeField] private TMP_Text loginStateTxt;
 
     private bool waitingForAuth = false;
     private void Start()
     {
         googleLoginPanel.SetActive(false);
+        loginButton.onClick.AddListener(GooglePlayGamesActive);
+    }
+
+    private void GooglePlayGamesActive()
+    {
         PlayGamesPlatform.DebugLogEnabled = true;
         PlayGamesPlatform.Activate();
         AutoLogin();

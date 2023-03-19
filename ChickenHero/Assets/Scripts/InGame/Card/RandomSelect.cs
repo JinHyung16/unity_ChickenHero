@@ -58,7 +58,7 @@ public class RandomSelect : MonoBehaviour, LobbySubject
             powerCardDataWeightedTotal += card.cardWeighted;
         }
 
-        pickCost = LocalData.GetInstance.PickCost;
+        pickCost = LocalDataManager.GetInstance.PickCost;
 
         radomPickBtn.onClick.AddListener(RandomCardOpen);
     }
@@ -111,7 +111,7 @@ public class RandomSelect : MonoBehaviour, LobbySubject
     /// </summary>
     public void RandomCardOpen()
     {
-        if (pickCost <= LocalData.GetInstance.Gold)
+        if (pickCost <= LocalDataManager.GetInstance.Gold)
         {
             powerCardData = RandomPowerCard();
             string name = powerCardData.powerCardName;
@@ -127,7 +127,7 @@ public class RandomSelect : MonoBehaviour, LobbySubject
                 obj.SetActive(true);
             }
 
-            LocalData.GetInstance.Gold -= pickCost;
+            LocalDataManager.GetInstance.Gold -= pickCost;
             ShopPanelScript.SetUpgradeLevel(name);
             NotifyObservers(LobbyNotifyType.OpenCard);
         }

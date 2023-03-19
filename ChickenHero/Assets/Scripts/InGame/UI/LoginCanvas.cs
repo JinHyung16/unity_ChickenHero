@@ -27,7 +27,7 @@ public class LoginCanvas : MonoBehaviour
     }
 
     /// <summary>
-    /// Name Input Field¿¡¼­ ÀÔ·ÂÇÑ À¯Àú ÀÌ¸§À» ¹Ş´Â´Ù.
+    /// Name Input Fieldì—ì„œ ì…ë ¥í•œ ìœ ì € ì´ë¦„ì„ ë°›ëŠ”ë‹¤.
     /// </summary>
     public void NickNameInput()
     {
@@ -35,9 +35,9 @@ public class LoginCanvas : MonoBehaviour
     }
 
     /// <summary>
-    /// À¯Àú°¡ NickNameÀ» ÀÔ·ÂÇß´ÂÁö È®ÀÎÇÑ´Ù.
+    /// ìœ ì €ê°€ NickNameì„ ì…ë ¥í–ˆëŠ”ì§€ í™•ì¸í•œë‹¤.
     /// </summary>
-    /// <returns>ÀÌ¸§ ÀÔ·ÂÇÏÁö ¾Ê¾ÒÀ¸¸é ÀÔ·ÂÇÏ¶ó°í ¾Ë¸° µÚ false ¸®ÅÏ, ÀÔ·ÂÇßÀ¸¸é true ¸®ÅÏ</returns>
+    /// <returns>ì´ë¦„ ì…ë ¥í•˜ì§€ ì•Šì•˜ìœ¼ë©´ ì…ë ¥í•˜ë¼ê³  ì•Œë¦° ë’¤ false ë¦¬í„´, ì…ë ¥í–ˆìœ¼ë©´ true ë¦¬í„´</returns>
     private bool CheckInputName
     {
         get
@@ -55,33 +55,16 @@ public class LoginCanvas : MonoBehaviour
     }
 
     /// <summary>
-    /// Server ¿¬°áÀÌ ¾ÈµÇ¾î ÀÖÀ» °æ¿ì¸¦ °¡Á¤ÇÏ¿© ¸¸µç ÇÔ¼ö
-    /// Login¼º°ø½Ã, OffLine Play½Ã PlayerPrefs¿¡ µ¥ÀÌÅÍ¸¦ ÀúÀåÇÒÁö ÆÇº°ÇØ¼­ ÀúÀåÇÑ´Ù.
+    /// Server ì—°ê²°ì´ ì•ˆë˜ì–´ ìˆì„ ê²½ìš°ë¥¼ ê°€ì •í•˜ì—¬ ë§Œë“  í•¨ìˆ˜
+    /// Loginì„±ê³µì‹œ, OffLine Playì‹œ PlayerPrefsì— ë°ì´í„°ë¥¼ ì €ì¥í• ì§€ íŒë³„í•´ì„œ ì €ì¥í•œë‹¤.
     /// </summary>
     private void UserInfoSetting()
     {
-        LocalData.GetInstance.Name = nickName;
-        LocalData.GetInstance.Gold = 10000;
-        LocalData.GetInstance.Power = 100;
-        LocalData.GetInstance.UpgradeLevel = 1;
+        LocalDataManager.GetInstance.Name = nickName;
+        LocalDataManager.GetInstance.Gold = 10;
+        LocalDataManager.GetInstance.Power = 1;
+        LocalDataManager.GetInstance.UpgradeLevel = 1;
 
         GameManager.GetInstance.curUserName = nickName;
-
-        /*
-        if (LocalData.GetInstance.CheckForUserInfo(nickName))
-        {
-#if UNITY_EDITOR
-            Debug.Log("UserInfoSetting - User°¡ ÀÌ¹Ì ÀÖ½À´Ï´Ù.");
-#endif
-            return;
-        }
-        else
-        {
-            LocalData.GetInstance.Name = nickName;
-            LocalData.GetInstance.Gold = 999;
-            LocalData.GetInstance.Power = 100;
-            LocalData.GetInstance.UpgradeLevel = 1;
-        }
-        */
     }
 }

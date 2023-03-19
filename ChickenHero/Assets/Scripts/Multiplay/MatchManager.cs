@@ -167,7 +167,7 @@ sealed class MatchManager : MonoBehaviour
         if (isLocalPlayer)
         {
             localPlayer = player;
-            MultiplayManager.GetInstance.SetOnLocalPlayer(player);
+            MultiplayPresenter.GetInstance.SetOnLocalPlayer(player);
             player.GetComponentInChildren<PlayerDataController>().playerDieEvent.AddListener(OnLocalPlayerDied);
         }
 
@@ -251,7 +251,7 @@ sealed class MatchManager : MonoBehaviour
                 }
                 break;
             case OpCodes.Score:
-                MultiplayManager.GetInstance.UpdateRemoteScoreInMultiplay(int.Parse(state["Score"]));
+                MultiplayPresenter.GetInstance.UpdateRemoteScoreInMultiplay(int.Parse(state["Score"]));
                 break;
             case OpCodes.StartGame:
                 startTime = int.Parse(state["maxTasks"]);
