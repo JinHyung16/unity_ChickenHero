@@ -6,13 +6,13 @@ using HughUtility.Observer;
 
 public class ShopPanel : MonoBehaviour
 {
-    [SerializeField] private TMP_Text upgradePowerLevelTxt; //ÇöÀç power ´Ü°è º¸¿©ÁÖ´Â text
-    [SerializeField] private TMP_Text goldTxt; //¾÷±×·¹ÀÌµå½Ã ÇÊ¿äÇÑ °ñµå·® º¸¿©ÁÖ´Â text
+    [SerializeField] private TMP_Text upgradePowerLevelTxt; //í˜„ì¬ power ë‹¨ê³„ ë³´ì—¬ì£¼ëŠ” text
+    [SerializeField] private TMP_Text goldTxt; //ì—…ê·¸ë ˆì´ë“œì‹œ í•„ìš”í•œ ê³¨ë“œëŸ‰ ë³´ì—¬ì£¼ëŠ” text
 
     [SerializeField] private int upgradePowerLevel = 1;
-    [SerializeField] private int upgradeGold = 0; //¾÷±×·¹ÀÌµå½Ã ÇÊ¿äÇÑ °ñµå
+    [SerializeField] private int upgradeGold = 0; //ì—…ê·¸ë ˆì´ë“œì‹œ í•„ìš”í•œ ê³¨ë“œ
 
-    private int ownUpgradePower; //º»ÀÎÀÌ upgradeÇÑ ´Ü°è ÀúÀåÇÑ °ª ´ã±â
+    private int ownUpgradePower; //ë³¸ì¸ì´ upgradeí•œ ë‹¨ê³„ ì €ì¥í•œ ê°’ ë‹´ê¸°
 
     private void OnEnable()
     {
@@ -40,7 +40,7 @@ public class ShopPanel : MonoBehaviour
 
             LocalDataManager.GetInstance.Power += 1;
             upgradeGold = LocalDataManager.GetInstance.GetUpgradeCost(LocalDataManager.GetInstance.UpgradeLevel.ToString());
-
+            LocalDataManager.GetInstance.Gold -= upgradeGold;
             DisplayUpdate();
             NotifyObservers(LobbyNotifyType.UpgradePower);
         }
@@ -65,16 +65,16 @@ public class ShopPanel : MonoBehaviour
         DisplayUpdate();
     }
 
-    #region Observer Pattern - ISubject interface ±¸Çö
+    #region Observer Pattern - ISubject interface êµ¬í˜„
 
     [SerializeField] private LobbyCanvas LobbyCanvasObserver;
-    private List<LobbyObserver> ObserverList = new List<LobbyObserver>(); //Objserverµé ÀúÀåÇÒ List
+    private List<LobbyObserver> ObserverList = new List<LobbyObserver>(); //Objserverë“¤ ì €ì¥í•  List
 
     /// <summary>
-    /// ObserverµéÀ» Observer List¿¡ ÀúÀåÇØµÎ´Â ÇÔ¼ö
-    /// parameter¿¡ µû¶ó OnEable / OnDisable¿¡ »ç¿ëÇÏ´Â°Ô ´Ù¸£´Ù
+    /// Observerë“¤ì„ Observer Listì— ì €ì¥í•´ë‘ëŠ” í•¨ìˆ˜
+    /// parameterì— ë”°ë¼ OnEable / OnDisableì— ì‚¬ìš©í•˜ëŠ”ê²Œ ë‹¤ë¥´ë‹¤
     /// </summary>
-    /// <param name="register"> µî·Ï ¶Ç´Â ÇØÁ¦¿©ºÎ¸¦ ÆÇÇÑ´Ù´Â parameter </param>
+    /// <param name="register"> ë“±ë¡ ë˜ëŠ” í•´ì œì—¬ë¶€ë¥¼ íŒí•œë‹¤ëŠ” parameter </param>
     private void InitObserver(bool register)
     {
         if (register)

@@ -856,6 +856,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1666201131373649836, guid: 140668a58f0ede14fbf796b07ff280ff, type: 3}
+      propertyPath: m_AdditionalShaderChannelsFlag
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3585551943334052532, guid: 140668a58f0ede14fbf796b07ff280ff, type: 3}
       propertyPath: m_Name
       value: MultiPlayCanvas
@@ -1508,7 +1512,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1890357802}
-  - component: {fileID: 1890357801}
+  - component: {fileID: 1890357803}
   m_Layer: 0
   m_Name: MultiplayManager
   m_TagString: Untagged
@@ -1516,18 +1520,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1890357801
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1890357800}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2acc03f06f194704f90a5eeb88e61503, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &1890357802
 Transform:
   m_ObjectHideFlags: 0
@@ -1543,6 +1535,18 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1890357803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1890357800}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2acc03f06f194704f90a5eeb88e61503, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1937914730
 GameObject:
   m_ObjectHideFlags: 0

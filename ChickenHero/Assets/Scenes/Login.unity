@@ -655,6 +655,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2163456689398713465, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 2163456689814617544, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -689,6 +693,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2163456689814617544, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
       propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456689814617544, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456689814617544, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456689814617544, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_LocalScale.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2163456689814617544, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
@@ -742,6 +758,18 @@ PrefabInstance:
     - target: {fileID: 2163456689814617547, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
       propertyPath: m_Name
       value: LoginCanvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456689814617551, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_RenderMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2163456689814617551, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_AdditionalShaderChannelsFlag
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7752936144526991011, guid: 2601404661db013428cc51a007c8f8ad, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2601404661db013428cc51a007c8f8ad, type: 3}

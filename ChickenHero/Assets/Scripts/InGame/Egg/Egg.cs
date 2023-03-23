@@ -13,11 +13,11 @@ public class Egg : MonoBehaviour
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private Animator anim;
 
-    //object pool °ü·Ã
+    //object pool ê´€ë ¨
     private IObjectPool<Egg> ManageEggPool;
     private bool isPoolRelease = false;
 
-    //UniTask °ü·Ã
+    //UniTask ê´€ë ¨
     private CancellationTokenSource tokenSource;
 
     private void OnEnable()
@@ -51,9 +51,7 @@ public class Egg : MonoBehaviour
         {
             if (collision.gameObject.CompareTag("Enemy"))
             {
-#if UNITY_ANDROID
-                HughUtility.Vibration.Vibrate(50);
-#endif
+                Vibration.Vibrate(50);  //HughUtilityì— ìˆëŠ” Vibration
             }
             DestroyEggCoroutine().Forget();
         }
@@ -69,17 +67,17 @@ public class Egg : MonoBehaviour
 
     #region Object Pool Function
     /// <summary>
-    /// PlayerInput¿¡¼­ »ı¼ºÇÑ Egg Object¸¦ ³Ö¾î¼­ °ü¸®ÇÒ Pool
-    /// ÇØ´ç Egg Object°¡ º»ÀÎÀÌ ¼ÓÇÑ PoolÀ» ¾Ë°í ÀÖ¾î¾ß ÇÑ´Ù
+    /// PlayerInputì—ì„œ ìƒì„±í•œ Egg Objectë¥¼ ë„£ì–´ì„œ ê´€ë¦¬í•  Pool
+    /// í•´ë‹¹ Egg Objectê°€ ë³¸ì¸ì´ ì†í•œ Poolì„ ì•Œê³  ìˆì–´ì•¼ í•œë‹¤
     /// </summary>
-    /// <param name="pool"> Egg¸¦ PoolingÇÑ ÂÊ¿¡¼­ Àü´ŞÇÏ´Â ¸Å°³º¯¼ö </param>
+    /// <param name="pool"> Eggë¥¼ Poolingí•œ ìª½ì—ì„œ ì „ë‹¬í•˜ëŠ” ë§¤ê°œë³€ìˆ˜ </param>
     public void SetManagePool(IObjectPool<Egg> pool)
     {
         ManageEggPool = pool;
     }
 
     /// <summary>
-    /// »ı¼ºµÈ Egg object¸¦ pool¿¡ ¹İÈ¯ÇÑ´Ù
+    /// ìƒì„±ëœ Egg objectë¥¼ poolì— ë°˜í™˜í•œë‹¤
     /// </summary>
     private void DestroyEgg()
     {   
