@@ -86,7 +86,7 @@ public class Enemy : MonoBehaviour
         if (collision.gameObject.CompareTag("Egg"))
         {
             anim.SetTrigger("IsHurt");
-            DamagedToEgg(LocalDataManager.GetInstance.Power);
+            DamagedToEgg(DataManager.GetInstance.Power);
         }
     }
 

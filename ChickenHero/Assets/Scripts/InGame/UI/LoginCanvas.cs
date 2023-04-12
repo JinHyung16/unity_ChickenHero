@@ -60,10 +60,10 @@ public class LoginCanvas : MonoBehaviour
     /// </summary>
     private void UserInfoSetting()
     {
-        LocalDataManager.GetInstance.Name = nickName;
-        LocalDataManager.GetInstance.Gold = 10;
-        LocalDataManager.GetInstance.Power = 1;
-        LocalDataManager.GetInstance.UpgradeLevel = 1;
+        DataManager.GetInstance.Name = nickName;
+        DataManager.GetInstance.Gold = 10;
+        DataManager.GetInstance.Power = 1;
+        DataManager.GetInstance.UpgradeLevel = 1;
 
         GameManager.GetInstance.curUserName = nickName;
     }

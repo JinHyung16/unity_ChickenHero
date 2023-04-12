@@ -32,7 +32,7 @@ public class SingleplayPresenter : MonoBehaviour, SingleplaySubject
     private void Start()
     {
         score = 0;
-        clearEnemyCount = LocalDataManager.GetInstance.GetEndGameRuleEnemyCount(curStage);
+        clearEnemyCount = DataManager.GetInstance.GetEndGameRuleEnemyCount(curStage);
     }
 
     /// <summary>
@@ -85,13 +85,13 @@ public class SingleplayPresenter : MonoBehaviour, SingleplaySubject
     private void StageClearAndStageUp()
     {
         curStage += 1;
-        if (LocalDataManager.GetInstance.isEndStageNum < curStage)
+        if (DataManager.GetInstance.isEndStageNum < curStage)
         {
             GameManager.GetInstance.GameEnd();
             return;
         }
         enemyDiedCntInStage = 0;
-        clearEnemyCount = LocalDataManager.GetInstance.GetEndGameRuleEnemyCount(curStage);
+        clearEnemyCount = DataManager.GetInstance.GetEndGameRuleEnemyCount(curStage);
     }
 
 
