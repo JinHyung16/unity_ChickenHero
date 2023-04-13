@@ -31,7 +31,8 @@ public class GooglePlayLogin : MonoBehaviour
     private void GooglePlayLoginAuto()
     {
         //구글 게임즈 플렛폼 활성화(초기화) 및 게임 정보 저장(EnableSavedGames)
-        PlayGamesPlatform.InitializeInstance(new PlayGamesClientConfiguration.Builder().EnableSavedGames().Build());
+        PlayGamesClientConfiguration config = new PlayGamesClientConfiguration.Builder().EnableSavedGames().Build();
+        PlayGamesPlatform.InitializeInstance(config);
         PlayGamesPlatform.DebugLogEnabled = true;
         PlayGamesPlatform.Activate();
     }
