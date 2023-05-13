@@ -5,31 +5,23 @@ using GooglePlayGames;
 using GooglePlayGames.BasicApi;
 using TMPro;
 using UnityEngine.UI;
+using System;
 
 public class GooglePlayLogin : MonoBehaviour
 {
-    [SerializeField] private GameObject googleLoginPanel;
-    [SerializeField] private Button loginButton;
-    [SerializeField] private TMP_Text loginStateTxt;
+    [SerializeField] private TMP_Text loginText;
 
-    
-    private string token;
-    private string error;
-
+    private bool isWaitingForAuth = false;
     private void Awake()
     {
-        GooglePlayLoginAuto();
+        InitGooglePlayLogin();
     }
 
-    private void Start()
+    //시작하자마자 자동 GPGS 인증 진행
+    private void InitGooglePlayLogin()
     {
-        googleLoginPanel.SetActive(false);
-        loginButton.onClick.AddListener(GooglePlayGamesActive);
-    }
+        loginText.text = "안녕하세요!!!";
 
-    //시작하자마자 자동 로그인 진행
-    private void GooglePlayLoginAuto()
-    {
         //구글 게임즈 플렛폼 활성화(초기화) 및 게임 정보 저장(EnableSavedGames)
         PlayGamesClientConfiguration config = new PlayGamesClientConfiguration.Builder().EnableSavedGames().Build();
         PlayGamesPlatform.InitializeInstance(config);
@@ -37,17 +29,14 @@ public class GooglePlayLogin : MonoBehaviour
         PlayGamesPlatform.Activate();
     }
 
-    //수동으로 로그인
-    public void GooglePlayGamesActive()
+    //로그인 버튼에 연결할 수동 로그인
+    public void GooglePlayGamesLogin()
     {
-        googleLoginPanel.SetActive(true);
-        //이미 인증된 사용자는 바로 로그인 성공 
+        //이미 인증된 사용자는 바로 로그인 성공된다. 
         if (Social.localUser.authenticated)
         {
             Debug.Log(Social.localUser.userName);
-            loginStateTxt.text = "name : " + Social.localUser.userName + "\n";
-            googleLoginPanel.SetActive(false);
-            return;
+            loginText.text = "name : " + Social.localUser.userName + "\n";
         }
         else
         {
@@ -55,15 +44,13 @@ public class GooglePlayLogin : MonoBehaviour
             {
                 if (success)
                 {
-                    loginStateTxt.text = "name : " + Social.localUser.userName + "\n";
+                    loginText.text = "성공! \n " + "안녕하세요 " + Social.localUser.userName;
                 }
                 else
                 {
-                    loginStateTxt.text = "Login Fail\n";
+                    loginText.text = "인증 실패! \r\n(로그인 없이 게임시작은 가능합니다)";
                 }
             });
-            googleLoginPanel.SetActive(false);
         }
     }
-    
 }

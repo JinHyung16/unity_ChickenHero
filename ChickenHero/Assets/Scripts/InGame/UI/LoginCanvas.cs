@@ -44,7 +44,7 @@ public class LoginCanvas : MonoBehaviour
         {
             if (string.IsNullOrEmpty(nickName))
             {
-                NameInputField.GetComponent<TMP_InputField>().placeholder.GetComponent<TMP_Text>().text = "Please Input NickName";
+                NameInputField.GetComponent<TMP_InputField>().placeholder.GetComponent<TMP_Text>().text = "이름을 입력해주세요!!";
                 return false;
             }
             else

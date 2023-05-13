@@ -1,0 +1,180 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="UnityMainThreadDispatcher" Collapsed="true">
+    <Position X="9.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AARAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAEAABAAAAAA=</HashCode>
+      <FileName>Assets\HughNakamaServer\UnityMainThreadDispatcher.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="RandomSelect" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="13.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAkAAAACCAYAAEAgAAgAIAAOACAQAAEgqAE=</HashCode>
+      <FileName>Assets\Scripts\InGame\Card\RandomSelect.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.133" />
+  </Class>
+  <Class Name="LobbyCanvas" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="13.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAICAAiAJAAAACAEAEAFAAIAEAgAABIQIFAAAAEA=</HashCode>
+      <FileName>Assets\Scripts\InGame\UI\LobbyCanvas.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Orientation="Bottom" Position="0.24" />
+  </Class>
+  <Class Name="DataManager" Collapsed="true">
+    <Position X="0.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQQBAAAACAAgAAAAAAARAQAAAAgAAIFAAAAAAEAGAE=</HashCode>
+      <FileName>Assets\Scripts\Manager\DataManager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="EnemySpawnManager" Collapsed="true">
+    <Position X="3" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ASACAAAAKCAAAhAQQAAgAABAAAAQAAgAACAAAIAAAIA=</HashCode>
+      <FileName>Assets\Scripts\Manager\EnemySpawnManager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GameManager" Collapsed="true">
+    <Position X="5.25" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACBDEAABAAAAAAIAAAAAAAAAAAAAAAAAAgA=</HashCode>
+      <FileName>Assets\Scripts\Manager\GameManager.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Orientation="Bottom" Position="0.119" />
+  </Class>
+  <Class Name="SceneController" Collapsed="true">
+    <Position X="7.5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAIAEAAACAAAAQAAAAAAAIAAAgAQAAAAAAACQAAEAA=</HashCode>
+      <FileName>Assets\Scripts\Manager\SceneController.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MultiplayPresenter" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="19" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAACAAACAAAAAAAABAAABADQIAIBAIAAAgAAggAEQ=</HashCode>
+      <FileName>Assets\Scripts\Multiplay\MultiplayPresenter.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Orientation="Bottom" Position="0.187" />
+  </Class>
+  <Class Name="MultiplayViewer" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="20.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IABAAABAgCAEAAAAKAEEAAAAoAAAAAAgBgAIAAAADAA=</HashCode>
+      <FileName>Assets\Scripts\Multiplay\MultiplayViewer.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Orientation="Bottom" Position="0.187" />
+  </Class>
+  <Class Name="SingleplayPresenter" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="15.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>EAAAAAggAKAAAAAAIAAIAgBABIIAIIAIAAAAAEAkAUA=</HashCode>
+      <FileName>Assets\Scripts\Singleplay\SingleplayPresenter.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Orientation="Bottom" Position="0.14" />
+  </Class>
+  <Class Name="SingleplayViewer" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="17.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgCgAAAAICAIAQKAAAEAABAAoQIgAoEABgCIEAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Singleplay\SingleplayViewer.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Orientation="Bottom" Position="0.227" />
+  </Class>
+  <Class Name="HughGeneric.Singleton&lt;T&gt;" Collapsed="true">
+    <Position X="5.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAABABAAAAAAAAAAAAAAEA=</HashCode>
+      <FileName>Assets\Scripts\Generics\Singleton.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="HughUtility.Observer.LobbyObserver">
+    <Position X="13.75" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAIAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Utility\ObserverInterfacae.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="HughUtility.Observer.LobbySubject" Collapsed="true">
+    <Position X="13.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAgAAAAAAAAAAAAAAAAAIAAAAAAAAAAgAAA=</HashCode>
+      <FileName>Assets\Scripts\Utility\ObserverInterfacae.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="HughUtility.Observer.SingleplayObserver">
+    <Position X="17.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAgQIAAgAAAgAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Utility\ObserverInterfacae.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="HughUtility.Observer.SingleplaySubject">
+    <Position X="15.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAABAAAAAIAAAAAAAAAAgAAA=</HashCode>
+      <FileName>Assets\Scripts\Utility\ObserverInterfacae.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="HughUtility.Observer.MultiplayObserver">
+    <Position X="20.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAACAAEAAAAgAAAAAAAAgAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Utility\ObserverInterfacae.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="HughUtility.Observer.MultiplaySubject">
+    <Position X="19" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAABAAAAAIAAAAAAAAAAgAAA=</HashCode>
+      <FileName>Assets\Scripts\Utility\ObserverInterfacae.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="UnityEngine.EventSystems.IPointerDownHandler" Collapsed="true">
+    <Position X="13.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier />
+  </Interface>
+  <Interface Name="System.IDisposable">
+    <Position X="5.25" Y="3" Width="1.5" />
+    <TypeIdentifier />
+  </Interface>
+  <Enum Name="GooglePlayGames.BasicApi.UIStatus">
+    <Position X="12" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACAAAABAAgAgAAAAABAAIAAAAABQAAAAA=</HashCode>
+      <FileName>Assets\GooglePlayGames\BasicApi\CommonTypes.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="HughUI.UIType">
+    <Position X="12" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAACAAAAAAAAIAAAAAAAAEAAAAAAAAAAAAhAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Data\UITypeData.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="HughUtility.Observer.LobbyNotifyType">
+    <Position X="13.75" Y="7" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAIAA=</HashCode>
+      <FileName>Assets\Scripts\Utility\ObserverInterfacae.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="HughUtility.Observer.SingleplayNotifyType">
+    <Position X="15.5" Y="7" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAgBAAAAAAAAQAgAAAAAAAAAAAEAAAA=</HashCode>
+      <FileName>Assets\Scripts\Utility\ObserverInterfacae.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="HughUtility.Observer.MultiplayNotifyType">
+    <Position X="19.25" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAACAAAAAAAAAAAAAAAAAASAAAAAAAAAAAAAEAAAA=</HashCode>
+      <FileName>Assets\Scripts\Utility\ObserverInterfacae.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="맑은 고딕" Size="9" />
+</ClassDiagram>
