@@ -7,7 +7,7 @@ using UnityEngine.UI;
 using System.Threading.Tasks;
 using System;
 using UnityEngine.EventSystems;
-using HughUI; //UIType »ç¿ëÀ» À§ÇØ
+using HughUI; //UIType ì‚¬ìš©ì„ ìœ„í•´
 using HughUtility.Observer;
 using Cysharp.Threading.Tasks;
 
@@ -17,24 +17,20 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     [SerializeField] private TMP_Text goldTxt;
     [SerializeField] private TMP_Text powerTxt;
 
-    //Æ¯¼ö Panel°ü·Ã ¹ÙÀÎµù -> Æ¯¼ö ÆĞ³ÎÀº ¿À·ÎÁö 1°³¸¸ ¿­·Á¾ß ÇÏ´Â ÆĞ³ÎÀÌ´Ù (ÇØ´ç Æ¯¼ö³¢¸° ¿­¸®´Â°Ô µ¶¸³ÀûÀÌ´Ù)
-    [SerializeField] private List<GameObject> PanelList; //ÆĞ³ÎÀ» ´ãÀº list
+    //íŠ¹ìˆ˜ Panelê´€ë ¨ ë°”ì¸ë”© -> íŠ¹ìˆ˜ íŒ¨ë„ì€ ì˜¤ë¡œì§€ 1ê°œë§Œ ì—´ë ¤ì•¼ í•˜ëŠ” íŒ¨ë„ì´ë‹¤ (í•´ë‹¹ íŠ¹ìˆ˜ë¼ë¦° ì—´ë¦¬ëŠ”ê²Œ ë…ë¦½ì ì´ë‹¤)
+    [SerializeField] private List<GameObject> PanelList; //íŒ¨ë„ì„ ë‹´ì€ list
 
-    private Dictionary<UIType, GameObject> PanelDictionary = new Dictionary<UIType, GameObject>(); //ÆĞ³ÎÀÇ key¸¦ ºÎ¿©ÇØ ÀúÀå
-    private Queue<GameObject> PanelActiveQueue = new Queue<GameObject>(); //SetActive½Ã Queue¿¡ ³Ö°í ¸Ç ¾ÕÀº Áö¿ì°í ¿À·ÎÁö 1°³¸¸ ¿­¸®°Ô ÀúÀå
+    private Dictionary<UIType, GameObject> PanelDictionary = new Dictionary<UIType, GameObject>(); //íŒ¨ë„ì˜ keyë¥¼ ë¶€ì—¬í•´ ì €ì¥
+    private Queue<GameObject> PanelActiveQueue = new Queue<GameObject>(); //SetActiveì‹œ Queueì— ë„£ê³  ë§¨ ì•ì€ ì§€ìš°ê³  ì˜¤ë¡œì§€ 1ê°œë§Œ ì—´ë¦¬ê²Œ ì €ì¥
 
     //PlayMode Button UI
     [SerializeField] private Button singlePlayBtn;
     [SerializeField] private Button multiPlayBtn;
 
-    [SerializeField] private GameObject ServerConnectCheckPanel; //¼­¹ö ¿¬°áÀÌ ¾ÈµÇ¾îÀÖÀ» ¶§, ¶ç¿ï °øÁöÃ¢
+    [SerializeField] private GameObject ServerConnectCheckPanel; //ì„œë²„ ì—°ê²°ì´ ì•ˆë˜ì–´ìˆì„ ë•Œ, ë„ìš¸ ê³µì§€ì°½
 
     private void Awake()
     {
-        if (DataManager.GetInstance.Name == null)
-        {
-            DataManager.GetInstance.Name = GameManager.GetInstance.curUserName;
-        }
     }
     private void Start()
     {
@@ -46,9 +42,9 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     }
 
     /// <summary>
-    /// Online, Offline »ó°ü¾øÀÌ Login µÇ¾úÀ» ¶§, UserÀÇ Info¸¦ °¡Á®¿Â´Ù
-    /// Login½Ã PlayerPrefs¿Í Server¿¡ ÀúÀåÇßÀ¸´Ï µÑÀÌ °°Àº Á¤º¸·Î
-    /// PlayerPrefs¿¡¼­ userÀÇ Á¤º¸¸¦ ²¨³»¿Í¼­ ºÙ¿©ÁØ´Ù.
+    /// Online, Offline ìƒê´€ì—†ì´ Login ë˜ì—ˆì„ ë•Œ, Userì˜ Infoë¥¼ ê°€ì ¸ì˜¨ë‹¤
+    /// Loginì‹œ PlayerPrefsì™€ Serverì— ì €ì¥í–ˆìœ¼ë‹ˆ ë‘˜ì´ ê°™ì€ ì •ë³´ë¡œ
+    /// PlayerPrefsì—ì„œ userì˜ ì •ë³´ë¥¼ êº¼ë‚´ì™€ì„œ ë¶™ì—¬ì¤€ë‹¤.
     /// </summary>
     private void LoadUserInfoDisplay()
     {
@@ -57,10 +53,10 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
         powerTxt.text = "P: " + DataManager.GetInstance.Power.ToString();
     }
 
-    #region Panel OpenÇÏ´Â Button°ü·Ã ÇÔ¼öµé
+    #region Panel Opení•˜ëŠ” Buttonê´€ë ¨ í•¨ìˆ˜ë“¤
     /// <summary>
-    /// LobbyCanvaseÀÇ Bottom Panel¹Ø¿¡ Shop Button¿¡ Á÷Á¢ ¿¬°áÁß
-    /// Shop ButtonÀ» ´©¸£¸é ShopÀ» ¿¬´Ù.
+    /// LobbyCanvaseì˜ Bottom Panelë°‘ì— Shop Buttonì— ì§ì ‘ ì—°ê²°ì¤‘
+    /// Shop Buttonì„ ëˆ„ë¥´ë©´ Shopì„ ì—°ë‹¤.
     /// </summary>
     public void ShopPanelOpen()
     {
@@ -68,8 +64,8 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     }
 
     /// <summary>
-    /// LobbyCanvasÀÇ Bottom Panel¹Ø¿¡ Inventory Button¿¡ Á÷Á¢ ¿¬°áÁß
-    /// Inventory ButtonÀ» ´©¸£¸é Inventory¸¦ ¿¬´Ù.
+    /// LobbyCanvasì˜ Bottom Panelë°‘ì— Inventory Buttonì— ì§ì ‘ ì—°ê²°ì¤‘
+    /// Inventory Buttonì„ ëˆ„ë¥´ë©´ Inventoryë¥¼ ì—°ë‹¤.
     /// </summary>
     public void InventoryPanelOpen()
     {
@@ -77,8 +73,8 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     }
 
     /// <summary>
-    /// LobbyCanvasÀÇ Bottom Panel¹Ø¿¡ PlayMode Button¿¡ Á÷Á¢ ¿¬°áÁß
-    /// PlayMode ButtonÀ» ´©¸£¸é È£ÃâµÈ´Ù
+    /// LobbyCanvasì˜ Bottom Panelë°‘ì— PlayMode Buttonì— ì§ì ‘ ì—°ê²°ì¤‘
+    /// PlayMode Buttonì„ ëˆ„ë¥´ë©´ í˜¸ì¶œëœë‹¤
     /// </summary>
     public void PlayModePanelOpen()
     {
@@ -86,8 +82,8 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     }
 
     /// <summary>
-    /// LobbyCanvasÀÇ Top Panel¹Ø¿¡ Option Button¿¡ Á÷Á¢ ¿¬°áÁß
-    /// Option ButtonÀ» ´©¸£¸é È£ÃâµÈ´Ù
+    /// LobbyCanvasì˜ Top Panelë°‘ì— Option Buttonì— ì§ì ‘ ì—°ê²°ì¤‘
+    /// Option Buttonì„ ëˆ„ë¥´ë©´ í˜¸ì¶œëœë‹¤
     /// </summary>
     public void OptionPanelOpen()
     {
@@ -95,10 +91,10 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     }
     #endregion
 
-    #region Panel³» Button ±â´É ÇÔ¼öµé
+    #region Panelë‚´ Button ê¸°ëŠ¥ í•¨ìˆ˜ë“¤
     /// <summary>
-    /// PlayMode Panel ¹Ø MultiPlay Button¿¡ Á÷Á¢ ¿¬°áÁß
-    /// MultiPlay ButtonÀ» ´©¸£¸é ¸ÅÄªÀ» ÁøÇàÇÑ´Ù.
+    /// PlayMode Panel ë°‘ MultiPlay Buttonì— ì§ì ‘ ì—°ê²°ì¤‘
+    /// MultiPlay Buttonì„ ëˆ„ë¥´ë©´ ë§¤ì¹­ì„ ì§„í–‰í•œë‹¤.
     /// </summary>
     public void GoToMultiPlay()
     {
@@ -120,8 +116,8 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     }
 
     /// <summary>
-    /// PlayMode Panel ¹Ø SinglePlay Button¿¡ Á÷Á¢ ¿¬°áÁß
-    /// SinglePlay ButtonÀ» ´©¸£¸é ½Ì±Û ÇÃ·¹ÀÌ¸¦ ÁøÇàÇÑ´Ù.
+    /// PlayMode Panel ë°‘ SinglePlay Buttonì— ì§ì ‘ ì—°ê²°ì¤‘
+    /// SinglePlay Buttonì„ ëˆ„ë¥´ë©´ ì‹±ê¸€ í”Œë ˆì´ë¥¼ ì§„í–‰í•œë‹¤.
     /// </summary>
     public void GoToSinglePlay()
     {
@@ -130,9 +126,9 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     }
 
     /// <summary>
-    /// Option Panel ¹Ø Save Button¿¡ Á÷Á¢ ¿¬°áÁß
-    /// Save ButtonÀ» ´©¸£¸é À¯Àú Á¤º¸¸¦ ÀúÀåÇÑ´Ù.
-    /// ¼­¹ö°¡ ¿¬°áµÇ¾î ÀÖÀ¸¸é DB¼­¹ö¿¡ À¯Àú Á¤º¸ °»½ÅÇÑ´Ù.
+    /// Option Panel ë°‘ Save Buttonì— ì§ì ‘ ì—°ê²°ì¤‘
+    /// Save Buttonì„ ëˆ„ë¥´ë©´ ìœ ì € ì •ë³´ë¥¼ ì €ì¥í•œë‹¤.
+    /// ì„œë²„ê°€ ì—°ê²°ë˜ì–´ ìˆìœ¼ë©´ DBì„œë²„ì— ìœ ì € ì •ë³´ ê°±ì‹ í•œë‹¤.
     /// </summary>
     public void SaveUserInfo()
     {
@@ -145,8 +141,8 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     }
 
     /// <summary>
-    /// Option Panel ¹Ø Clear Button¿¡ Á÷Á¢ ¿¬°áÁß
-    /// Clear ButtonÀ» ´©¸£¸é À¯Àú Á¤º¸¸¦ »èÁ¦ÇÑ´Ù.
+    /// Option Panel ë°‘ Clear Buttonì— ì§ì ‘ ì—°ê²°ì¤‘
+    /// Clear Buttonì„ ëˆ„ë¥´ë©´ ìœ ì € ì •ë³´ë¥¼ ì‚­ì œí•œë‹¤.
     /// </summary>
     public void ClearUserInfo()
     {
@@ -155,10 +151,10 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     }
     #endregion
 
-    #region Always PanelÄÁÆ®·Ñ ÇÔ¼öµé
+    #region Always Panelì»¨íŠ¸ë¡¤ í•¨ìˆ˜ë“¤
     /// <summary>
-    /// ´Ù¸¥ PanelÀÌ ¿­¸°»óÅÂ¿¡¼­ AlwaysPanel tag¸¦ °®°íÀÖ´Â °÷À» ÅÍÄ¡ÇÏ¸é È°¼ºÈ­µÈ ¸ğµç ÆĞ³ÎÀÌ ´İÈù´Ù
-    /// pointerEnterÇü½ÄÀ¸·Î ¹Ş¾Æ¶ó ¸ğ¹ÙÀÏ¿¡¼­ ÅÍÄ¡ ÀÔ·Â ¹Ş´Â´Ù
+    /// ë‹¤ë¥¸ Panelì´ ì—´ë¦°ìƒíƒœì—ì„œ AlwaysPanel tagë¥¼ ê°–ê³ ìˆëŠ” ê³³ì„ í„°ì¹˜í•˜ë©´ í™œì„±í™”ëœ ëª¨ë“  íŒ¨ë„ì´ ë‹«íŒë‹¤
+    /// pointerEnterí˜•ì‹ìœ¼ë¡œ ë°›ì•„ë¼ ëª¨ë°”ì¼ì—ì„œ í„°ì¹˜ ì…ë ¥ ë°›ëŠ”ë‹¤
     /// </summary>
     /// <param name="eventData"></param>
     public void OnPointerDown(PointerEventData eventData)
@@ -170,7 +166,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     }
 
     /// <summary>
-    /// Lobby Scene ÁøÀÔ½Ã, ÆĞ³Î ¼¼ÆÃ
+    /// Lobby Scene ì§„ì…ì‹œ, íŒ¨ë„ ì„¸íŒ…
     /// </summary>
     public void InitaDictionary()
     {
@@ -200,10 +196,10 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
     }
 
     /// <summary>
-    /// LobbyScene¿¡¼­ LobbyCanvas¿¡¼­ ÀÔ·ÂÀ» ¹Ş¾Æ¼­ ÇØ´ç ¾ÀÀÇ ÆĞ³ÎÀ» Ã³¸®ÇØÁØ´Ù
+    /// LobbySceneì—ì„œ LobbyCanvasì—ì„œ ì…ë ¥ì„ ë°›ì•„ì„œ í•´ë‹¹ ì”¬ì˜ íŒ¨ë„ì„ ì²˜ë¦¬í•´ì¤€ë‹¤
     /// </summary>
-    /// <param name="type"> OpenÇÒ PanelÀÇ TypeÀ» ¹Ş´Â´Ù </param>
-    /// <param name="layer"> CanvasÀÇ À§Ä¡¸¦ ¹Ş¾Æ ÀÚ½ÄÀ¸·Î ³Ö´Â´Ù </param>
+    /// <param name="type"> Opení•  Panelì˜ Typeì„ ë°›ëŠ”ë‹¤ </param>
+    /// <param name="layer"> Canvasì˜ ìœ„ì¹˜ë¥¼ ë°›ì•„ ìì‹ìœ¼ë¡œ ë„£ëŠ”ë‹¤ </param>
     public void OpenPanel(UIType type)
     {
         if (type == UIType.NonePanel)
@@ -242,7 +238,7 @@ public class LobbyCanvas : MonoBehaviour, IPointerDownHandler, LobbyObserver
 
     #endregion
 
-    #region Observer Pattern - PowerCardObserver interface ±¸Çö
+    #region Observer Pattern - PowerCardObserver interface êµ¬í˜„
     public void UpdateOpenPowerCard(PowerCardData cardData)
     {
         switch (cardData.powerCardName)

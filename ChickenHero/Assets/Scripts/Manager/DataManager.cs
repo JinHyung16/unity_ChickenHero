@@ -19,16 +19,17 @@ public class DataManager : Singleton<DataManager>
 
     #region PlayerPrefs Save Data Property
     private string userName = string.Empty;
+    private string localDataKey = "chickenhero";
     public string Name
     {
         get
         {
-            return PlayerPrefs.GetString(userName);
+            return PlayerPrefs.GetString(localDataKey);
         }
         set
         {
             userName = value;
-            PlayerPrefs.SetString(userName, value);
+            PlayerPrefs.SetString(localDataKey, userName);
         }
     }
 
@@ -36,11 +37,11 @@ public class DataManager : Singleton<DataManager>
     {
         get
         {
-            return PlayerPrefs.GetInt(userName + "Gold");
+            return PlayerPrefs.GetInt(localDataKey + "Gold");
         }
         set
         {
-            PlayerPrefs.SetInt(userName + "Gold", value);
+            PlayerPrefs.SetInt(localDataKey + "Gold", value);
         }
     }
 
@@ -48,11 +49,11 @@ public class DataManager : Singleton<DataManager>
     {
         get
         {
-            return PlayerPrefs.GetInt(userName + "Power");
+            return PlayerPrefs.GetInt(localDataKey + "Power");
         }
         set
         {
-            PlayerPrefs.SetInt(userName + "Power", value);
+            PlayerPrefs.SetInt(localDataKey + "Power", value);
         }
     }
 
@@ -60,11 +61,11 @@ public class DataManager : Singleton<DataManager>
     {
         get
         {
-            return PlayerPrefs.GetInt(userName + "UpgradeLevel");
+            return PlayerPrefs.GetInt(localDataKey + "UpgradeLevel");
         }
         set
         {
-            PlayerPrefs.SetInt(userName + "UpgradeLevel", value);
+            PlayerPrefs.SetInt(localDataKey + "UpgradeLevel", value);
         }
     }
 

@@ -51,7 +51,7 @@ public class Egg : MonoBehaviour
         {
             if (collision.gameObject.CompareTag("Enemy"))
             {
-                Vibration.Vibrate(50);  //HughUtility에 있는 Vibration
+                //Vibration.Vibrate(50);  //HughUtility에 있는 Vibration
             }
             DestroyEggCoroutine().Forget();
         }

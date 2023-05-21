@@ -6,7 +6,7 @@ using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
 
-public class SingleplayViewer : MonoBehaviour, SingleplayObserver
+public class SingleplayViewer : MonoBehaviour
 {
     //UI관련
     [SerializeField] private TMP_Text playerScoreTxt;
@@ -42,8 +42,6 @@ public class SingleplayViewer : MonoBehaviour, SingleplayObserver
     /// </summary>
     private void InitSinglePlayCanvas()
     {
-        SingleplayPresenter.GetInstance.RegisterObserver(this);
-
         GameManager.GetInstance.GameStart();
         playerScore = 0;
         DisplayUpdate();
@@ -62,8 +60,6 @@ public class SingleplayViewer : MonoBehaviour, SingleplayObserver
         playerHPTxt.text = "HP: " + playerHp.ToString();
         playerScoreTxt.text = "점수: " + playerScore.ToString();
     }
-
-    #region Exit Button - Sinplay Scene
     /// <summary>
     /// Exit Yes Button 을 누르면 다시 로그인 화면으로 보낸다.
     /// 이때, 게임하면서 모았던 골드나 이름은 저장되지 않는다.
@@ -72,9 +68,7 @@ public class SingleplayViewer : MonoBehaviour, SingleplayObserver
     {
         GameManager.GetInstance.GameEnd();
     }
-    #endregion
 
-    #region Observer 패턴 구현 - GameObserver
     public void UpdateHPText(int playerHP)
     {
         this.playerHp = playerHP;
@@ -155,5 +149,4 @@ public class SingleplayViewer : MonoBehaviour, SingleplayObserver
         await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: this.GetCancellationTokenOnDestroy());
         bloodEffectPanel.SetActive(false);
     }
-    #endregion
 }

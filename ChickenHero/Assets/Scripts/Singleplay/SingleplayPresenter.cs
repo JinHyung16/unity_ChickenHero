@@ -1,10 +1,11 @@
 using Cysharp.Threading.Tasks.Triggers;
 using HughUtility.Observer;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SingleplayPresenter : MonoBehaviour, SingleplaySubject
+public class SingleplayPresenter : MonoBehaviour
 {
     #region Static
     public static SingleplayPresenter GetInstance;
@@ -14,6 +15,7 @@ public class SingleplayPresenter : MonoBehaviour, SingleplaySubject
     }
     #endregion
 
+    [SerializeField] private SingleplayViewer singleplayViewer;
     public int playerHP { get; set; }
 
     private int score; //적을 잡을때 마다 얻는 Score
@@ -25,14 +27,16 @@ public class SingleplayPresenter : MonoBehaviour, SingleplaySubject
     private int enemyDiedCntInStage = 0; //Stage마다 죽인 적이 몇마리인지
 
     private int earnAmountOfGold = 0;
-    private void OnDisable()
-    {
-        RemoveAllObserver();
-    }
     private void Start()
     {
         score = 0;
         clearEnemyCount = DataManager.GetInstance.GetEndGameRuleEnemyCount(curStage);
+    }
+
+    public void InitSinglePlayStart()
+    {
+        singleplayViewer.UpdateHPText(playerHP);
+        singleplayViewer.UpdateScoreText(score);
     }
 
     /// <summary>
@@ -43,7 +47,9 @@ public class SingleplayPresenter : MonoBehaviour, SingleplaySubject
     public void UpdateHPInSingleplay(int hp)
     {
         playerHP -= hp;
-        NotifyObservers(SingleplayNotifyType.HP);
+
+        singleplayViewer.UpdateHPText(playerHP);
+        singleplayViewer.GetDamaged();
 
         if (playerHP <= 0)
         {
@@ -58,7 +64,7 @@ public class SingleplayPresenter : MonoBehaviour, SingleplaySubject
     public void UpdateScoreInSingleplay()
     {
         score++;
-        NotifyObservers(SingleplayNotifyType.Score);
+        singleplayViewer.UpdateScoreText(score);
     }
 
     /// <summary>
@@ -75,7 +81,7 @@ public class SingleplayPresenter : MonoBehaviour, SingleplaySubject
             isStageClear = true;
             StageClearAndStageUp();
         }
-        NotifyObservers(SingleplayNotifyType.EnemyDown);
+        singleplayViewer.UpdateEnemyDownCountAndStageText(isStageClear, curStage);
     }
 
     /// <summary>
@@ -97,51 +103,8 @@ public class SingleplayPresenter : MonoBehaviour, SingleplaySubject
 
     public void UpdateGameResultWhenEnd()
     {
-        earnAmountOfGold = curStage * (score / 5);
-        NotifyObservers(SingleplayNotifyType.GameEnd);
+        earnAmountOfGold = (score % 10) * curStage;
+        DataManager.GetInstance.Gold += earnAmountOfGold;
+        singleplayViewer.ResultGameText(curStage, score, earnAmountOfGold);
     }
-    #region Observer pattern interface구현
-    private List<SingleplayObserver> observerList = new List<SingleplayObserver>();
-
-    public void RegisterObserver(SingleplayObserver observer)
-    {
-        observerList.Add(observer);
-    }
-
-    public void RemoveAllObserver()
-    {
-        observerList.Clear();
-    }
-
-    public void NotifyObservers(SingleplayNotifyType notifyType)
-    {
-        foreach (var observer in observerList)
-        {
-
-            switch (notifyType)
-            {
-                case SingleplayNotifyType.None:
-                    observer.UpdateHPText(playerHP);
-                    observer.UpdateScoreText(score);
-                    break;
-                case SingleplayNotifyType.HP:
-                    observer.UpdateHPText(playerHP);
-                    observer.GetDamaged();
-                    break;
-                case SingleplayNotifyType.Score:
-                    observer.UpdateScoreText(score);
-                    break;
-                case SingleplayNotifyType.EnemyDown:
-                    observer.UpdateEnemyDownCountAndStageText(isStageClear, curStage);
-                    break;
-                case SingleplayNotifyType.GameEnd:
-                    observer.ResultGameText(curStage, score, earnAmountOfGold);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-
-    #endregion
 }

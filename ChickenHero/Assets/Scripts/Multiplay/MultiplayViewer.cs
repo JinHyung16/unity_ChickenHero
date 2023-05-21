@@ -7,7 +7,7 @@ using Cysharp.Threading.Tasks;
 using System;
 using UnityEngine.SocialPlatforms.Impl;
 
-public class MultiplayViewer : MonoBehaviour, MultiplayObserver
+public class MultiplayViewer : MonoBehaviour
 {
     [SerializeField] private TMP_Text localHPText;
     [SerializeField] private TMP_Text localScoreText;
@@ -24,7 +24,6 @@ public class MultiplayViewer : MonoBehaviour, MultiplayObserver
 
     private void Start()
     {
-        MultiplayPresenter.GetInstance.RegisterObserver(this);
         InitMultiPlayCanvas();
     }
 
@@ -72,8 +71,6 @@ public class MultiplayViewer : MonoBehaviour, MultiplayObserver
         //await MatchManager.GetInstance.SendMatchStateAsync(OpCodes.Score, jsonData);
         MatchManager.GetInstance.SendMatchState(OpCodes.Score, jsonData);
     }
-    
-    #region Observer 패턴 구현 - GameObserver
     public void UpdateHPText(int playerHP)
     {
         this.localHP = playerHP;
@@ -108,5 +105,4 @@ public class MultiplayViewer : MonoBehaviour, MultiplayObserver
         await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: this.GetCancellationTokenOnDestroy());
         bloodEffectPanel.SetActive(false);
     }
-    #endregion
 }

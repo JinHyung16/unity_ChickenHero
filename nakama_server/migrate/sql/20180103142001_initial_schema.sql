@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS leaderboard (
     sort_order     SMALLINT     NOT NULL DEFAULT 1, -- asc(0), desc(1)
     operator       SMALLINT     NOT NULL DEFAULT 0, -- best(0), set(1), increment(2), decrement(3)
     reset_schedule VARCHAR(64), -- e.g. cron format: "* * * * * * *"
-    metadata       JSON        NOT NULL DEFAULT '{}',
+    metadata       JSON,
     create_time    DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS leaderboard_record (
     score          BIGINT        NOT NULL DEFAULT 0 CHECK (score >= 0),
     subscore       BIGINT        NOT NULL DEFAULT 0 CHECK (subscore >= 0),
     num_score      INT           NOT NULL DEFAULT 1 CHECK (num_score >= 0),
-    metadata       JSON          NOT NULL DEFAULT '{}',
+    metadata       JSON,
     create_time    DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time    DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expiry_time    DATETIME   NOT NULL DEFAULT '1970-01-01 00:00:00',

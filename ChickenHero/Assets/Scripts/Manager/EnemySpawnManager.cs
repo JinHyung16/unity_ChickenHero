@@ -10,22 +10,22 @@ using HughGeneric;
 public class EnemySpawnManager : Singleton<EnemySpawnManager>
 {
     /// <summary>
-    /// EnemySpanwerÀÇ °æ¿ì, GameManagerÇÏÀ§¿¡ ºÙ¿©³õ°í »ç¿ëÇÑ´Ù.
-    /// Single Play, Multi Play »ó°ü¾øÀÌ Enemy´Â »ı¼º½ÃÄÑ¾ß ÇÏ±â ¶§¹®¿¡
-    /// GameÀ» ½ÃÀÛÇÏ·Á°í SceneÀ» ÀÌµ¿ÇÔ¿¡ µû¶ó GameManger¿¡¼­ ÀÌ¸¦ ½ÇÇà½ÃÅ°µµ·Ï ÇÑ´Ù.
+    /// EnemySpanwerì˜ ê²½ìš°, GameManagerí•˜ìœ„ì— ë¶™ì—¬ë†“ê³  ì‚¬ìš©í•œë‹¤.
+    /// Single Play, Multi Play ìƒê´€ì—†ì´ EnemyëŠ” ìƒì„±ì‹œì¼œì•¼ í•˜ê¸° ë•Œë¬¸ì—
+    /// Gameì„ ì‹œì‘í•˜ë ¤ê³  Sceneì„ ì´ë™í•¨ì— ë”°ë¼ GameMangerì—ì„œ ì´ë¥¼ ì‹¤í–‰ì‹œí‚¤ë„ë¡ í•œë‹¤.
     /// </summary>
 
-    //enemy poolingÇØ¼­ ¹èÄ¡ÇÒ À§Ä¡ ¹üÀ§ ÁöÁ¤ÇÏ±â
+    //enemy poolingí•´ì„œ ë°°ì¹˜í•  ìœ„ì¹˜ ë²”ìœ„ ì§€ì •í•˜ê¸°
     [SerializeField] private float xPosRight;
     [SerializeField] private float xPosLeft;
     [SerializeField] private float yPosUp;
     [SerializeField] private float yPosDown;
 
-    //±âº» enemy pooling
+    //ê¸°ë³¸ enemy pooling
     [SerializeField] private GameObject enemyPrefab;
     private IObjectPool<Enemy> enemyPool;
 
-    //UniTask °ü·Ã
+    //UniTask ê´€ë ¨
     private CancellationTokenSource tokenSource;
 
     private bool isSpawnStart = false;
@@ -42,7 +42,7 @@ public class EnemySpawnManager : Singleton<EnemySpawnManager>
         yPosUp = 3.0f;
         yPosDown = -3.0f;
 
-        //tokenSource°¡ ÀÌ¹Ì ÇÒ´çµÇ¾î ÀÖ´Ù¸é ÇØÁ¦ÇÏ°í ´Ù½Ã »ı¼ºÇÏÀÚ
+        //tokenSourceê°€ ì´ë¯¸ í• ë‹¹ë˜ì–´ ìˆë‹¤ë©´ í•´ì œí•˜ê³  ë‹¤ì‹œ ìƒì„±í•˜ì
         if (tokenSource != null)
         {
             tokenSource.Dispose();
@@ -68,7 +68,6 @@ public class EnemySpawnManager : Singleton<EnemySpawnManager>
     public void StopEnemySpawnerPooling()
     {
         isSpawnStart = false;
-
         tokenSource.Cancel();
     }
 
@@ -83,17 +82,17 @@ public class EnemySpawnManager : Singleton<EnemySpawnManager>
             var enemy = enemyPool.Get();
             enemy.transform.position = posVec;
 
-            float spawnTime = UnityEngine.Random.Range(0.5f, 2.0f);
+            float spawnTime = UnityEngine.Random.Range(0.5f, 8.0f);
             await UniTask.Delay(TimeSpan.FromSeconds(spawnTime), cancellationToken: tokenSource.Token);
         }
     }
 
     #region Object Pool Function
     /// <summary>
-    /// Enemy Object¸¦ »ı¼ºÇÑ´Ù.
-    /// »ı¼ºµÈ ÈÄ Enemy Object¿¡ ÀÚ½ÅÀÌ µî·ÏµÇ¾î¾ß ÇÒ PoolÀ» ¾Ë·ÁÁÖ°í ¹İÈ¯ÇÑ´Ù.
+    /// Enemy Objectë¥¼ ìƒì„±í•œë‹¤.
+    /// ìƒì„±ëœ í›„ Enemy Objectì— ìì‹ ì´ ë“±ë¡ë˜ì–´ì•¼ í•  Poolì„ ì•Œë ¤ì£¼ê³  ë°˜í™˜í•œë‹¤.
     /// </summary>
-    /// <returns> Enemy typeÀ» ¹İÈ¯ÇÑ´Ù </returns>
+    /// <returns> Enemy typeì„ ë°˜í™˜í•œë‹¤ </returns>
     private Enemy CreateEnemy()
     {
         Enemy enemy = Instantiate(enemyPrefab).GetComponent<Enemy>();
@@ -102,27 +101,27 @@ public class EnemySpawnManager : Singleton<EnemySpawnManager>
     }
 
     /// <summary>
-    /// Pool¿¡¼­ Object¸¦ °¡Á®¿Ã ÇÔ¼ö
+    /// Poolì—ì„œ Objectë¥¼ ê°€ì ¸ì˜¬ í•¨ìˆ˜
     /// </summary>
-    /// <param name="enemy">Pool¿¡ ÀÖ´Â Enemy¸¦ °¡Á®¿Ã ¸Å°³º¯¼ö</param>
+    /// <param name="enemy">Poolì— ìˆëŠ” Enemyë¥¼ ê°€ì ¸ì˜¬ ë§¤ê°œë³€ìˆ˜</param>
     private void OnGetEnemy(Enemy enemy)
     {
         enemy.gameObject.SetActive(true);
     }
 
     /// <summary>
-    /// Pool¿¡ Object¸¦ µ¹·ÁÁÙ ÇÔ¼ö
+    /// Poolì— Objectë¥¼ ëŒë ¤ì¤„ í•¨ìˆ˜
     /// </summary>
-    /// <param name="enemy">Pool¿¡ µ¹·ÁÁÙ Enemy ¸Å°³º¯¼ö</param>
+    /// <param name="enemy">Poolì— ëŒë ¤ì¤„ Enemy ë§¤ê°œë³€ìˆ˜</param>
     private void OnReleaseEnemy(Enemy enemy)
     {
         enemy.gameObject.SetActive(false);
     }
 
     /// <summary>
-    /// Pool¿¡¼­ Object¸¦ ÆÄ±«ÇÒ ¶§ ¾µ ÇÔ¼ö
+    /// Poolì—ì„œ Objectë¥¼ íŒŒê´´í•  ë•Œ ì“¸ í•¨ìˆ˜
     /// </summary>
-    /// <param name="enemy">Pool¿¡¼­ ÆÄ±«ÇÒ Object typeÀÇ ¸Å°³º¯¼ö</param>
+    /// <param name="enemy">Poolì—ì„œ íŒŒê´´í•  Object typeì˜ ë§¤ê°œë³€ìˆ˜</param>
     private void OnDestroyEnemy(Enemy enemy)
     {
         Destroy(enemy.gameObject);

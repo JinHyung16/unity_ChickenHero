@@ -8,8 +8,7 @@ using Cysharp.Threading.Tasks.Triggers;
 
 sealed class GameManager : Singleton<GameManager>, IDisposable
 {
-    public string curUserName { get; set; } //UserÀÇ ÀÌ¸§À» °¡Áö°í ÀÖ´Ù°¡ Lobby·Î ÀÌµ¿ÇÒ¶§¸¶´Ù ÀÌ°É·Î µ¥ÀÌÅÍ¸¦ ÀĞ¾î¿Â´Ù.
-    public bool isSingleplay { get; set; } = false; //false·Î default value ÃÊ±âÈ­
+    public bool isSingleplay { get; set; } = false; //falseë¡œ default value ì´ˆê¸°í™”
 
     [SerializeField] private GameObject offLinePlayerPrefab;
     [SerializeField] private Vector3 playerSpawnPoint;
@@ -25,9 +24,9 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
         playerSpawnPoint = new Vector3(0, -5.5f, 0);
     }
 
-    #region IDisposable Interface ±¸Çö
+    #region IDisposable Interface êµ¬í˜„
     /// <summary>
-    /// offlinePlayer ÆÄ±«Àü ¹Ì¸® ÇÒ´ç ÇØÁ¦ÇÏ°í ÆÄ±«ÇÏ±â
+    /// offlinePlayer íŒŒê´´ì „ ë¯¸ë¦¬ í• ë‹¹ í•´ì œí•˜ê³  íŒŒê´´í•˜ê¸°
     /// </summary>
     public void Dispose()
     {
@@ -37,7 +36,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
     #endregion
 
     /// <summary>
-    /// OffLineÀÏ ¶© OffLinePlayer »ı¼º¸¸ µû·Î if¹®À¸·Î Ã³¸®ÇØ¼­ °ÔÀÓ ½ÃÀÛÇßÀ½À» ¾Ë¸°´Ù
+    /// OffLineì¼ ë• OffLinePlayer ìƒì„±ë§Œ ë”°ë¡œ ifë¬¸ìœ¼ë¡œ ì²˜ë¦¬í•´ì„œ ê²Œì„ ì‹œì‘í–ˆìŒì„ ì•Œë¦°ë‹¤
     /// </summary>
     public void GameStart()
     {
@@ -53,7 +52,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
     }
 
     /// <summary>
-    /// Áß°£¿¡ GameÀ» ³ª°¡Áö ¾Ê°í ´Ù ÇÃ·¹ÀÌ ÇßÀ» °æ¿ì ½ÇÇàµÇ´Â ÇÔ¼ö
+    /// ì¤‘ê°„ì— Gameì„ ë‚˜ê°€ì§€ ì•Šê³  ë‹¤ í”Œë ˆì´ í–ˆì„ ê²½ìš° ì‹¤í–‰ë˜ëŠ” í•¨ìˆ˜
     /// </summary>
     public void GameEnd()
     {
@@ -64,7 +63,7 @@ sealed class GameManager : Singleton<GameManager>, IDisposable
 
             SingleplayPresenter.GetInstance.UpdateGameResultWhenEnd();
 
-            //off-line player¸¦ Áö¿î´Ù.
+            //off-line playerë¥¼ ì§€ìš´ë‹¤.
             Dispose();
         }
         else

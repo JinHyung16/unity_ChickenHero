@@ -11,8 +11,8 @@ using Cysharp.Threading.Tasks;
 public partial class GameServer : LazySingleton<GameServer>
 {
     protected string Scheme = "http";
-    //protected string Host = "35.199.169.87"; // @GCP hugh-server VM ¿ÜºÎ ip
-    protected string Host = "localhost"; //Local Host
+    protected string Host = "34.83.71.34"; // @GCP hugh-server VM ì™¸ë¶€ ip
+    //protected string Host = "localhost"; //Local Host
     protected int Port = 7350;
     protected string ServerKey = "defaultkey";
 
@@ -21,7 +21,7 @@ public partial class GameServer : LazySingleton<GameServer>
 
     protected IClient Client;
     protected ISession Session;
-    protected ISocket Socket; //socketÀÇ °æ¿ì GameManager¿¡¼­ Match°ü·Ã ÄÚµå ÀÛ¼ºÁßÀÌ¶ó ÇÊ¿äÇØ¼­ publicÀ¸·Î ¿­¾î¾ßÇÔ
+    protected ISocket Socket; //socketì˜ ê²½ìš° GameManagerì—ì„œ Matchê´€ë ¨ ì½”ë“œ ì‘ì„±ì¤‘ì´ë¼ í•„ìš”í•´ì„œ publicìœ¼ë¡œ ì—´ì–´ì•¼í•¨
 
     public ISocket GetSocket() { return this.Socket; }
 
@@ -116,10 +116,10 @@ public partial class GameServer : LazySingleton<GameServer>
     }
 
     /// <summary>
-    /// ¼­¹öÀÇ ¿¬°áµÇ¾î ÀÖ´Â °æ¿ì, DB ¼­¹ö¿¡ UserÀÇ Á¤º¸¸¦ Àü´ŞÇÑ´Ù.
+    /// ì„œë²„ì˜ ì—°ê²°ë˜ì–´ ìˆëŠ” ê²½ìš°, DB ì„œë²„ì— Userì˜ ì •ë³´ë¥¼ ì „ë‹¬í•œë‹¤.
     /// </summary>
-    /// <param name="name">À¯ÀúÀÇ ´Ğ³×ÀÓ Àü´Ş</param>
-    /// <param name="gold">À¯ÀúÀÇ ÀçÈ­·® Àü´Ş</param>
+    /// <param name="name">ìœ ì €ì˜ ë‹‰ë„¤ì„ ì „ë‹¬</param>
+    /// <param name="gold">ìœ ì €ì˜ ì¬í™”ëŸ‰ ì „ë‹¬</param>
     public async void SaveUserInfoServer(string name)
     {
         if (GetIsServerConnect())
@@ -135,9 +135,9 @@ public partial class GameServer : LazySingleton<GameServer>
     }
 
     /// <summary>
-    /// ¼­¹öÀÇ ¿¬°áµÇ¾î ÀÖ´Â °æ¿ì, DB ¼­¹ö¿¡ userId·Î °Ë»öÇØ ÇØ´ç À¯ÀúÀÇ Á¤º¸¸¦ Áö¿î´Ù.
+    /// ì„œë²„ì˜ ì—°ê²°ë˜ì–´ ìˆëŠ” ê²½ìš°, DB ì„œë²„ì— userIdë¡œ ê²€ìƒ‰í•´ í•´ë‹¹ ìœ ì €ì˜ ì •ë³´ë¥¼ ì§€ìš´ë‹¤.
     /// </summary>
-    /// <param name="_userId"> userId¸¦ ¹Ş´Â´Ù </param>
+    /// <param name="_userId"> userIdë¥¼ ë°›ëŠ”ë‹¤ </param>
     public async void RemoveUserInfoServer(string _userId)
     {
         ReqUserInfoPacket reqData = new ReqUserInfoPacket

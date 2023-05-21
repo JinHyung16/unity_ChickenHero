@@ -4,14 +4,13 @@ using UnityEngine;
 using GooglePlayGames;
 using GooglePlayGames.BasicApi;
 using TMPro;
-using UnityEngine.UI;
-using System;
+using System.Drawing.Text;
 
 public class GooglePlayLogin : MonoBehaviour
 {
     [SerializeField] private TMP_Text loginText;
 
-    private bool isWaitingForAuth = false;
+    /*
     private void Awake()
     {
         InitGooglePlayLogin();
@@ -20,7 +19,7 @@ public class GooglePlayLogin : MonoBehaviour
     //시작하자마자 자동 GPGS 인증 진행
     private void InitGooglePlayLogin()
     {
-        loginText.text = "안녕하세요!!!";
+        loginText.text = "안녕하세요!!! \r\n(로그인 없이 게임 시작 가능합니다.)";
 
         //구글 게임즈 플렛폼 활성화(초기화) 및 게임 정보 저장(EnableSavedGames)
         PlayGamesClientConfiguration config = new PlayGamesClientConfiguration.Builder().EnableSavedGames().Build();
@@ -48,9 +47,10 @@ public class GooglePlayLogin : MonoBehaviour
                 }
                 else
                 {
-                    loginText.text = "인증 실패! \r\n(로그인 없이 게임시작은 가능합니다)";
+                    loginText.text = "구글 로그인 인증 실패! \r\n(로그인 없이 게임 시작 가능합니다.)";
                 }
             });
         }
     }
+    */
 }

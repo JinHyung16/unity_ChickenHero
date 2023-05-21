@@ -7,7 +7,7 @@ namespace HughUtility.Observer
     #region LobbyObserver
     public interface LobbyObserver
     {
-        //power card opoen Data ¾Ë·ÁÁÖ±â
+        //power card opoen Data ì•Œë ¤ì£¼ê¸°
         void UpdateOpenPowerCard(PowerCardData cardData);
         void UpdatePowerUp();
     }
@@ -23,60 +23,6 @@ namespace HughUtility.Observer
     {
         OpenCard = 0,
         UpgradePower,
-    }
-    #endregion
-
-    #region Singleplay Observer
-    public interface SingleplayObserver
-    {
-        void UpdateHPText(int playerHP);
-        void GetDamaged();
-        void UpdateScoreText(int score);
-        void UpdateEnemyDownCountAndStageText(bool isStageClear, int stage);
-
-        void ResultGameText(int stage, int score, int gold);
-    }
-
-    public interface SingleplaySubject
-    {
-        void RegisterObserver(SingleplayObserver observer);
-        void RemoveAllObserver();
-        void NotifyObservers(SingleplayNotifyType notifyType);
-    }
-
-    public enum SingleplayNotifyType
-    {
-        None = 0,
-        HP,
-        Score,
-        EnemyDown,
-        GameEnd,
-    }
-    #endregion
-
-    #region Multiplay Observer
-    public interface MultiplayObserver
-    {
-        void UpdateHPText(int playerHP);
-        void GetDamaged();
-        void UpdateLocalScoreText(int score);
-
-        void UpdateRemoteScoreText(int score);
-    }
-
-    public interface MultiplaySubject
-    {
-        void RegisterObserver(MultiplayObserver observer);
-        void RemoveAllObserver();
-        void NotifyObservers(MultiplayNotifyType notifyType);
-    }
-
-    public enum MultiplayNotifyType
-    {
-        None = 0,
-        HP,
-        LocalScore,
-        RemoteScore,
     }
     #endregion
 }

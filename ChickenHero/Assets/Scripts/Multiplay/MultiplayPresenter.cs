@@ -1,10 +1,11 @@
 using HughUtility.Observer;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SocialPlatforms.Impl;
 
-public class MultiplayPresenter : MonoBehaviour, MultiplaySubject
+public class MultiplayPresenter : MonoBehaviour
 {
     #region Static
     public static MultiplayPresenter GetInstance;
@@ -15,7 +16,7 @@ public class MultiplayPresenter : MonoBehaviour, MultiplaySubject
     }
     #endregion
 
-    
+    [SerializeField] private MultiplayViewer multiplayViewer;
     public int PlayerHP { get; set; }
 
     public int LocalScore { get; private set; } = 0;
@@ -26,12 +27,18 @@ public class MultiplayPresenter : MonoBehaviour, MultiplaySubject
 
     private void OnDisable()
     {
-        RemoveAllObserver();
     }
     private void Start()
     {
         LocalScore = 0;
         RemoteScore = 0;
+    }
+
+    public void InitSinglePlayStart()
+    {
+        multiplayViewer.UpdateHPText(PlayerHP);
+        multiplayViewer.UpdateLocalScoreText(LocalScore);
+        multiplayViewer.UpdateRemoteScoreText(RemoteScore);
     }
 
     public void SetOnLocalPlayer(GameObject player)
@@ -42,7 +49,8 @@ public class MultiplayPresenter : MonoBehaviour, MultiplaySubject
     public void UpdateHPInMultiplay(int hp)
     {
         PlayerHP -= hp;
-        NotifyObservers(MultiplayNotifyType.HP);
+        multiplayViewer.UpdateHPText(PlayerHP);
+        multiplayViewer.GetDamaged();
 
         if (PlayerHP <= 0)
         {
@@ -53,53 +61,12 @@ public class MultiplayPresenter : MonoBehaviour, MultiplaySubject
     public void UpdateLocalScoreInMultiplay()
     {
         LocalScore++;
-        NotifyObservers(MultiplayNotifyType.LocalScore);
+        multiplayViewer.UpdateLocalScoreText(LocalScore);
     }
 
     public void UpdateRemoteScoreInMultiplay(int score)
     {
         RemoteScore = score;
-        NotifyObservers(MultiplayNotifyType.RemoteScore);
+        multiplayViewer.UpdateRemoteScoreText(RemoteScore);
     }
-
-
-    #region Observer pattern interface구현
-    private List<MultiplayObserver> observerList = new List<MultiplayObserver>();
-    public void RegisterObserver(MultiplayObserver observer)
-    {
-        observerList.Add(observer);
-    }
-
-    public void RemoveAllObserver()
-    {
-        observerList.Clear();
-    }
-    public void NotifyObservers(MultiplayNotifyType notifyType)
-    {
-        foreach (var observer in observerList)
-        {
-
-            switch (notifyType)
-            {
-                case MultiplayNotifyType.None:
-                    observer.UpdateHPText(PlayerHP);
-                    observer.UpdateLocalScoreText(LocalScore);
-                    observer.UpdateRemoteScoreText(RemoteScore);
-                    break;
-                case MultiplayNotifyType.HP:
-                    observer.UpdateHPText(PlayerHP);
-                    observer.GetDamaged();
-                    break;
-                case MultiplayNotifyType.LocalScore:
-                    observer.UpdateLocalScoreText(LocalScore);
-                    break;
-                case MultiplayNotifyType.RemoteScore:
-                    observer.UpdateRemoteScoreText(RemoteScore);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-    #endregion
 }

@@ -11,7 +11,7 @@ public class PlayerDataController : MonoBehaviour
     //player died event when use multiplay
     public PlayerDieEvent playerDieEvent;
 
-    //chicken data °ü·Ã ¹ÙÀÎµùÇÒ º¯¼ö
+    //chicken data ê´€ë ¨ ë°”ì¸ë”©í•  ë³€ìˆ˜
     private SpriteRenderer spriteRenderer;
     private int playerHP;
 
@@ -25,12 +25,12 @@ public class PlayerDataController : MonoBehaviour
         if (GameManager.GetInstance.isSingleplay)
         {
             SingleplayPresenter.GetInstance.playerHP = this.playerHP;
-            SingleplayPresenter.GetInstance.NotifyObservers(SingleplayNotifyType.None);
+            SingleplayPresenter.GetInstance.InitSinglePlayStart();
         }
         else
         {
             MultiplayPresenter.GetInstance.PlayerHP = this.playerHP;
-            MultiplayPresenter.GetInstance.NotifyObservers(MultiplayNotifyType.None);
+            MultiplayPresenter.GetInstance.InitSinglePlayStart();
         }
 
         if (playerDieEvent == null)
@@ -46,7 +46,7 @@ public class PlayerDataController : MonoBehaviour
 
 
     /// <summary>
-    /// OnEnable½Ã OnEnable¿¡¼­ ¼öÇàÇÒ µ¥ÀÌÅÍ ÃÊ±âÈ­ ºÎºĞ
+    /// OnEnableì‹œ OnEnableì—ì„œ ìˆ˜í–‰í•  ë°ì´í„° ì´ˆê¸°í™” ë¶€ë¶„
     /// </summary>
     private void InitChickenData()
     {
