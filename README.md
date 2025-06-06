@@ -1,4 +1,26 @@
-# unity_ChickenHero  
+# Chicken Hero 🐔
+
+Nakama 서버를 직접 구축하고, GCP 환경에서 배포 및 매치메이킹 시스템을 실험한 실전 네트워크 슈팅 게임입니다.  
+멀티플레이 매칭/통신을 중심으로, MVP 구조 및 UniTask 기반 비동기 처리 등 구조 설계를 실현했습니다.
+
+## 📌 프로젝트 개요
+
+- 장르: 하이퍼 캐주얼 / 2D 멀티플레이 슈팅
+- 기술 스택: Unity, C#, Nakama, GCP, UniTask
+- 출시: Google Play 등록 완료
+- 역할: 개인 개발 (기획 ~ 구현 ~ 배포)
+
+## 🔧 주요 기능
+
+- Nakama + GCP + Docker 서버 구축
+- 매치메이킹 / 유저 위치/점수 동기화
+- MVP 구조 및 옵저버 패턴 도입
+- UniTask 기반 비동기 처리
+
+## 💡 기술 포인트
+
+- 실시간 매칭 및 유저 상태 연결 흐름 설계
+- Coroutine → UniTask로 전환하며 GC 감소 및 구조 안정
 
 ## Version
 - Nakama version : v3.14.0 
